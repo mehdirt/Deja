@@ -1,8 +1,10 @@
 // "You've Been Here Before" — the resurface moment. As the user types, we
-// debounce, ask the background worker for the closest prior prompt, and float
+// debounce, ask the background worker for the closest prior prompts, and float
 // a gentle tooltip above the input. Clicking it copies the OLD prompt to the
-// clipboard (we never auto-fill — respect the user). Dismissible per page
-// session, never nags. Read-only: this file captures nothing.
+// clipboard (we never auto-fill — respect the user). When more than one prompt
+// matches, the user can step through them; each one shows the words it shares
+// with what they're typing, so the match isn't a black box. Dismissible per
+// page session, never nags. Read-only: this file captures nothing.
 //
 // Rendered inside a Shadow DOM so host-page CSS can't break the tooltip and
 // our CSS can't leak into the host page. Mirrors the "notebook meets terminal"
@@ -34,8 +36,22 @@ function readText(el: HTMLElement): string {
 
 // ── Shadow-DOM tooltip ──────────────────────────────────────────────────────
 
+// What the tooltip renders for the candidate currently in focus.
+interface CandidateView {
+  preview: string
+  terms: string[]
+  index: number
+  total: number
+}
+
+interface TooltipHandlers {
+  onCopy: () => void
+  onNext: () => void
+}
+
 interface Tooltip {
-  show: (preview: string, onClick: () => void) => void
+  show: (view: CandidateView, handlers: TooltipHandlers) => void
+  update: (view: CandidateView) => void
   hide: () => void
   reposition: (anchor: DOMRect) => void
   isVisible: () => boolean
@@ -46,7 +62,11 @@ function createTooltip(onDismiss: () => void): Tooltip {
   let host: HTMLDivElement | null = null
   let card: HTMLButtonElement | null = null
   let previewEl: HTMLSpanElement | null = null
-  let clickHandler: (() => void) | null = null
+  let metaEl: HTMLSpanElement | null = null
+  let countEl: HTMLSpanElement | null = null
+  let nextEl: HTMLSpanElement | null = null
+  let copyHandler: (() => void) | null = null
+  let nextHandler: (() => void) | null = null
   let visible = false
 
   const ensure = () => {
@@ -69,8 +89,8 @@ function createTooltip(onDismiss: () => void): Tooltip {
     // palette there changes, update these to match.
     style.textContent = `
       :host{all:initial}
-      .dj-rs{position:fixed;left:0;top:0;max-width:min(420px,calc(100vw - 16px));pointer-events:auto;
-        display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer;
+      .dj-rs{position:fixed;left:0;top:0;max-width:min(440px,calc(100vw - 16px));pointer-events:auto;
+        display:flex;align-items:flex-start;gap:10px;text-align:left;cursor:pointer;
         background:#faf8f3;color:#1c1b19;border:1px solid #e7e2d8;
         border-radius:10px;padding:8px 10px;box-shadow:0 8px 28px rgba(0,0,0,.18);
         font:13px/1.4 'Inter',system-ui,-apple-system,sans-serif;
@@ -81,12 +101,17 @@ function createTooltip(onDismiss: () => void): Tooltip {
       .dj-rs-lead{display:flex;align-items:center;gap:6px;color:#5b54f0;font-weight:600;white-space:nowrap}
       .dj-rs-dot{width:6px;height:6px;border-radius:50%;background:#5b54f0;flex:none}
       .dj-rs-preview{color:#6b6862;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-        font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(380px,calc(100vw - 80px))}
-      .dj-rs-x{pointer-events:auto;flex:none;background:none;border:none;cursor:pointer;
+        font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(400px,calc(100vw - 80px))}
+      .dj-rs-meta{color:#9a968d;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        max-width:min(400px,calc(100vw - 80px))}
+      .dj-rs-meta:empty{display:none}
+      .dj-rs-ctl{display:flex;align-items:center;gap:4px;flex:none;align-self:flex-start}
+      .dj-rs-count{color:#9a968d;font:600 10px/1 'JetBrains Mono',ui-monospace,monospace;white-space:nowrap}
+      .dj-rs-next,.dj-rs-x{pointer-events:auto;flex:none;background:none;border:none;cursor:pointer;
         color:#9a968d;font:600 14px/1 'JetBrains Mono',ui-monospace,monospace;
-        padding:2px 4px;border-radius:6px;align-self:flex-start}
-      .dj-rs-x:hover{background:#e7e2d8;color:#1c1b19}
-      .dj-rs-x:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
+        padding:2px 4px;border-radius:6px}
+      .dj-rs-next:hover,.dj-rs-x:hover{background:#e7e2d8;color:#1c1b19}
+      .dj-rs-next:focus-visible,.dj-rs-x:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
       @keyframes dj-rs-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
       @media (prefers-reduced-motion: reduce){.dj-rs{animation:none}}
       @media (prefers-color-scheme: dark){
@@ -95,8 +120,9 @@ function createTooltip(onDismiss: () => void): Tooltip {
         .dj-rs-lead{color:#9c97f7}
         .dj-rs-dot{background:#8983f5}
         .dj-rs-preview{color:#a8a49b}
-        .dj-rs-x{color:#6e6a62}
-        .dj-rs-x:hover{background:#2e2c36;color:#f3f1ea}
+        .dj-rs-meta,.dj-rs-count{color:#6e6a62}
+        .dj-rs-next,.dj-rs-x{color:#6e6a62}
+        .dj-rs-next:hover,.dj-rs-x:hover{background:#2e2c36;color:#f3f1ea}
       }
     `
     shadow.appendChild(style)
@@ -121,7 +147,30 @@ function createTooltip(onDismiss: () => void): Tooltip {
     previewEl = document.createElement('span')
     previewEl.className = 'dj-rs-preview'
 
-    body.append(lead, previewEl)
+    metaEl = document.createElement('span')
+    metaEl.className = 'dj-rs-meta'
+
+    body.append(lead, previewEl, metaEl)
+
+    // Right-side controls: a "1/3" counter and a "›" step button (both shown
+    // only when there's more than one match), then the dismiss ×. These are
+    // <span>s — not interactive content per HTML, so nesting them inside the
+    // <button> card is valid — and each stops propagation so it doesn't trip
+    // the card's copy action.
+    const ctl = document.createElement('span')
+    ctl.className = 'dj-rs-ctl'
+
+    countEl = document.createElement('span')
+    countEl.className = 'dj-rs-count'
+
+    nextEl = document.createElement('span')
+    nextEl.className = 'dj-rs-next'
+    nextEl.setAttribute('aria-label', 'Show the next match')
+    nextEl.textContent = '›'
+    nextEl.addEventListener('click', (e) => {
+      e.stopPropagation()
+      nextHandler?.()
+    })
 
     const close = document.createElement('span')
     close.className = 'dj-rs-x'
@@ -133,20 +182,38 @@ function createTooltip(onDismiss: () => void): Tooltip {
       onDismiss()
     })
 
-    card.addEventListener('click', () => clickHandler?.())
+    ctl.append(countEl, nextEl, close)
 
-    card.append(body, close)
+    card.addEventListener('click', () => copyHandler?.())
+
+    card.append(body, ctl)
     shadow.appendChild(card)
     document.documentElement.appendChild(host)
   }
 
+  const render = (view: CandidateView) => {
+    if (previewEl) previewEl.textContent = view.preview
+    if (metaEl) metaEl.textContent = view.terms.length ? `matched on ${view.terms.join(', ')}` : ''
+    const multi = view.total > 1
+    if (countEl) {
+      countEl.textContent = multi ? `${view.index + 1}/${view.total}` : ''
+      countEl.style.display = multi ? '' : 'none'
+    }
+    if (nextEl) nextEl.style.display = multi ? '' : 'none'
+  }
+
   return {
-    show(preview, onClick) {
+    show(view, handlers) {
       ensure()
-      clickHandler = onClick
-      if (previewEl) previewEl.textContent = preview
+      copyHandler = handlers.onCopy
+      nextHandler = handlers.onNext
+      render(view)
       if (card) card.style.display = 'flex'
       visible = true
+    },
+    update(view) {
+      if (!visible) return
+      render(view)
     },
     hide() {
       if (card) card.style.display = 'none'
@@ -179,7 +246,11 @@ function createTooltip(onDismiss: () => void): Tooltip {
       host = null
       card = null
       previewEl = null
-      clickHandler = null
+      metaEl = null
+      countEl = null
+      nextEl = null
+      copyHandler = null
+      nextHandler = null
       visible = false
     },
   }
@@ -197,10 +268,18 @@ export function attachResurface(
 
   let debounceTimer: number | undefined
   let dismissed = false // dismissed for this page session — never nag again
-  let currentMatch: SimilarMatch | null = null
+  let currentMatches: SimilarMatch[] = []
+  let currentIndex = 0
   let lastQueried = ''
   let repositionTimer: number | undefined
   let queryToken = 0
+
+  const viewFor = (i: number): CandidateView => ({
+    preview: currentMatches[i].text.replace(/\s+/g, ' ').trim(),
+    terms: currentMatches[i].terms,
+    index: i,
+    total: currentMatches.length,
+  })
 
   const anchorRect = (): DOMRect | null => {
     const el = getInput()
@@ -220,7 +299,8 @@ export function attachResurface(
   }
 
   const hide = () => {
-    currentMatch = null
+    currentMatches = []
+    currentIndex = 0
     lastQueried = ''
     // Invalidate any in-flight query so a late response (debounce + worker
     // wake latency) can't re-show the tooltip after submit/blur/dismiss.
@@ -234,16 +314,26 @@ export function attachResurface(
   }
 
   const onClickCopy = () => {
-    if (!currentMatch) return
-    const text = currentMatch.text
+    const match = currentMatches[currentIndex]
+    if (!match) return
     try {
-      void navigator.clipboard?.writeText(text)?.catch(() => {})
+      void navigator.clipboard?.writeText(match.text)?.catch(() => {})
     } catch {
       /* clipboard unavailable — fail silently, never disturb the host page */
     }
     log('copied prior prompt to clipboard')
     // A copy is a successful resurface; tuck the tooltip away for now.
     hide()
+  }
+
+  // Step to the next candidate, wrapping around. We don't swap in fresh query
+  // results while the tooltip is up (that reads as pushy), so stepping only
+  // ever cycles the set that was frozen when the tooltip first appeared.
+  const onNext = () => {
+    if (currentMatches.length < 2) return
+    currentIndex = (currentIndex + 1) % currentMatches.length
+    tooltip.update(viewFor(currentIndex))
+    reposition()
   }
 
   const runQuery = (text: string) => {
@@ -253,7 +343,7 @@ export function attachResurface(
       hide()
       return
     }
-    if (trimmed === lastQueried && currentMatch) {
+    if (trimmed === lastQueried && currentMatches.length) {
       reposition()
       return
     }
@@ -270,21 +360,21 @@ export function attachResurface(
             hide()
             return
           }
-          const match = resp.match
-          if (!match) {
+          const matches = resp.matches
+          if (!matches.length) {
             hide()
             return
           }
-          // Freeze the first surfaced match: once the tooltip is up, don't
-          // swap the preview under the user as they keep typing — that reads
-          // as pushy/"alive". It stays put until hidden or dismissed.
-          if (tooltip.isVisible() && currentMatch) {
+          // Freeze the surfaced set: once the tooltip is up, don't swap matches
+          // under the user as they keep typing — that reads as pushy/"alive".
+          // It stays put (the user can step through it) until hidden/dismissed.
+          if (tooltip.isVisible() && currentMatches.length) {
             reposition()
             return
           }
-          currentMatch = match
-          const preview = match.text.replace(/\s+/g, ' ').trim()
-          tooltip.show(preview, onClickCopy)
+          currentMatches = matches
+          currentIndex = 0
+          tooltip.show(viewFor(0), { onCopy: onClickCopy, onNext })
           reposition()
         })
         .catch(() => {

@@ -34,12 +34,21 @@ export type RuntimeMessage = CapturedPromptMessage | UndoCaptureMessage | Simila
 
 export type CaptureResponse = { ok: true; id: number } | { ok: false; error: string }
 
-// The closest prior prompt to the in-progress text, or null if nothing clears
-// the similarity threshold. Read-only: the resurface tooltip never writes.
-export type SimilarMatch = { id: number; text: string; platform: Platform }
+// A prior prompt close enough to the in-progress text to resurface, carrying
+// its similarity score and the meaningful words it shares with the query (so
+// the tooltip can show *why* it matched). Read-only: resurface never writes.
+export type SimilarMatch = {
+  id: number
+  text: string
+  platform: Platform
+  score: number
+  terms: string[]
+}
 
+// The top candidates above the similarity threshold, best first (empty if none
+// clear it). The tooltip shows the first and lets the user step through the rest.
 export type SimilarResponse =
-  | { ok: true; match: SimilarMatch | null }
+  | { ok: true; matches: SimilarMatch[] }
   | { ok: false; error: string }
 
 export const PLATFORM_LABEL: Record<Platform, string> = {
