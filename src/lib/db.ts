@@ -1,10 +1,13 @@
 import Dexie, { type Table } from 'dexie'
 import type { Platform, Prompt } from './types'
 
-class PromptShelfDB extends Dexie {
+class DejaDB extends Dexie {
   prompts!: Table<Prompt, number>
 
   constructor() {
+    // NOTE: the IndexedDB database name stays 'promptshelf' across the rename to
+    // Deja. It's an internal key users never see, and changing it would orphan
+    // every existing local prompt (Dexie would open a fresh, empty database).
     super('promptshelf')
     this.version(1).stores({
       prompts: '++id, platform, createdAt, lastUsedAt',
@@ -31,7 +34,7 @@ class PromptShelfDB extends Dexie {
   }
 }
 
-export const db = new PromptShelfDB()
+export const db = new DejaDB()
 
 export async function savePrompt(input: Omit<Prompt, 'id' | 'usageCount' | 'lastUsedAt'>): Promise<number> {
   const now = input.createdAt

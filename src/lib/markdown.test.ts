@@ -71,7 +71,7 @@ describe('buildMarkdown', () => {
 
   it('renders an empty header when there are no live prompts', () => {
     const md = buildMarkdown([])
-    expect(md).toContain('# promptshelf export')
+    expect(md).toContain('# deja export')
     expect(md).toContain('0 prompts · stored locally')
   })
 })

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ──────────────────────────────────────────────────────────────
-   PromptShelf design tokens — "notebook meets terminal"
+   Deja design tokens — "notebook meets terminal"
    Single source of truth for the visual identity. Themed via
    CSS variables so light/dark come from one place. No web fonts
    (offline + local-first); we rely on locally installed faces

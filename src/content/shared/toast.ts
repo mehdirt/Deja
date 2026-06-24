@@ -1,4 +1,4 @@
-// A minimal, self-contained "saved to your shelf · undo" toast injected into
+// A minimal, self-contained "remembered · undo" toast injected into
 // the host page. Rendered inside a Shadow DOM so host CSS can't touch it and
 // our CSS can't leak out. The container is pointer-events:none so it never
 // intercepts clicks on the host page — only the undo button is interactive.
@@ -56,7 +56,7 @@ export function showSavedToast(onUndo: () => void): void {
 
   const msg = document.createElement('span')
   msg.className = 'ps-msg'
-  msg.textContent = 'saved to your shelf'
+  msg.textContent = 'remembered'
 
   const undo = document.createElement('button')
   undo.className = 'ps-undo'

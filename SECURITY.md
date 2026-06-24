@@ -1,6 +1,6 @@
-# PromptShelf — Security & Privacy Framework
+# Deja — Security & Privacy Framework
 
-PromptShelf reads what you type on AI sites. That is an inherently sensitive
+Deja reads what you type on AI sites. That is an inherently sensitive
 capability, and the trust it requires is the whole product. This document is the
 standing framework for keeping that trust: what we promise, what we defend
 against, the rules capture must obey, and the checklist every release runs
@@ -18,7 +18,7 @@ and the gates that keep them there.
    All data lives in local IndexedDB; the only egress is *you* exporting a file.
 3. **Capture is scoped to the prompt box.** We capture the AI prompt composer,
    not "any text field on the page."
-4. **The host page is never broken.** A bug in PromptShelf must fail silently and
+4. **The host page is never broken.** A bug in Deja must fail silently and
    never disturb ChatGPT/Claude/Gemini/DeepSeek/Grok.
 5. **You can always get out.** Export to JSON/Markdown from day one; true erase
    (not just hide) for anything captured.
@@ -152,7 +152,7 @@ Run before every build that ships:
 
 ## 7. Reporting
 
-Found a way PromptShelf captures or leaks something it shouldn't? That's a
+Found a way Deja captures or leaks something it shouldn't? That's a
 security bug, not a feature request — treat it as the highest priority. Until a
 formal channel exists, file it as a private issue with reproduction steps and the
 site/field involved.

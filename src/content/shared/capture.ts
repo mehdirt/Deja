@@ -10,7 +10,7 @@ import { showSavedToast } from './toast'
 const DEBUG = false
 
 function log(...args: unknown[]) {
-  if (DEBUG) console.log('[PromptShelf]', ...args)
+  if (DEBUG) console.log('[Deja]', ...args)
 }
 
 export function sendCapture(text: string, platform: Platform): void {

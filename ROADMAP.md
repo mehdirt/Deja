@@ -1,4 +1,4 @@
-# PromptShelf — Roadmap
+# Deja — Roadmap
 
 A phased plan. Each phase is a usable product. Don't start phase N+1 until phase N feels finished.
 

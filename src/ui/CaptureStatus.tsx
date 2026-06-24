@@ -23,12 +23,12 @@ function titleFor(state: State, p: Platform): string {
   if (state === 'ok') return `Capture is working on ${label}`
   if (state === 'broken')
     return `Couldn't find the prompt box on ${label} — the site may have changed. Capture there may be paused.`
-  return `Not checked yet — open ${label} and PromptShelf starts listening`
+  return `Not checked yet — open ${label} and Deja starts listening`
 }
 
-// A quiet at-a-glance proof that the shelf is actually listening. Stays
+// A quiet at-a-glance proof that deja is actually listening. Stays
 // unobtrusive when all is well; speaks up only when a platform looks broken,
-// so a silently-broken selector can never masquerade as a working shelf.
+// so a silently-broken selector can never masquerade as working capture.
 export function CaptureStatus() {
   const [health, setHealth] = useState<CaptureHealth>({})
 

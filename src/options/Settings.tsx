@@ -81,7 +81,7 @@ export function Settings() {
       <section className="flex flex-col gap-2">
         <h2 className="font-mono text-sm text-ink">capture health</h2>
         <p className="text-sm text-ink-soft">
-          a quiet check that the shelf is still listening on each site. green means we can find the
+          a quiet check that deja is still listening on each site. green means we can find the
           prompt box; red means the site changed and capture may be paused there.
         </p>
         <CaptureStatus />

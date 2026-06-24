@@ -1,8 +1,8 @@
-# PromptShelf
+# Deja
 
 Your personal prompt library — organized automatically, always within reach.
 
-PromptShelf is a Chrome extension that **passively captures** every prompt you send to ChatGPT, Claude, and Gemini, then stores it locally in a searchable library. No copy-paste. No accounts. No cloud. Your prompts stay on your machine.
+Deja is a Chrome extension that **passively captures** every prompt you send to ChatGPT, Claude, and Gemini, then stores it locally in a searchable library. No copy-paste. No accounts. No cloud. Your prompts stay on your machine.
 
 ## Status
 
@@ -17,7 +17,7 @@ npm run dev
 
 Then in Chrome: `chrome://extensions` → Developer mode → "Load unpacked" → select `dist/`.
 
-Send a prompt on ChatGPT, Claude, or Gemini. Click the PromptShelf toolbar icon to see it.
+Send a prompt on ChatGPT, Claude, or Gemini. Click the Deja toolbar icon to see it.
 
 ## What's in v1
 

@@ -1,5 +1,5 @@
 {
-  "name": "promptshelf",
+  "name": "deja",
   "version": "0.1.0",
   "description": "Your personal prompt library — passive capture from ChatGPT, Claude, Gemini, DeepSeek, and Grok. Local-first.",
   "private": true,

@@ -1,4 +1,4 @@
-# PromptShelf — Concept
+# Deja — Concept
 
 *Your personal prompt library — organized automatically, always within reach.*
 
@@ -14,7 +14,7 @@ Every frequent AI user has experienced the **prompt graveyard**: you craft a per
 
 ## The product, in one sentence
 
-PromptShelf is a Chrome extension that silently remembers every prompt you send to ChatGPT, Claude, Gemini, DeepSeek, and Grok, and — at the exact moment you start to re-ask something you've asked before — quietly surfaces your old, better version so you can reuse the thinking you already did.
+Deja is a Chrome extension that silently remembers every prompt you send to ChatGPT, Claude, Gemini, DeepSeek, and Grok, and — at the exact moment you start to re-ask something you've asked before — quietly surfaces your old, better version so you can reuse the thinking you already did.
 
 The library is how you *browse*. The resurface moment is the *product*. We build in that order.
 
@@ -25,7 +25,7 @@ These are the trade-offs we keep coming back to. When in doubt, follow the princ
 1. **Passive over active.** The user never has to think about saving. If they have to click "Save", we failed.
 2. **Local-first.** All data lives on the user's machine by default. Cloud is an opt-in upgrade, never a default.
 3. **Good UX over more features.** Three features that feel finished beat ten features that feel half-done.
-4. **Never block the host page.** A bug in PromptShelf must never break the AI tool you're using.
+4. **Never block the host page.** A bug in Deja must never break the AI tool you're using.
 5. **Fail loud to us, silent to them.** The host page must never notice a problem — but *we* must. A selector that breaks and silently captures nothing is the worst outcome we can ship: a beautiful, trusted, empty shelf. Capture health must be self-detecting.
 6. **No judgment.** Don't grade users' prompts. Help them find old ones; that's the job.
 7. **No friction at setup.** No login, no API key, no payment to use the core product.
@@ -47,15 +47,15 @@ The deferred list is not the discard list. Several of these (heatmap, "been here
 
 ## The killer feature
 
-**"You've Been Here Before."** As you type a new prompt, a gentle inline tooltip appears: *"Looks like you've asked something like this before →"* with one click to surface the old one. This single feature is what makes PromptShelf irreplaceable. Everything else is just plumbing for this moment.
+**"You've Been Here Before."** As you type a new prompt, a gentle inline tooltip appears: *"Looks like you've asked something like this before →"* with one click to surface the old one. This single feature is what makes Deja irreplaceable. Everything else is just plumbing for this moment.
 
-The mental model is a password manager, not a notebook. Nobody opens 1Password to admire their passwords — it earns its place by appearing at the exact moment of friction (the login box) and making recall instant and in-context. PromptShelf's popup and library are the *least* important surfaces; the in-the-textarea resurface is where a user first feels the value, at the speed they feel a forgotten password. So we ship a rough version of that moment early and tune it on real reactions, rather than treating it as a v1.5 garnish on top of finished plumbing.
+The mental model is a password manager, not a notebook. Nobody opens 1Password to admire their passwords — it earns its place by appearing at the exact moment of friction (the login box) and making recall instant and in-context. Deja's popup and library are the *least* important surfaces; the in-the-textarea resurface is where a user first feels the value, at the speed they feel a forgotten password. So we ship a rough version of that moment early and tune it on real reactions, rather than treating it as a v1.5 garnish on top of finished plumbing.
 
 The plumbing and the first real version of the moment both ship in v1. We do not consider v1 "good" until the moment lands.
 
 ## Why this is defensible
 
-Any of the platforms we capture from (OpenAI, Google, and the rest) could ship a native "save prompt" button tomorrow. That's fine — because the value isn't the save, it's the *cross-platform* memory. People increasingly hop between ChatGPT, Claude, Gemini, DeepSeek, and Grok, and no single lab will ever let your prompt history follow you *out* of its walled garden into a competitor's. PromptShelf is the prompt layer that rides *above* whichever model wins: your accumulated craft, portable, private, and yours. The longer you use it, the more it knows how you think with AI — a longitudinal, on-device record that a per-vendor feature structurally cannot replicate.
+Any of the platforms we capture from (OpenAI, Google, and the rest) could ship a native "save prompt" button tomorrow. That's fine — because the value isn't the save, it's the *cross-platform* memory. People increasingly hop between ChatGPT, Claude, Gemini, DeepSeek, and Grok, and no single lab will ever let your prompt history follow you *out* of its walled garden into a competitor's. Deja is the prompt layer that rides *above* whichever model wins: your accumulated craft, portable, private, and yours. The longer you use it, the more it knows how you think with AI — a longitudinal, on-device record that a per-vendor feature structurally cannot replicate.
 
 The one-liner for the world: **your prompts, every AI, one shelf.**
 
@@ -98,4 +98,4 @@ If LLM features ever land, they will be **bring-your-own-key, optional, gated be
 - Export to JSON is available from day one so users never feel locked in.
 - The list of sites the extension reads from is in the manifest; users can audit it.
 
-This stance is a feature, not a side effect. It is the reason a privacy-conscious user installs PromptShelf instead of one of the dozen worse alternatives.
+This stance is a feature, not a side effect. It is the reason a privacy-conscious user installs Deja instead of one of the dozen worse alternatives.

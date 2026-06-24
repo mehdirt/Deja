@@ -1,6 +1,6 @@
-# PromptShelf — Design Identity
+# Deja — Design Identity
 
-The fixed visual identity for PromptShelf. **Use this everywhere; don't invent new tokens per surface.** All values live as CSS variables in `src/styles/globals.css` and are wired into Tailwind in `tailwind.config.js` — change them there, not inline.
+The fixed visual identity for Deja. **Use this everywhere; don't invent new tokens per surface.** All values live as CSS variables in `src/styles/globals.css` and are wired into Tailwind in `tailwind.config.js` — change them there, not inline.
 
 ## Direction: notebook meets terminal
 

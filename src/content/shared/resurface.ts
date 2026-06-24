@@ -20,7 +20,7 @@ const MIN_CHARS = 15
 const REPOSITION_THROTTLE_MS = 100
 
 function log(...args: unknown[]) {
-  if (DEBUG) console.log('[PromptShelf:resurface]', ...args)
+  if (DEBUG) console.log('[Deja:resurface]', ...args)
 }
 
 // Read only what we're allowed to read. Like capture, resurface must never

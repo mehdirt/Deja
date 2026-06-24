@@ -44,5 +44,5 @@ export function buildMarkdown(prompts: Prompt[]): string {
     promptToMarkdownSection(p, PLATFORM_LABEL[p.platform], formatDate(p.createdAt)),
   )
   const count = `${live.length} ${live.length === 1 ? 'prompt' : 'prompts'} · stored locally`
-  return `# promptshelf export\n\n_${count}_\n\n${sections.join('\n')}`
+  return `# deja export\n\n_${count}_\n\n${sections.join('\n')}`
 }

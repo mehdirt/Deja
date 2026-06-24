@@ -264,7 +264,7 @@ export function Library() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `promptshelf-${new Date().toISOString().slice(0, 10)}.${ext}`
+    a.download = `deja-${new Date().toISOString().slice(0, 10)}.${ext}`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -291,18 +291,18 @@ export function Library() {
     setImportMsg(null)
     try {
       const parsed = JSON.parse(await file.text())
-      // A promptshelf export is a JSON array of prompts. Anything else parses
+      // A deja export is a JSON array of prompts. Anything else parses
       // fine but isn't ours — say so plainly instead of reporting "imported 0",
       // which reads like a successful no-op.
       if (!Array.isArray(parsed)) {
-        setImportMsg("that file isn't a promptshelf export")
+        setImportMsg("that file isn't a deja export")
         return
       }
       const res = await importPrompts(parsed)
       setImportMsg(`imported ${res.imported} · skipped ${res.skipped}`)
       reload()
     } catch {
-      setImportMsg("couldn't read that file — expected a promptshelf json export")
+      setImportMsg("couldn't read that file — expected a deja json export")
     }
   }
 
@@ -356,7 +356,7 @@ export function Library() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search your prompts"
-          placeholder="search your shelf…"
+          placeholder="search your prompts…"
           className="ps-input pr-12 font-mono"
         />
         <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">
@@ -501,7 +501,7 @@ export function Library() {
           <div className="py-16 text-center text-sm">
             {prompts.length === 0 ? (
               <>
-                <p className="text-ink">your shelf is empty — that&apos;s fine.</p>
+                <p className="text-ink">nothing here yet — that&apos;s fine.</p>
                 <p className="mt-1 text-ink-faint">
                   nothing to set up. send a prompt on chatgpt, claude, gemini, deepseek, or grok and
                   it lands here automatically.

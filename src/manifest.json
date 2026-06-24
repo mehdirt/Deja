@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "PromptShelf",
+  "name": "Deja",
   "version": "0.1.0",
   "description": "Your personal prompt library — passive capture from ChatGPT, Claude, Gemini, DeepSeek, and Grok. Local-first.",
   "action": {
     "default_popup": "src/popup/index.html",
-    "default_title": "PromptShelf"
+    "default_title": "Deja"
   },
   "options_page": "src/options/index.html",
   "background": {
@@ -48,7 +48,7 @@
   "commands": {
     "_execute_action": {
       "suggested_key": { "default": "Ctrl+Shift+K", "mac": "Command+Shift+K" },
-      "description": "Open PromptShelf"
+      "description": "Open Deja"
     }
   }
 }

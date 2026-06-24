@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-PromptShelf is a Manifest V3 Chrome extension that **passively captures prompts** sent on ChatGPT, Claude, Gemini, DeepSeek, and Grok and stores them in a local, searchable library. v1 is intentionally lean: no LLM calls, no backend, no accounts. Everything lives in IndexedDB on the user's machine.
+Deja is a Manifest V3 Chrome extension that **passively captures prompts** sent on ChatGPT, Claude, Gemini, DeepSeek, and Grok and stores them in a local, searchable library. v1 is intentionally lean: no LLM calls, no backend, no accounts. Everything lives in IndexedDB on the user's machine.
 
 ## Commands
 

@@ -69,7 +69,7 @@ export function Popup() {
           <div className="px-2 py-8 text-center text-sm text-ink-soft">
             {prompts.length === 0 ? (
               <>
-                <p className="text-ink">your shelf is empty — that&apos;s fine.</p>
+                <p className="text-ink">nothing here yet — that&apos;s fine.</p>
                 <p className="mt-1 text-ink-faint">
                   nothing to set up. send a prompt on chatgpt, claude, gemini, deepseek, or grok and
                   it lands here.

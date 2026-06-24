@@ -17,7 +17,7 @@ export function Privacy() {
       <section className="flex flex-col gap-2">
         <h2 className="font-mono text-sm text-ink">privacy, plainly</h2>
         <p className="text-ink-soft">
-          promptshelf keeps your prompts on your machine and nowhere else. it is a local notebook,
+          deja keeps your prompts on your machine and nowhere else. it is a local notebook,
           not a service. there is no account, no server, and nothing to sign up for.
         </p>
       </section>
