@@ -1,4 +1,5 @@
-import type { CapturedPromptMessage, Platform } from '@/lib/types'
+import type { CaptureResponse, CapturedPromptMessage, Platform } from '@/lib/types'
+import { showSavedToast } from './toast'
 
 const DEBUG = true
 
@@ -14,9 +15,31 @@ export function sendCapture(text: string, platform: Platform): void {
     payload: { text: trimmed, platform, url: location.href },
   }
   log('capturing', trimmed.length, 'chars on', platform)
-  chrome.runtime.sendMessage(msg).catch((err) => {
-    log('sendMessage failed (worker may be asleep):', err)
-  })
+  // After an extension reload, an old content script is orphaned and
+  // chrome.runtime.sendMessage throws *synchronously*. Bail early and
+  // wrap so we never throw into the host page.
+  if (!chrome.runtime?.id) return
+  try {
+    chrome.runtime
+      .sendMessage(msg)
+      .then((resp: CaptureResponse | undefined) => {
+        if (!resp?.ok) return
+        const savedId = resp.id
+        showSavedToast(() => {
+          if (!chrome.runtime?.id) return
+          try {
+            chrome.runtime.sendMessage({ type: 'UNDO_CAPTURE', id: savedId }).catch(() => {})
+          } catch {
+            /* orphaned context — ignore */
+          }
+        })
+      })
+      .catch((err) => {
+        log('sendMessage failed (worker may be asleep):', err)
+      })
+  } catch (err) {
+    log('runtime unavailable (orphaned content script):', err)
+  }
 }
 
 function readText(el: HTMLElement): string {
