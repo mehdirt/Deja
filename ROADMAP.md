@@ -67,7 +67,7 @@ The point of this phase is to prove the thing works *and* that the magic moment 
 
 The moment exists and we've watched people use it. Now sharpen it from what we learned. The two items that don't need user data are built; the two that do are still held.
 
-- Short-prompt behavior handled explicitly ✅ — `similarity()` blends symmetric Jaccard with the overlap coefficient so a brief query that's nearly a substring of a longer stored prompt still scores (plain trigram Jaccard tanked these). Threshold *tuning* still waits on real Phase 1 reactions.
+- Short-prompt behavior handled explicitly ✅ — `similarity()` blends symmetric Jaccard with the overlap coefficient so a brief query that's nearly a substring of a longer stored prompt still scores (plain trigram Jaccard tanked these). Trigrams are also IDF-weighted (distinctive terms outweigh boilerplate, damped so the score scale stays stable as the library grows), and the threshold scales up for short queries. The tuning *constants* are centralized and provisional — they still wait on real Phase 1 reactions.
 - Smarter match preview ✅ — resurface returns the top candidates; the tooltip shows *why* each matched ("matched on …" shared terms) and lets the user step through them (`1/3` + `›`).
 - Polish the tooltip's look, timing, and placement so it feels like part of the host page, not an intrusion — *needs real reactions*
 - Decide the auto-fill question from evidence: still copy-only, or offer an opt-in one-tap insert? — *needs real reactions*
@@ -125,11 +125,12 @@ After ~50 users have used the v1 for a few weeks, look at what they actually do 
 1. **Optional LLM features** (bring-your-own-key)
    - "Improve this prompt" button on a card (on-demand, not automatic)
    - Auto-tag suggestion (one-tap accept, never silent)
-2. **Activity heatmap** — pure visualization on existing data, low risk
-3. **Prompt chaining** — link prompts into named sequences for repeatable workflows
-4. **Encrypted cloud sync** — E2EE only; never plaintext on a server
-5. **Team / shared vaults** — likely a paid tier; only after individual product is great
-6. **Mobile companion** — read-only browse + copy on the go
+2. **Semantic resurface via local embeddings** — the real fix for the one thing trigram similarity can't do: catch paraphrases ("write a poem about cats" ↔ "compose verse about felines"). Run a small quantized embedding model fully on-device (e.g. transformers.js / ONNX-WASM), embed each prompt once at capture, cosine-match at query time. This is a genuine architectural decision, not a tweak: ~20–30 MB model bundle, a first-load init cost, and the "is the extension allowed to get that heavy" tradeoff. The clean design is a **hybrid** — keep the instant lexical path as-is and fall back to embeddings only when lexical finds nothing — so we keep today's speed and gain paraphrase recall, all still local ($0, no network). Deferred until Phase 1/2 reactions show lexical-only is actually leaving good matches on the table.
+3. **Activity heatmap** — pure visualization on existing data, low risk
+4. **Prompt chaining** — link prompts into named sequences for repeatable workflows
+5. **Encrypted cloud sync** — E2EE only; never plaintext on a server
+6. **Team / shared vaults** — likely a paid tier; only after individual product is great
+7. **Mobile companion** — read-only browse + copy on the go
 
 Explicitly **not** on the roadmap unless someone shows a clear reason:
 
@@ -144,6 +145,7 @@ Explicitly **not** on the roadmap unless someone shows a clear reason:
 
 - **Selectors will break.** Every supported site (ChatGPT, Claude, Gemini, DeepSeek, Grok) changes its DOM every few weeks. Build a habit of testing capture on all of them after every release, lean on the capture-health view to catch silent breakage, and keep selector code in one file per site for fast fixes.
 - **Latency budget.** From Enter keypress to toast: under 100 ms. From popup open to first result: under 50 ms. If we miss either, fix it before adding the next feature.
+- **Resurface scaling (deferred until it bites).** Each debounced keystroke re-reads the whole prompt table and trigram-scans every row to find similar prompts. That's fine for hundreds of prompts; at thousands it'll start to drag — exactly when a power user's library is most valuable. The fix when (and only when) real libraries feel slow: a worker-scope cache of precomputed trigram sets plus an inverted index (trigram → prompts), so a query only scores candidates that share a rare trigram instead of the whole table. Premature now; building it before the data shows the slowdown is speculative. Flagged in `src/background/index.ts`.
 - **Cost budget.** $0/month to operate v1. The moment we add a hosted feature, we have a different product with different risks; weigh that carefully.
 - **Listening, not asking.** Don't run feature surveys. Watch how people use it, what they wish was faster, and what causes uninstalls.
 
