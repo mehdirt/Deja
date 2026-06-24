@@ -1,24 +1,30 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { listPrompts, touchUsage } from '@/lib/db'
 import { buildIndex, searchPrompts } from '@/lib/search'
 import { PromptCard } from '@/ui/PromptCard'
+import { SkeletonList } from '@/ui/Skeleton'
+import { Logo } from '@/ui/Logo'
 import type { Prompt } from '@/lib/types'
 
 export function Popup() {
   const [prompts, setPrompts] = useState<Prompt[]>([])
+  const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
+  const deferredQuery = useDeferredValue(query)
 
   useEffect(() => {
-    listPrompts().then(setPrompts)
+    listPrompts()
+      .then(setPrompts)
+      .finally(() => setLoading(false))
   }, [])
 
   const index = useMemo(() => buildIndex(prompts), [prompts])
   const visible: Prompt[] = useMemo(() => {
-    if (!query.trim()) return prompts.slice(0, 5)
-    const hits = searchPrompts(index, query, 10)
+    if (!deferredQuery.trim()) return prompts.slice(0, 5)
+    const hits = searchPrompts(index, deferredQuery, 10)
     const byId = new Map(prompts.map((p) => [p.id!, p]))
     return hits.map((h) => byId.get(h.id as number)).filter(Boolean) as Prompt[]
-  }, [query, prompts, index])
+  }, [deferredQuery, prompts, index])
 
   const onCopy = async (p: Prompt) => {
     await navigator.clipboard.writeText(p.text)
@@ -28,32 +34,45 @@ export function Popup() {
   const openLibrary = () => chrome.runtime.openOptionsPage()
 
   return (
-    <div className="p-3 flex flex-col gap-3">
-      <header className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold tracking-tight">PromptShelf</h1>
-        <button onClick={openLibrary} className="text-xs text-accent hover:underline">
-          Open library →
+    <div className="flex max-h-[560px] min-h-[400px] flex-col">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-line bg-bg/95 px-3 py-2.5 backdrop-blur">
+        <Logo size={20} />
+        <button onClick={openLibrary} className="ps-btn ps-btn-ghost px-2 py-1 text-xs">
+          library →
         </button>
       </header>
-      <input
-        type="search"
-        autoFocus
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search your prompts…"
-        className="w-full rounded-md border border-ink-100 bg-white px-3 py-2 text-sm dark:bg-ink-800 dark:border-ink-800"
-      />
-      <div className="flex flex-col gap-2 max-h-[420px] overflow-auto">
-        {visible.length === 0 && (
-          <p className="text-sm text-ink-800/60 dark:text-ink-50/60 py-6 text-center">
-            {prompts.length === 0
-              ? 'No prompts yet. Send a prompt on ChatGPT, Claude, or Gemini to start your shelf.'
-              : 'No matches.'}
-          </p>
+
+      <div className="px-3 pt-3">
+        <input
+          type="search"
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search your prompts"
+          placeholder="search your prompts…"
+          className="ps-input font-mono"
+        />
+      </div>
+
+      <div className="flex flex-1 flex-col gap-2 overflow-auto p-3">
+        {loading ? (
+          <SkeletonList count={3} />
+        ) : visible.length === 0 ? (
+          <div className="px-2 py-8 text-center text-sm text-ink-soft">
+            {prompts.length === 0 ? (
+              <>
+                <p className="text-ink">your shelf is empty — that's fine.</p>
+                <p className="mt-1 text-ink-faint">
+                  nothing to set up. send a prompt on chatgpt, claude, or gemini and it lands here.
+                </p>
+              </>
+            ) : (
+              <p className="text-ink-faint">no matches.</p>
+            )}
+          </div>
+        ) : (
+          visible.map((p) => <PromptCard key={p.id} prompt={p} onCopy={onCopy} compact />)
         )}
-        {visible.map((p) => (
-          <PromptCard key={p.id} prompt={p} onCopy={onCopy} compact />
-        ))}
       </div>
     </div>
   )
