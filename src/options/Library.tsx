@@ -365,26 +365,46 @@ export function Library() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by platform">
-          {PLATFORMS.map((p) => (
-            <button
-              key={p.key}
-              role="tab"
-              aria-selected={platform === p.key}
-              onClick={() => setPlatform(p.key)}
-              className={`ps-pill ${platform === p.key ? 'ps-pill-active' : ''}`}
-            >
-              {p.label}
-            </button>
-          ))}
-          {/* favorites = pinned only */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by platform">
+            {PLATFORMS.map((p) => (
+              <button
+                key={p.key}
+                role="tab"
+                aria-selected={platform === p.key}
+                onClick={() => setPlatform(p.key)}
+                className={`ps-pill ${platform === p.key ? 'ps-pill-active' : ''}`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* favorites = pinned only. A switch, not a filter pill: the platform
+              tabs are single-select (radio-like), so an identical-looking pill
+              hid that this is an independent on/off toggle. The divider + track
+              make its state unmistakable. */}
+          <span className="mx-0.5 h-4 w-px bg-line" aria-hidden />
           <button
-            aria-pressed={favoritesOnly}
+            role="switch"
+            aria-checked={favoritesOnly}
+            aria-label="Show favorites only"
             onClick={() => setFavoritesOnly((v) => !v)}
-            className={`ps-pill inline-flex items-center gap-1 ${favoritesOnly ? 'ps-pill-active' : ''}`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line px-2 py-1 text-xs font-medium text-ink-soft transition-colors hover:bg-sunk focus:outline-none focus:ring-2 focus:ring-accent"
           >
+            <span
+              className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+                favoritesOnly ? 'bg-accent' : 'bg-line'
+              }`}
+            >
+              <span
+                className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
+                  favoritesOnly ? 'translate-x-[14px]' : 'translate-x-0.5'
+                }`}
+              />
+            </span>
             <PinIcon filled={favoritesOnly} />
-            favorites
+            <span className={favoritesOnly ? 'text-ink' : undefined}>favorites</span>
           </button>
         </div>
         <select
