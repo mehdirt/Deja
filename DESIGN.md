@@ -51,7 +51,7 @@ Defined in `globals.css` `@layer components` — compose these instead of re-sty
 
 ## Logo
 
-`src/ui/Logo.tsx` — `<Logo />` (mark + wordmark) or `<LogoMark />` (mark only). The mark is a shelf holding three "books" (saved prompts) with a terminal cursor, accent background. Wordmark is lowercase mono: `prompt` (ink) + `shelf` (accent). Toolbar icons (`src/assets/icon-*.png`) use the same motif.
+`src/ui/Logo.tsx` — `<Logo />` (mark + wordmark) or `<LogoMark />` (mark only). The mark is a card and its echo — the "I've seen this before" double image of déjà vu — with a terminal-cursor tick on the front card, white on an accent tile. Wordmark is lowercase mono: `de` (ink) + `ja` (accent). Toolbar icons (`src/assets/icon-*.png`) are generated from `src/assets/icon.svg`, which mirrors the same mark.
 
 ## Voice
 
