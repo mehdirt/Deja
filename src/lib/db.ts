@@ -5,10 +5,12 @@ class DejaDB extends Dexie {
   prompts!: Table<Prompt, number>
 
   constructor() {
-    // NOTE: the IndexedDB database name stays 'promptshelf' across the rename to
-    // Deja. It's an internal key users never see, and changing it would orphan
-    // every existing local prompt (Dexie would open a fresh, empty database).
-    super('promptshelf')
+    // NOTE: the IndexedDB database is named 'deja'. This is an internal key users
+    // never see. It was renamed from 'promptshelf' alongside the product rename;
+    // any prompts captured under the old name in a pre-rename build are not
+    // migrated (Dexie opens a fresh database under the new name). This is
+    // acceptable while the extension is unpublished and only has local dev data.
+    super('deja')
     this.version(1).stores({
       prompts: '++id, platform, createdAt, lastUsedAt',
     })
