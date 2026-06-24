@@ -7,7 +7,7 @@ class PromptShelfDB extends Dexie {
   constructor() {
     super('promptshelf')
     this.version(1).stores({
-      prompts: '++id, platform, createdAt, lastUsedAt, deletedAt',
+      prompts: '++id, platform, createdAt, lastUsedAt',
     })
   }
 }
@@ -16,11 +16,12 @@ export const db = new PromptShelfDB()
 
 export async function savePrompt(input: Omit<Prompt, 'id' | 'usageCount' | 'lastUsedAt'>): Promise<number> {
   const now = input.createdAt
-  return db.prompts.add({ ...input, usageCount: 0, lastUsedAt: now, deletedAt: null })
+  return db.prompts.add({ ...input, usageCount: 0, lastUsedAt: now })
 }
 
 export async function listPrompts(): Promise<Prompt[]> {
-  return db.prompts.where('deletedAt').equals(0).or('deletedAt').equals(null as never).reverse().sortBy('createdAt')
+  const all = await db.prompts.orderBy('createdAt').reverse().toArray()
+  return all.filter((p) => !p.deletedAt)
 }
 
 export async function softDelete(id: number): Promise<void> {
