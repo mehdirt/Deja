@@ -28,6 +28,16 @@
       "matches": ["https://gemini.google.com/*"],
       "js": ["src/content/gemini/index.ts"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://chat.deepseek.com/*"],
+      "js": ["src/content/deepseek/index.ts"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://grok.com/*"],
+      "js": ["src/content/grok/index.ts"],
+      "run_at": "document_idle"
     }
   ],
   "icons": {

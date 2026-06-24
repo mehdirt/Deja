@@ -1,4 +1,4 @@
-export type Platform = 'chatgpt' | 'claude' | 'gemini'
+export type Platform = 'chatgpt' | 'claude' | 'gemini' | 'deepseek' | 'grok'
 
 export interface Prompt {
   id?: number
@@ -29,6 +29,8 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
   chatgpt: 'ChatGPT',
   claude: 'Claude',
   gemini: 'Gemini',
+  deepseek: 'DeepSeek',
+  grok: 'Grok',
 }
 
 // Faint per-platform accent dot so the shelf is scannable at a glance.
@@ -36,4 +38,6 @@ export const PLATFORM_COLOR: Record<Platform, string> = {
   chatgpt: '#10a37f',
   claude: '#d97757',
   gemini: '#4285f4',
+  deepseek: '#4d6bfe',
+  grok: '#71767b',
 }
