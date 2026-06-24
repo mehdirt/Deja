@@ -55,4 +55,4 @@ Defined in `globals.css` `@layer components` — compose these instead of re-sty
 
 ## Voice
 
-Lowercase, calm, no hype. "saved to your shelf", "your shelf is empty — that's fine", "nothing to set up". Never grade or nag the user.
+Lowercase, calm, no hype. "saved to your library", "your library is empty — that's fine", "nothing to set up". Never grade or nag the user.

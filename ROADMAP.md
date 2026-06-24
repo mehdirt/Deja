@@ -4,7 +4,7 @@ A phased plan. Each phase is a usable product. Don't start phase N+1 until phase
 
 The principle: **ship something good, then make it great, then make it powerful.** Not all at once.
 
-**What changed (June 2026 reframe).** After a hard look at the concept, we moved the resurface moment — "You've Been Here Before" — out of "later" and into the core of v1. The library is plumbing; the in-context moment is the product, and you can't polish a moment you've never watched a human react to. We also promoted capture *reliability* (not capture *polish*) to the very first thing we build, because a silently-broken selector means a beautiful empty shelf and we'd never know. UI/UX is a first-class deliverable throughout, not a final coat of paint.
+**What changed (June 2026 reframe).** After a hard look at the concept, we moved the resurface moment — "You've Been Here Before" — out of "later" and into the core of v1. The library is plumbing; the in-context moment is the product, and you can't polish a moment you've never watched a human react to. We also promoted capture *reliability* (not capture *polish*) to the very first thing we build, because a silently-broken selector means a beautiful empty library and we'd never know. UI/UX is a first-class deliverable throughout, not a final coat of paint.
 
 ---
 
@@ -30,7 +30,7 @@ The point of this phase is to prove the thing works *and* that the magic moment 
 **Capture reliability — build this first**
 - A self-check that runs on each supported page load: locate the input element, and if the selector misses, record a local-only "capture health" signal (never a network call). A broken selector should be visible to *us* in seconds, invisible to the user always.
 - Per-site selector fallbacks (a small ordered list per platform, not one brittle query)
-- Health surfaced quietly in the library/settings ("Capture is working on ChatGPT ✓ Claude ✓ Gemini ✓ DeepSeek ✓ Grok ✓") so a user can tell at a glance the shelf is actually listening
+- Health surfaced quietly in the library/settings ("Capture is working on ChatGPT ✓ Claude ✓ Gemini ✓ DeepSeek ✓ Grok ✓") so a user can tell at a glance the library is actually listening
 - Handle edit-resubmit gracefully (don't double-save the same prompt)
 - Multi-line prompts and code blocks preserve formatting
 - Latency from Enter to stored: under 100 ms, measured
@@ -44,8 +44,8 @@ The point of this phase is to prove the thing works *and* that the magic moment 
 - Ship it deliberately rough to ~5 users early in the phase; the goal is to learn whether the moment lands at all before we sink days into pixels
 
 **Library + capture polish (UI/UX is a deliverable, not a coat of paint)**
-- Dismissible toast on save with 5 s **Undo** ("Saved to your shelf · Undo")
-- Empty state that teaches, not shames ("Send your first prompt on ChatGPT to start your shelf")
+- Dismissible toast on save with 5 s **Undo** ("Saved to your library · Undo")
+- Empty state that teaches, not shames ("Send your first prompt on ChatGPT to start your library")
 - Keyboard shortcuts: `⌘K` focus search, `↑/↓` navigate, `Enter` copy, `⌫` delete
 - Loading skeletons (currently flashes empty before list renders)
 - Sort: newest / most-used / longest unseen

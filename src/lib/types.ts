@@ -50,7 +50,7 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
   grok: 'Grok',
 }
 
-// Faint per-platform accent dot so the shelf is scannable at a glance.
+// Faint per-platform accent dot so the library is scannable at a glance.
 export const PLATFORM_COLOR: Record<Platform, string> = {
   chatgpt: '#10a37f',
   claude: '#d97757',

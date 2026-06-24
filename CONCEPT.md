@@ -2,7 +2,7 @@
 
 *Your personal prompt library — organized automatically, always within reach.*
 
-A browser extension that quietly saves every prompt you send to ChatGPT, Claude, Gemini, DeepSeek, and Grok into a local, searchable shelf. No copy-paste. No accounts. No cloud.
+A browser extension that quietly saves every prompt you send to ChatGPT, Claude, Gemini, DeepSeek, and Grok into a local, searchable library. No copy-paste. No accounts. No cloud.
 
 This document supersedes `PromptShelf_Concept.pdf` (June 2026). The PDF's ambition stands; this is the version we are actually building, in the order we are building it.
 
@@ -26,7 +26,7 @@ These are the trade-offs we keep coming back to. When in doubt, follow the princ
 2. **Local-first.** All data lives on the user's machine by default. Cloud is an opt-in upgrade, never a default.
 3. **Good UX over more features.** Three features that feel finished beat ten features that feel half-done.
 4. **Never block the host page.** A bug in Deja must never break the AI tool you're using.
-5. **Fail loud to us, silent to them.** The host page must never notice a problem — but *we* must. A selector that breaks and silently captures nothing is the worst outcome we can ship: a beautiful, trusted, empty shelf. Capture health must be self-detecting.
+5. **Fail loud to us, silent to them.** The host page must never notice a problem — but *we* must. A selector that breaks and silently captures nothing is the worst outcome we can ship: a beautiful, trusted, empty library. Capture health must be self-detecting.
 6. **No judgment.** Don't grade users' prompts. Help them find old ones; that's the job.
 7. **No friction at setup.** No login, no API key, no payment to use the core product.
 
@@ -57,7 +57,7 @@ The plumbing and the first real version of the moment both ship in v1. We do not
 
 Any of the platforms we capture from (OpenAI, Google, and the rest) could ship a native "save prompt" button tomorrow. That's fine — because the value isn't the save, it's the *cross-platform* memory. People increasingly hop between ChatGPT, Claude, Gemini, DeepSeek, and Grok, and no single lab will ever let your prompt history follow you *out* of its walled garden into a competitor's. Deja is the prompt layer that rides *above* whichever model wins: your accumulated craft, portable, private, and yours. The longer you use it, the more it knows how you think with AI — a longitudinal, on-device record that a per-vendor feature structurally cannot replicate.
 
-The one-liner for the world: **your prompts, every AI, one shelf.**
+The one-liner for the world: **your prompts, every AI, one library.**
 
 ## How it works
 

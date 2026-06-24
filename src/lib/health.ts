@@ -1,7 +1,7 @@
 import type { Platform } from './types'
 
 // Capture health — our defense against the worst failure mode: a selector
-// silently breaking so the user keeps typing into a shelf that records
+// silently breaking so the user keeps typing into a library that records
 // nothing. We persist a per-platform "are we still integrated with this
 // site" signal in chrome.storage.local (not Dexie — it's tiny, and both
 // content scripts and the options UI can read/write it directly).
