@@ -63,14 +63,14 @@ The point of this phase is to prove the thing works *and* that the magic moment 
 
 ---
 
-## Phase 2 — Make the moment great *(needs real-user reactions before tuning)*
+## Phase 2 — Make the moment great *(partly built; tuning still needs real-user reactions)*
 
-The moment exists and we've watched people use it. Now sharpen it from what we learned.
+The moment exists and we've watched people use it. Now sharpen it from what we learned. The two items that don't need user data are built; the two that do are still held.
 
-- Tune the similarity threshold and short-prompt behavior from real Phase 1 reactions (trigram Jaccard misfires on very short or near-paraphrased prompts — handle those cases explicitly)
-- Polish the tooltip's look, timing, and placement so it feels like part of the host page, not an intrusion
-- Smarter match preview: show *why* it matched, and let the user step through more than one candidate
-- Decide the auto-fill question from evidence: still copy-only, or offer an opt-in one-tap insert?
+- Short-prompt behavior handled explicitly ✅ — `similarity()` blends symmetric Jaccard with the overlap coefficient so a brief query that's nearly a substring of a longer stored prompt still scores (plain trigram Jaccard tanked these). Threshold *tuning* still waits on real Phase 1 reactions.
+- Smarter match preview ✅ — resurface returns the top candidates; the tooltip shows *why* each matched ("matched on …" shared terms) and lets the user step through them (`1/3` + `›`).
+- Polish the tooltip's look, timing, and placement so it feels like part of the host page, not an intrusion — *needs real reactions*
+- Decide the auto-fill question from evidence: still copy-only, or offer an opt-in one-tap insert? — *needs real reactions*
 
 **Exit criteria:** During a normal week of AI use, the tooltip surfaces 3–10 times and is genuinely helpful in a clear majority of them — enough that users would notice and miss it if it were gone.
 
