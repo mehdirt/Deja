@@ -28,6 +28,16 @@ export async function softDelete(id: number): Promise<void> {
   await db.prompts.update(id, { deletedAt: Date.now() })
 }
 
+export async function restore(id: number): Promise<void> {
+  await db.prompts.update(id, { deletedAt: null })
+}
+
+// Permanent removal — used only to undo a just-captured prompt, where the
+// row was never really wanted, so there's nothing to soft-delete.
+export async function hardDelete(id: number): Promise<void> {
+  await db.prompts.delete(id)
+}
+
 export async function touchUsage(id: number): Promise<void> {
   const now = Date.now()
   const p = await db.prompts.get(id)
