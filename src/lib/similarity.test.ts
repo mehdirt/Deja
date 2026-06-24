@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { jaccard, similarity, sharedTerms, findSimilar } from './similarity'
+import {
+  jaccard,
+  similarity,
+  sharedTerms,
+  findSimilar,
+  buildTrigramIdf,
+  thresholdForLength,
+} from './similarity'
 
 describe('jaccard trigram similarity', () => {
   it('returns 1 for identical strings', () => {
@@ -34,6 +41,72 @@ describe('similarity (resurface score)', () => {
     // prompt; the blended score should rescue the short-in-long match.
     expect(similarity(short, long)).toBeGreaterThan(jaccard(short, long))
     expect(similarity(short, long)).toBeGreaterThan(0.4)
+  })
+})
+
+describe('IDF weighting', () => {
+  it('down-weighting the shared trigrams lowers the score', () => {
+    const a = 'the cat sat'
+    const b = 'the cat ran'
+    const base = similarity(a, b)
+    // A weight that treats trigrams containing "cat" (the shared signal) as
+    // near-worthless should drag the score below the unweighted blend.
+    const muted = similarity(a, b, (g) => (g.includes('cat') ? 0.01 : 1))
+    expect(muted).toBeLessThan(base)
+  })
+
+  it('identical strings still score 1 under IDF weighting', () => {
+    const idf = buildTrigramIdf(['deploy the service', 'write a poem', 'fix the bug'])
+    expect(similarity('deploy the service', 'deploy the service', idf)).toBeCloseTo(1)
+  })
+
+  it('scores a distinctive-term match above a boilerplate-only match', () => {
+    // "weekly report" is boilerplate (appears in many stored prompts → low IDF);
+    // "kubernetes" is rare (→ high IDF). A query touching both should prefer the
+    // candidate that shares the rare term over the one sharing only boilerplate.
+    const boilerplate = Array.from(
+      { length: 8 },
+      (_, i) => `weekly report number ${i} for the team meeting`,
+    )
+    const distinctive = 'notes about kubernetes autoscaling behavior'
+    const boilerOnly = 'weekly report on something unrelated entirely'
+    const idf = buildTrigramIdf([distinctive, boilerOnly, ...boilerplate])
+
+    const query = 'weekly report about kubernetes'
+    expect(similarity(query, distinctive, idf)).toBeGreaterThan(
+      similarity(query, boilerOnly, idf),
+    )
+  })
+
+  it('keeps a genuinely similar long pair above the live 0.4 bar in a boilerplate-heavy pool', () => {
+    // The scale-shift guard: as a heavy user's pool fills with structurally
+    // similar prompts, IDF must not silently deflate a real partial match below
+    // the threshold the live path uses. Long query (no short-query penalty).
+    const variants = Array.from(
+      { length: 40 },
+      (_, i) => `write a detailed poem about my pet number ${i}`,
+    )
+    const target = { text: 'write a detailed poem about my three orange cats' }
+    const pool = [target, ...variants.map((text) => ({ text }))]
+    const query = 'write a detailed poem about my three orange dogs'
+    const results = findSimilar(query, pool, 0.4)
+    expect(results[0]?.item.text).toBe(target.text)
+    expect(results[0]!.score).toBeGreaterThanOrEqual(0.4)
+  })
+})
+
+describe('thresholdForLength', () => {
+  it('leaves the base threshold untouched for long queries', () => {
+    expect(thresholdForLength(100, 0.4)).toBeCloseTo(0.4)
+  })
+
+  it('raises the bar for short queries', () => {
+    expect(thresholdForLength(12, 0.4)).toBeGreaterThan(0.4)
+  })
+
+  it('is monotonic — shorter queries never get an easier bar', () => {
+    expect(thresholdForLength(15, 0.4)).toBeGreaterThanOrEqual(thresholdForLength(30, 0.4))
+    expect(thresholdForLength(30, 0.4)).toBeGreaterThanOrEqual(thresholdForLength(45, 0.4))
   })
 })
 
