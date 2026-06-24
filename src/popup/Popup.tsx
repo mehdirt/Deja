@@ -20,7 +20,15 @@ export function Popup() {
 
   const index = useMemo(() => buildIndex(prompts), [prompts])
   const visible: Prompt[] = useMemo(() => {
-    if (!deferredQuery.trim()) return prompts.slice(0, 5)
+    if (!deferredQuery.trim()) {
+      // Pinned prompts sort to the top of the recent list, then by recency.
+      // prompts is already createdAt desc, so a stable pinned-first sort keeps
+      // recency order within each group. Treat undefined `pinned` as false.
+      const ordered = [...prompts].sort(
+        (a, b) => Number(b.pinned ?? false) - Number(a.pinned ?? false),
+      )
+      return ordered.slice(0, 5)
+    }
     const hits = searchPrompts(index, deferredQuery, 10)
     const byId = new Map(prompts.map((p) => [p.id!, p]))
     return hits.map((h) => byId.get(h.id as number)).filter(Boolean) as Prompt[]
@@ -61,9 +69,10 @@ export function Popup() {
           <div className="px-2 py-8 text-center text-sm text-ink-soft">
             {prompts.length === 0 ? (
               <>
-                <p className="text-ink">your shelf is empty — that's fine.</p>
+                <p className="text-ink">your shelf is empty — that&apos;s fine.</p>
                 <p className="mt-1 text-ink-faint">
-                  nothing to set up. send a prompt on chatgpt, claude, or gemini and it lands here.
+                  nothing to set up. send a prompt on chatgpt, claude, gemini, deepseek, or grok and
+                  it lands here.
                 </p>
               </>
             ) : (

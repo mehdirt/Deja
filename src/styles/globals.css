@@ -87,6 +87,20 @@ body {
   .ps-pill-active {
     @apply border-accent bg-accent text-white hover:bg-accent;
   }
+
+  /* user tag — small, quiet, clickable to filter */
+  .ps-tag {
+    @apply inline-flex items-center gap-1 rounded-full border border-line bg-sunk px-2 py-0.5;
+    @apply font-mono text-[11px] text-ink-soft transition-colors hover:text-ink;
+  }
+  .ps-tag-active {
+    @apply border-accent bg-accent-soft text-accent;
+  }
+  /* Truncate only the tag label so a long pasted tag can't stretch the row;
+     the × remove button is a sibling and stays fully visible/clickable. */
+  .ps-tag-label {
+    @apply block max-w-[12rem] overflow-hidden text-ellipsis whitespace-nowrap;
+  }
 }
 
 /* Thin, unobtrusive scrollbars to match the calm aesthetic */

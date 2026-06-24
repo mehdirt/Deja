@@ -1,9 +1,23 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
-import { listPrompts, softDelete, restore, touchUsage, exportAll } from '@/lib/db'
+import {
+  listPrompts,
+  softDelete,
+  restore,
+  touchUsage,
+  exportAll,
+  togglePin,
+  addTag,
+  removeTag,
+  bulkSoftDelete,
+  bulkRestore,
+  importPrompts,
+} from '@/lib/db'
 import { buildIndex, searchPrompts } from '@/lib/search'
+import { buildMarkdown } from '@/lib/markdown'
+import { usefulnessScore } from '@/lib/ranking'
 import { PromptCard } from '@/ui/PromptCard'
 import { SkeletonList } from '@/ui/Skeleton'
-import { Logo } from '@/ui/Logo'
+import { PinIcon } from '@/ui/PinIcon'
 import { CaptureStatus } from '@/ui/CaptureStatus'
 import { PLATFORM_LABEL, type Platform, type Prompt } from '@/lib/types'
 
@@ -12,9 +26,10 @@ const PLATFORMS: Array<{ key: Platform | 'all'; label: string }> = [
   ...(Object.keys(PLATFORM_LABEL) as Platform[]).map((k) => ({ key: k, label: PLATFORM_LABEL[k] })),
 ]
 
-type Sort = 'newest' | 'most-used' | 'longest-unseen'
+type Sort = 'newest' | 'most-useful' | 'most-used' | 'longest-unseen'
 const SORTS: Array<{ key: Sort; label: string }> = [
   { key: 'newest', label: 'newest' },
+  { key: 'most-useful', label: 'most useful' },
   { key: 'most-used', label: 'most used' },
   { key: 'longest-unseen', label: 'longest unseen' },
 ]
@@ -28,6 +43,16 @@ export function Library() {
   const [sort, setSort] = useState<Sort>('newest')
   const [selected, setSelected] = useState(0)
   const [undoId, setUndoId] = useState<number | null>(null)
+  // Tag filter: AND semantics. A prompt must carry EVERY active tag to show.
+  // AND is the more useful default — as you click tags you narrow toward the
+  // exact prompt you're after, rather than widening the result set (OR).
+  const [activeTags, setActiveTags] = useState<string[]>([])
+  const [favoritesOnly, setFavoritesOnly] = useState(false)
+  // Bulk selection mode + the set of selected ids and the last batch undone.
+  const [selecting, setSelecting] = useState(false)
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set())
+  const [undoBatch, setUndoBatch] = useState<number[] | null>(null)
+  const [importMsg, setImportMsg] = useState<string | null>(null)
 
   const searchRef = useRef<HTMLInputElement>(null)
   const selectedRef = useRef<HTMLDivElement>(null)
@@ -44,10 +69,25 @@ export function Library() {
     reload()
   }, [reload])
 
-  const filtered = useMemo(
-    () => (platform === 'all' ? prompts : prompts.filter((p) => p.platform === platform)),
-    [prompts, platform],
-  )
+  // Every tag in use across the (platform-scoped) library, for the filter row.
+  const allTags = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const p of prompts) for (const t of p.tags ?? []) counts.set(t, (counts.get(t) ?? 0) + 1)
+    return [...counts.keys()].sort()
+  }, [prompts])
+
+  const filtered = useMemo(() => {
+    let list = platform === 'all' ? prompts : prompts.filter((p) => p.platform === platform)
+    if (favoritesOnly) list = list.filter((p) => p.pinned ?? false)
+    if (activeTags.length) {
+      // AND: keep prompts that carry every active tag. Undefined tags → [].
+      list = list.filter((p) => {
+        const tags = p.tags ?? []
+        return activeTags.every((t) => tags.includes(t))
+      })
+    }
+    return list
+  }, [prompts, platform, favoritesOnly, activeTags])
   const index = useMemo(() => buildIndex(filtered), [filtered])
 
   const visible: Prompt[] = useMemo(() => {
@@ -59,9 +99,15 @@ export function Library() {
       const byId = new Map(filtered.map((p) => [p.id!, p]))
       list = hits.map((h) => byId.get(h.id as number)).filter(Boolean) as Prompt[]
     }
-    if (sort === 'most-used') list.sort((a, b) => b.usageCount - a.usageCount)
-    else if (sort === 'longest-unseen') list.sort((a, b) => a.lastUsedAt - b.lastUsedAt)
+    if (sort === 'most-useful') {
+      const now = Date.now()
+      list.sort((a, b) => usefulnessScore(b, now) - usefulnessScore(a, now))
+    } else if (sort === 'most-used') list.sort((a, b) => (b.usageCount ?? 0) - (a.usageCount ?? 0))
+    else if (sort === 'longest-unseen') list.sort((a, b) => (a.lastUsedAt ?? 0) - (b.lastUsedAt ?? 0))
     // 'newest' keeps listPrompts() order (already createdAt desc); search keeps relevance order
+    // Pinned prompts always float to the top within the library, regardless of
+    // sort. sort() is stable, so the chosen order is preserved within each group.
+    list.sort((a, b) => Number(b.pinned ?? false) - Number(a.pinned ?? false))
     return list
   }, [deferredQuery, filtered, index, sort])
 
@@ -82,6 +128,7 @@ export function Library() {
     async (p: Prompt) => {
       if (!p.id) return
       await softDelete(p.id)
+      setUndoBatch(null)
       setUndoId(p.id)
       window.clearTimeout(undoTimer.current)
       undoTimer.current = window.setTimeout(() => setUndoId(null), 6000)
@@ -96,6 +143,71 @@ export function Library() {
     setUndoId(null)
     reload()
   }, [undoId, reload])
+
+  const onTogglePin = useCallback(
+    async (p: Prompt) => {
+      if (!p.id) return
+      await togglePin(p.id)
+      reload()
+    },
+    [reload],
+  )
+
+  const onAddTag = useCallback(
+    async (p: Prompt, tag: string) => {
+      if (!p.id) return
+      await addTag(p.id, tag)
+      reload()
+    },
+    [reload],
+  )
+
+  const onRemoveTag = useCallback(
+    async (p: Prompt, tag: string) => {
+      if (!p.id) return
+      await removeTag(p.id, tag)
+      reload()
+    },
+    [reload],
+  )
+
+  const onTagClick = useCallback((tag: string) => {
+    setActiveTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+  }, [])
+
+  const onToggleCheck = useCallback((p: Prompt) => {
+    if (!p.id) return
+    setCheckedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(p.id!)) next.delete(p.id!)
+      else next.add(p.id!)
+      return next
+    })
+  }, [])
+
+  const exitSelecting = useCallback(() => {
+    setSelecting(false)
+    setCheckedIds(new Set())
+  }, [])
+
+  const onBulkDelete = useCallback(async () => {
+    const ids = [...checkedIds]
+    if (!ids.length) return
+    await bulkSoftDelete(ids)
+    setUndoId(null)
+    setUndoBatch(ids)
+    window.clearTimeout(undoTimer.current)
+    undoTimer.current = window.setTimeout(() => setUndoBatch(null), 6000)
+    exitSelecting()
+    reload()
+  }, [checkedIds, reload, exitSelecting])
+
+  const onUndoBatch = useCallback(async () => {
+    if (!undoBatch) return
+    await bulkRestore(undoBatch)
+    setUndoBatch(null)
+    reload()
+  }, [undoBatch, reload])
 
   // Keyboard ergonomics — this is a power-user tool.
   useEffect(() => {
@@ -116,10 +228,14 @@ export function Library() {
         return
       }
       if (e.key === 'Escape') {
+        if (selecting) exitSelecting()
         if (query) setQuery('')
         searchRef.current?.blur()
         return
       }
+      // In bulk-select mode the per-row checkbox is the delete path; don't let
+      // the single-item arrow/Enter/Backspace shortcuts compete with it.
+      if (selecting) return
       if (!visible.length) return
       if (e.key === 'ArrowDown') {
         e.preventDefault()
@@ -137,34 +253,99 @@ export function Library() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [visible, selected, query, onCopy, onDelete])
+  }, [visible, selected, query, onCopy, onDelete, selecting, exitSelecting])
 
   useEffect(() => () => window.clearTimeout(undoTimer.current), [])
 
-  const onExport = async () => {
-    const all = await exportAll()
-    const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' })
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  function download(content: string, type: string, ext: string) {
+    const blob = new Blob([content], { type })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `promptshelf-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = `promptshelf-${new Date().toISOString().slice(0, 10)}.${ext}`
     a.click()
     URL.revokeObjectURL(url)
   }
 
+  const onExport = async () => {
+    const all = await exportAll()
+    download(JSON.stringify(all, null, 2), 'application/json', 'json')
+  }
+
+  // Markdown export — one readable .md file. buildMarkdown filters out
+  // soft-deleted rows and picks a fence longer than any backtick run in the
+  // text so multi-line / code prompts survive the round trip.
+  const onExportMarkdown = async () => {
+    const all = await exportAll()
+    download(buildMarkdown(all), 'text/markdown', 'md')
+  }
+
+  const onPickImport = () => fileRef.current?.click()
+
+  const onImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-importing the same file
+    if (!file) return
+    setImportMsg(null)
+    try {
+      const parsed = JSON.parse(await file.text())
+      // A promptshelf export is a JSON array of prompts. Anything else parses
+      // fine but isn't ours — say so plainly instead of reporting "imported 0",
+      // which reads like a successful no-op.
+      if (!Array.isArray(parsed)) {
+        setImportMsg("that file isn't a promptshelf export")
+        return
+      }
+      const res = await importPrompts(parsed)
+      setImportMsg(`imported ${res.imported} · skipped ${res.skipped}`)
+      reload()
+    } catch {
+      setImportMsg("couldn't read that file — expected a promptshelf json export")
+    }
+  }
+
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-5 p-6">
-      <header className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <Logo size={26} />
-          <p className="font-mono text-xs text-ink-faint">
-            {prompts.length} {prompts.length === 1 ? 'prompt' : 'prompts'} · stored locally
-          </p>
+    <div className="flex flex-col gap-5">
+      <header className="flex items-center justify-between gap-2">
+        <p className="font-mono text-xs text-ink-faint">
+          {prompts.length} {prompts.length === 1 ? 'prompt' : 'prompts'} · stored locally
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={onImportFile}
+            className="hidden"
+            aria-hidden
+          />
+          <button onClick={onPickImport} className="ps-btn ps-btn-ghost px-2 py-1 text-xs">
+            import json
+          </button>
+          <button
+            onClick={onExportMarkdown}
+            disabled={prompts.length === 0}
+            className="ps-btn px-2 py-1 text-xs disabled:opacity-40"
+          >
+            export md
+          </button>
+          <button
+            onClick={onExport}
+            disabled={prompts.length === 0}
+            className="ps-btn px-2 py-1 text-xs disabled:opacity-40"
+          >
+            export json
+          </button>
         </div>
-        <button onClick={onExport} className="ps-btn">
-          Export JSON
-        </button>
       </header>
+
+      {importMsg && (
+        <div className="rounded-btn border border-line bg-sunk px-3 py-2 font-mono text-xs text-ink-soft">
+          {importMsg}
+        </div>
+      )}
 
       <CaptureStatus />
 
@@ -196,6 +377,15 @@ export function Library() {
               {p.label}
             </button>
           ))}
+          {/* favorites = pinned only */}
+          <button
+            aria-pressed={favoritesOnly}
+            onClick={() => setFavoritesOnly((v) => !v)}
+            className={`ps-pill inline-flex items-center gap-1 ${favoritesOnly ? 'ps-pill-active' : ''}`}
+          >
+            <PinIcon filled={favoritesOnly} />
+            favorites
+          </button>
         </div>
         <select
           value={sort}
@@ -211,10 +401,74 @@ export function Library() {
         </select>
       </div>
 
+      {allTags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5" aria-label="Filter by tag (AND)">
+          {allTags.map((t) => {
+            const active = activeTags.includes(t)
+            return (
+              <button
+                key={t}
+                aria-pressed={active}
+                onClick={() => onTagClick(t)}
+                className={`ps-tag ${active ? 'ps-tag-active' : ''}`}
+              >
+                {t}
+              </button>
+            )
+          })}
+          {activeTags.length > 0 && (
+            <button
+              onClick={() => setActiveTags([])}
+              className="ps-btn ps-btn-ghost px-2 py-0.5 font-mono text-[11px]"
+            >
+              clear tags
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-2">
+        {selecting ? (
+          <>
+            <span className="font-mono text-xs text-ink-faint">{checkedIds.size} selected</span>
+            <div className="flex gap-2">
+              <button onClick={exitSelecting} className="ps-btn ps-btn-ghost px-2 py-1 text-xs">
+                cancel
+              </button>
+              <button
+                onClick={onBulkDelete}
+                disabled={checkedIds.size === 0}
+                className="ps-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
+              >
+                delete selected
+              </button>
+            </div>
+          </>
+        ) : (
+          <button
+            onClick={() => setSelecting(true)}
+            className="ps-btn ps-btn-ghost px-2 py-1 font-mono text-xs"
+          >
+            select
+          </button>
+        )}
+      </div>
+
       {undoId != null && (
         <div className="flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
           <span className="text-ink-soft">prompt deleted</span>
           <button onClick={onUndoDelete} className="ps-btn ps-btn-ghost px-2 py-1 font-mono text-xs">
+            undo
+          </button>
+        </div>
+      )}
+
+      {undoBatch != null && (
+        <div className="flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
+          <span className="text-ink-soft">
+            {undoBatch.length} {undoBatch.length === 1 ? 'prompt' : 'prompts'} deleted
+          </span>
+          <button onClick={onUndoBatch} className="ps-btn ps-btn-ghost px-2 py-1 font-mono text-xs">
             undo
           </button>
         </div>
@@ -227,10 +481,10 @@ export function Library() {
           <div className="py-16 text-center text-sm">
             {prompts.length === 0 ? (
               <>
-                <p className="text-ink">your shelf is empty — that's fine.</p>
+                <p className="text-ink">your shelf is empty — that&apos;s fine.</p>
                 <p className="mt-1 text-ink-faint">
-                  nothing to set up. send a prompt on chatgpt, claude, or gemini and it lands here
-                  automatically.
+                  nothing to set up. send a prompt on chatgpt, claude, gemini, deepseek, or grok and
+                  it lands here automatically.
                 </p>
               </>
             ) : (
@@ -246,6 +500,14 @@ export function Library() {
               selected={i === selected}
               onCopy={onCopy}
               onDelete={onDelete}
+              onTogglePin={onTogglePin}
+              onAddTag={onAddTag}
+              onRemoveTag={onRemoveTag}
+              onTagClick={onTagClick}
+              activeTags={activeTags}
+              selectable={selecting}
+              checked={p.id != null && checkedIds.has(p.id)}
+              onToggleCheck={onToggleCheck}
             />
           ))
         )}
