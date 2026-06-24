@@ -23,7 +23,7 @@ Project compiles, extension loads, capture writes to IndexedDB, popup and librar
 
 ---
 
-## Phase 1 — Trustworthy capture + the first real moment *(target: 2 weeks)*
+## Phase 1 — Trustworthy capture + the first real moment ✅ *(built; awaiting real-user verification)*
 
 The point of this phase is to prove the thing works *and* that the magic moment lands — both, before any cosmetic polish gets the final pass. Two workstreams run together: make capture impossible to silently break, and put a real (if rough) resurface moment in front of humans.
 
@@ -63,7 +63,7 @@ The point of this phase is to prove the thing works *and* that the magic moment 
 
 ---
 
-## Phase 2 — Make the moment great *(target: 1 week)*
+## Phase 2 — Make the moment great *(needs real-user reactions before tuning)*
 
 The moment exists and we've watched people use it. Now sharpen it from what we learned.
 
@@ -76,7 +76,7 @@ The moment exists and we've watched people use it. Now sharpen it from what we l
 
 ---
 
-## Phase 3 — Light organization *(target: 1 week)*
+## Phase 3 — Light organization ✅ *(built)*
 
 Once users have 50+ prompts, flat list isn't enough.
 
@@ -92,7 +92,7 @@ No auto-categorization yet. We see if manual tags are enough before adding a mod
 
 ---
 
-## Phase 4 — Trust & portability *(target: 3–5 days)*
+## Phase 4 — Trust & portability ✅ *(built)*
 
 Make it impossible to feel locked in.
 
