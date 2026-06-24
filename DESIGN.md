@@ -25,7 +25,7 @@ Reference via Tailwind classes (`bg-bg`, `text-ink`, `text-ink-soft`, `bg-surfac
 
 Dark mode is driven by `prefers-color-scheme` — one set of variables, no class toggling.
 
-Per-platform accent dots (chips only, subtle): ChatGPT `#10a37f`, Claude `#d97757`, Gemini `#4285f4` — see `PLATFORM_COLOR` in `src/lib/types.ts`.
+Per-platform accent dots (chips only, subtle): ChatGPT `#10a37f`, Claude `#d97757`, Gemini `#4285f4`, DeepSeek `#4d6bfe`, Grok `#71767b` — see `PLATFORM_COLOR` in `src/lib/types.ts`.
 
 ## Typography
 
@@ -47,7 +47,7 @@ Scale: `text-xs` 12 · `text-sm` 13–14 · `text-base` 15 · `text-lg` 18 · `t
 
 Defined in `globals.css` `@layer components` — compose these instead of re-styling:
 
-`.dj-card` · `.dj-chip` · `.dj-input` · `.dj-btn` / `.dj-btn-primary` / `.dj-btn-ghost` · `.dj-pill` / `.dj-pill-active`
+`.dj-card` · `.dj-chip` · `.dj-input` · `.dj-btn` / `.dj-btn-primary` / `.dj-btn-ghost` · `.dj-pill` / `.dj-pill-active` · `.dj-tag` / `.dj-tag-active` / `.dj-tag-label`
 
 ## Logo
 

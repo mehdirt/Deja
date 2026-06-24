@@ -40,10 +40,15 @@ Four execution contexts, all in TypeScript, bundled by Vite via `@crxjs/vite-plu
 
 Shared core lives under `src/lib/`:
 
-- `db.ts` — Dexie schema (single `prompts` table) and all CRUD. Soft-delete via `deletedAt`; never hard-delete.
+- `db.ts` — Dexie schema (single `prompts` table) and all CRUD. Default delete is soft (`deletedAt` tombstone, undoable); hard-delete is reserved for undo-capture and the explicit "purge deleted" / "clear all" actions.
 - `search.ts` — MiniSearch fuzzy index, rebuilt in-memory from the current list of prompts.
-- `similarity.ts` — trigram Jaccard similarity, used for the "You've Been Here Before" feature (not yet wired into a content-script UI in v1).
-- `types.ts` — `Prompt`, `Platform`, and the `CapturedPromptMessage` shape used across contexts.
+- `similarity.ts` — IDF-weighted trigram similarity with a length-aware threshold, powering the "You've Been Here Before" resurface tooltip (wired via the background worker's `SIMILAR_QUERY` handler → `src/content/shared/resurface.ts`).
+- `ranking.ts` — usefulness score (usage × recency) for the library's "most useful" sort.
+- `health.ts` — per-platform capture-health storage/signals (the content-side probe lives in `src/content/shared/health.ts`).
+- `sensitive.ts` — capture-eligibility: rejects password/OTP/credential and non-composer fields, and minimizes captured URLs.
+- `blocklist.ts` — user blocklist (domains + regex) storage/matching (the content-side sync cache lives in `src/content/shared/blocklist.ts`).
+- `markdown.ts` — Markdown export. `format.ts` — text/relative-time formatting helpers.
+- `types.ts` — `Prompt`, `Platform`, the runtime message/response shapes, and `PLATFORM_LABEL` / `PLATFORM_COLOR`.
 
 The path alias `@/` resolves to `src/` (configured in `tsconfig.json` and `vite.config.ts` — keep them in sync).
 
