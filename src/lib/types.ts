@@ -9,6 +9,10 @@ export interface Prompt {
   usageCount: number
   lastUsedAt: number
   deletedAt?: number | null
+  // Light organization (Phase 3). Optional so stored v1 rows and old JSON
+  // exports stay valid; treat undefined as [] / false everywhere.
+  tags?: string[]
+  pinned?: boolean
 }
 
 export type CapturedPromptMessage = {
@@ -21,9 +25,22 @@ export type UndoCaptureMessage = {
   id: number
 }
 
-export type RuntimeMessage = CapturedPromptMessage | UndoCaptureMessage
+export type SimilarQueryMessage = {
+  type: 'SIMILAR_QUERY'
+  text: string
+}
+
+export type RuntimeMessage = CapturedPromptMessage | UndoCaptureMessage | SimilarQueryMessage
 
 export type CaptureResponse = { ok: true; id: number } | { ok: false; error: string }
+
+// The closest prior prompt to the in-progress text, or null if nothing clears
+// the similarity threshold. Read-only: the resurface tooltip never writes.
+export type SimilarMatch = { id: number; text: string; platform: Platform }
+
+export type SimilarResponse =
+  | { ok: true; match: SimilarMatch | null }
+  | { ok: false; error: string }
 
 export const PLATFORM_LABEL: Record<Platform, string> = {
   chatgpt: 'ChatGPT',
