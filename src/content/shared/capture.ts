@@ -1,5 +1,7 @@
 import type { CaptureResponse, CapturedPromptMessage, Platform } from '@/lib/types'
 import { writeHealth } from '@/lib/health'
+import { isBlocked } from '@/lib/blocklist'
+import { getBlocklist } from './blocklist'
 import { showSavedToast } from './toast'
 
 const DEBUG = true
@@ -11,6 +13,13 @@ function log(...args: unknown[]) {
 export function sendCapture(text: string, platform: Platform): void {
   const trimmed = text.trim()
   if (trimmed.length < 2) return
+  // Honor the capture blocklist (privacy-critical). Read the cached snapshot
+  // synchronously — no latency added. If blocked, silently skip: capture
+  // nothing, no toast, no health write. isBlocked is pure and never throws.
+  if (isBlocked(location.href, trimmed, getBlocklist())) {
+    log('blocked by blocklist — skipping capture on', platform)
+    return
+  }
   const msg: CapturedPromptMessage = {
     type: 'PROMPT_CAPTURED',
     payload: { text: trimmed, platform, url: location.href },
