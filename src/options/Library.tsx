@@ -99,7 +99,11 @@ export function Library() {
   // Keyboard ergonomics — this is a power-user tool.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const inSearch = document.activeElement === searchRef.current
+      const active = document.activeElement
+      const inSearch = active === searchRef.current
+      // Don't hijack action keys while a control (button/input/select) is focused —
+      // it would double-fire alongside that control's own handler.
+      const onControl = !!active && /^(BUTTON|INPUT|SELECT|TEXTAREA)$/.test(active.tagName)
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         searchRef.current?.focus()
@@ -122,10 +126,10 @@ export function Library() {
       } else if (e.key === 'ArrowUp') {
         e.preventDefault()
         setSelected((s) => Math.max(s - 1, 0))
-      } else if (e.key === 'Enter' && !inSearch) {
+      } else if (e.key === 'Enter' && !onControl) {
         e.preventDefault()
         void onCopy(visible[selected])
-      } else if ((e.key === 'Backspace' || e.key === 'Delete') && !inSearch) {
+      } else if ((e.key === 'Backspace' || e.key === 'Delete') && !onControl) {
         e.preventDefault()
         void onDelete(visible[selected])
       }
@@ -133,6 +137,8 @@ export function Library() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [visible, selected, query, onCopy, onDelete])
+
+  useEffect(() => () => window.clearTimeout(undoTimer.current), [])
 
   const onExport = async () => {
     const all = await exportAll()
