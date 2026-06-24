@@ -1,8 +1,19 @@
 import { attachSubmitHook } from '../shared/capture'
 
-// ChatGPT uses a contenteditable div with id="prompt-textarea" (subject to change).
-const getInput = (): HTMLElement | null =>
-  document.querySelector<HTMLElement>('#prompt-textarea') ||
-  document.querySelector<HTMLElement>('textarea[data-id], textarea[placeholder]')
+const SELECTORS = [
+  '#prompt-textarea',
+  'div[contenteditable="true"][id*="prompt"]',
+  'div.ProseMirror[contenteditable="true"]',
+  'textarea[data-id]',
+  'main form textarea',
+]
+
+const getInput = (): HTMLElement | null => {
+  for (const sel of SELECTORS) {
+    const el = document.querySelector<HTMLElement>(sel)
+    if (el) return el
+  }
+  return null
+}
 
 attachSubmitHook(getInput, 'chatgpt')

@@ -1,8 +1,18 @@
 import { attachSubmitHook } from '../shared/capture'
 
-// Claude.ai uses a contenteditable ProseMirror editor.
-const getInput = (): HTMLElement | null =>
-  document.querySelector<HTMLElement>('div.ProseMirror[contenteditable="true"]') ||
-  document.querySelector<HTMLElement>('[contenteditable="true"]')
+const SELECTORS = [
+  'div.ProseMirror[contenteditable="true"]',
+  'div[contenteditable="true"][role="textbox"]',
+  'fieldset div[contenteditable="true"]',
+  'div[contenteditable="true"]',
+]
+
+const getInput = (): HTMLElement | null => {
+  for (const sel of SELECTORS) {
+    const el = document.querySelector<HTMLElement>(sel)
+    if (el) return el
+  }
+  return null
+}
 
 attachSubmitHook(getInput, 'claude')
