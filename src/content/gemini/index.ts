@@ -1,4 +1,5 @@
 import { attachSubmitHook } from '../shared/capture'
+import { startHealthProbe } from '../shared/health'
 
 const SELECTORS = [
   'rich-textarea div.ql-editor[contenteditable="true"]',
@@ -17,3 +18,4 @@ const getInput = (): HTMLElement | null => {
 }
 
 attachSubmitHook(getInput, 'gemini')
+startHealthProbe(getInput, 'gemini')

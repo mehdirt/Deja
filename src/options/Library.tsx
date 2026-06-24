@@ -4,6 +4,7 @@ import { buildIndex, searchPrompts } from '@/lib/search'
 import { PromptCard } from '@/ui/PromptCard'
 import { SkeletonList } from '@/ui/Skeleton'
 import { Logo } from '@/ui/Logo'
+import { CaptureStatus } from '@/ui/CaptureStatus'
 import { PLATFORM_LABEL, type Platform, type Prompt } from '@/lib/types'
 
 const PLATFORMS: Array<{ key: Platform | 'all'; label: string }> = [
@@ -164,6 +165,8 @@ export function Library() {
           Export JSON
         </button>
       </header>
+
+      <CaptureStatus />
 
       <div className="relative">
         <input

@@ -1,4 +1,5 @@
 import { attachSubmitHook } from '../shared/capture'
+import { startHealthProbe } from '../shared/health'
 
 const SELECTORS = [
   '#prompt-textarea',
@@ -17,3 +18,4 @@ const getInput = (): HTMLElement | null => {
 }
 
 attachSubmitHook(getInput, 'chatgpt')
+startHealthProbe(getInput, 'chatgpt')

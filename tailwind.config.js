@@ -20,6 +20,7 @@ export default {
         },
         line: 'var(--ps-line)',
         danger: 'var(--ps-danger)',
+        ok: 'var(--ps-ok)',
       },
       fontFamily: {
         sans: 'var(--ps-font-sans)',

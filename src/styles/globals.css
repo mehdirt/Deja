@@ -21,6 +21,7 @@
   --ps-accent-hover: #4a43e0;
   --ps-line: #e7e2d8; /* hairline borders */
   --ps-danger: #c0392b;
+  --ps-ok: #2f9e63; /* capture healthy */
 
   --ps-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --ps-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -39,6 +40,7 @@
     --ps-accent-hover: #9c97f7;
     --ps-line: #2e2c36;
     --ps-danger: #e06c5d;
+    --ps-ok: #56c98a;
   }
 }
 
