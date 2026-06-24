@@ -18,6 +18,16 @@ class PromptShelfDB extends Dexie {
     this.version(2).stores({
       prompts: '++id, platform, createdAt, lastUsedAt, *tags',
     })
+    // v3 — version bump only; no schema change vs v2. During development the v2
+    // schema was edited in place (a `pinned` index was added, then removed —
+    // booleans aren't indexable). Editing an already-applied version's schema
+    // makes Dexie throw "schema was changed" on open for anyone who loaded the
+    // intermediate build, which silently breaks ALL writes, capture included.
+    // Bumping the version forces Dexie to run a clean upgrade and reconcile the
+    // indexes. Data is preserved.
+    this.version(3).stores({
+      prompts: '++id, platform, createdAt, lastUsedAt, *tags',
+    })
   }
 }
 
