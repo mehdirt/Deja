@@ -1,4 +1,6 @@
+import { forwardRef, useState } from 'react'
 import type { Prompt } from '@/lib/types'
+import { PLATFORM_COLOR, PLATFORM_LABEL } from '@/lib/types'
 import { relativeTime, truncate } from '@/lib/format'
 
 interface Props {
@@ -6,42 +8,66 @@ interface Props {
   onCopy: (p: Prompt) => void
   onDelete?: (p: Prompt) => void
   compact?: boolean
+  selected?: boolean
 }
 
-const PLATFORM_LABEL: Record<Prompt['platform'], string> = {
-  chatgpt: 'ChatGPT',
-  claude: 'Claude',
-  gemini: 'Gemini',
-}
+export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
+  { prompt, onCopy, onDelete, compact, selected },
+  ref,
+) {
+  const [copied, setCopied] = useState(false)
 
-export function PromptCard({ prompt, onCopy, onDelete, compact }: Props) {
+  const handleCopy = () => {
+    onCopy(prompt)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1200)
+  }
+
   return (
-    <div className="card flex flex-col gap-2">
+    <div
+      ref={ref}
+      className={`ps-card flex flex-col gap-2 p-4 transition-shadow ${
+        selected ? 'ring-2 ring-accent' : ''
+      }`}
+    >
       <div className="flex items-center justify-between gap-2">
-        <span className="chip">{PLATFORM_LABEL[prompt.platform]}</span>
-        <span className="text-xs text-ink-800/60 dark:text-ink-50/60">
+        <span className="ps-chip font-mono">
+          <span
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ background: PLATFORM_COLOR[prompt.platform] }}
+            aria-hidden="true"
+          />
+          {PLATFORM_LABEL[prompt.platform]}
+        </span>
+        <span className="font-mono text-xs text-ink-faint">
           {relativeTime(prompt.createdAt)}
+          {prompt.usageCount > 0 && ` · used ${prompt.usageCount}×`}
         </span>
       </div>
-      <p className="text-sm whitespace-pre-wrap font-mono leading-relaxed">
+
+      <p className="whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-ink">
         {truncate(prompt.text, compact ? 160 : 600)}
       </p>
-      <div className="flex items-center justify-end gap-2 pt-1">
+
+      <div className="flex items-center justify-end gap-1 pt-1">
         {onDelete && (
           <button
             onClick={() => onDelete(prompt)}
-            className="text-xs text-ink-800/60 hover:text-red-600 dark:text-ink-50/60"
+            aria-label="Delete prompt"
+            className="ps-btn ps-btn-ghost px-2 py-1 text-xs hover:text-danger"
           >
             Delete
           </button>
         )}
         <button
-          onClick={() => onCopy(prompt)}
-          className="text-xs px-2 py-1 rounded bg-accent text-white hover:opacity-90"
+          onClick={handleCopy}
+          aria-label="Copy prompt to clipboard"
+          aria-live="polite"
+          className="ps-btn ps-btn-primary min-w-[68px] px-2 py-1 text-xs"
         >
-          Copy
+          {copied ? 'copied ✓' : 'Copy'}
         </button>
       </div>
     </div>
   )
-}
+})
