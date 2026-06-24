@@ -17,25 +17,25 @@ function ensureHost(): ShadowRoot {
     'position:fixed;inset:0;z-index:2147483647;pointer-events:none;'
   const shadow = host.attachShadow({ mode: 'open' })
   const style = document.createElement('style')
-  const reduce = '@media (prefers-reduced-motion: reduce){.ps-toast{animation:none}}'
+  const reduce = '@media (prefers-reduced-motion: reduce){.dj-toast{animation:none}}'
   style.textContent = `
-    .ps-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-    .ps-toast{pointer-events:auto;display:flex;align-items:center;gap:12px;
+    .dj-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+    .dj-toast{pointer-events:auto;display:flex;align-items:center;gap:12px;
       background:#201f27;color:#f3f1ea;font:13px/1.4 'Inter',system-ui,sans-serif;
       padding:10px 12px;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);
-      border:1px solid #2e2c36;animation:ps-in .14s ease-out}
-    .ps-dot{width:7px;height:7px;border-radius:50%;background:#8983f5;flex:none}
-    .ps-msg{white-space:nowrap}
-    .ps-undo{pointer-events:auto;background:none;border:none;color:#9c97f7;
+      border:1px solid #2e2c36;animation:dj-in .14s ease-out}
+    .dj-dot{width:7px;height:7px;border-radius:50%;background:#8983f5;flex:none}
+    .dj-msg{white-space:nowrap}
+    .dj-undo{pointer-events:auto;background:none;border:none;color:#9c97f7;
       font:600 13px 'JetBrains Mono',ui-monospace,monospace;cursor:pointer;padding:2px 4px;border-radius:6px}
-    .ps-undo:hover{background:#272534}
-    .ps-undo:focus-visible{outline:2px solid #8983f5;outline-offset:1px}
-    @keyframes ps-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .dj-undo:hover{background:#272534}
+    .dj-undo:focus-visible{outline:2px solid #8983f5;outline-offset:1px}
+    @keyframes dj-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
     ${reduce}
   `
   shadow.appendChild(style)
   const wrap = document.createElement('div')
-  wrap.className = 'ps-wrap'
+  wrap.className = 'dj-wrap'
   shadow.appendChild(wrap)
   document.documentElement.appendChild(host)
   return shadow
@@ -43,23 +43,23 @@ function ensureHost(): ShadowRoot {
 
 export function showSavedToast(onUndo: () => void): void {
   const shadow = ensureHost()
-  const wrap = shadow.querySelector('.ps-wrap') as HTMLElement
+  const wrap = shadow.querySelector('.dj-wrap') as HTMLElement
   wrap.replaceChildren()
 
   const toast = document.createElement('div')
-  toast.className = 'ps-toast'
+  toast.className = 'dj-toast'
   toast.setAttribute('role', 'status')
   toast.setAttribute('aria-live', 'polite')
 
   const dot = document.createElement('span')
-  dot.className = 'ps-dot'
+  dot.className = 'dj-dot'
 
   const msg = document.createElement('span')
-  msg.className = 'ps-msg'
+  msg.className = 'dj-msg'
   msg.textContent = 'remembered'
 
   const undo = document.createElement('button')
-  undo.className = 'ps-undo'
+  undo.className = 'dj-undo'
   undo.textContent = 'undo'
   undo.addEventListener('click', () => {
     onUndo()
@@ -77,6 +77,6 @@ export function showSavedToast(onUndo: () => void): void {
 }
 
 function dismiss(): void {
-  const wrap = host?.shadowRoot?.querySelector('.ps-wrap') as HTMLElement | null
+  const wrap = host?.shadowRoot?.querySelector('.dj-wrap') as HTMLElement | null
   wrap?.replaceChildren()
 }

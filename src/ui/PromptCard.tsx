@@ -63,7 +63,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
   return (
     <div
       ref={ref}
-      className={`ps-card flex flex-col gap-2 p-4 transition-shadow ${
+      className={`dj-card flex flex-col gap-2 p-4 transition-shadow ${
         selected ? 'ring-2 ring-accent' : ''
       } ${checked ? 'ring-2 ring-accent/60' : ''}`}
     >
@@ -78,7 +78,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
               className="h-3.5 w-3.5 accent-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             />
           )}
-          <span className="ps-chip font-mono">
+          <span className="dj-chip font-mono">
             <span
               className="h-1.5 w-1.5 rounded-full"
               style={{ background: PLATFORM_COLOR[prompt.platform] }}
@@ -103,12 +103,12 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
           {tags.map((t) => {
             const active = activeTags.includes(t)
             return (
-              <span key={t} className={`ps-tag ${active ? 'ps-tag-active' : ''}`}>
+              <span key={t} className={`dj-tag ${active ? 'dj-tag-active' : ''}`}>
                 <button
                   onClick={() => onTagClick?.(t)}
                   aria-label={`Filter by tag ${t}`}
                   title={t}
-                  className="ps-tag-label bg-transparent"
+                  className="dj-tag-label bg-transparent"
                 >
                   {t}
                 </button>
@@ -143,13 +143,13 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
                 }}
                 placeholder="tag…"
                 aria-label="Add a tag"
-                className="ps-input w-24 px-2 py-0.5 font-mono text-[11px]"
+                className="dj-input w-24 px-2 py-0.5 font-mono text-[11px]"
               />
             ) : (
               <button
                 onClick={() => setAdding(true)}
                 aria-label="Add a tag"
-                className="ps-tag text-ink-faint hover:text-ink"
+                className="dj-tag text-ink-faint hover:text-ink"
               >
                 + tag
               </button>
@@ -164,7 +164,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             onClick={() => onTogglePin(prompt)}
             aria-label={pinned ? 'Unpin prompt' : 'Pin prompt'}
             aria-pressed={pinned}
-            className="ps-btn ps-btn-ghost px-2 py-1 text-xs"
+            className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
           >
             {pinned ? 'unpin' : 'pin'}
           </button>
@@ -173,7 +173,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
           <button
             onClick={() => onDelete(prompt)}
             aria-label="Delete prompt"
-            className="ps-btn ps-btn-ghost px-2 py-1 text-xs hover:text-danger"
+            className="dj-btn dj-btn-ghost px-2 py-1 text-xs hover:text-danger"
           >
             delete
           </button>
@@ -182,7 +182,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
           onClick={handleCopy}
           aria-label="Copy prompt to clipboard"
           aria-live="polite"
-          className="ps-btn ps-btn-primary min-w-[68px] px-2 py-1 text-xs"
+          className="dj-btn dj-btn-primary min-w-[68px] px-2 py-1 text-xs"
         >
           {copied ? 'copied ✓' : 'copy'}
         </button>

@@ -110,17 +110,17 @@ export function Settings() {
               onChange={(e) => setDomainInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addDomain()}
               placeholder="e.g. claude.ai"
-              className="ps-input font-mono text-sm"
+              className="dj-input font-mono text-sm"
             />
-            <button onClick={addDomain} className="ps-btn px-3 py-1 text-xs">
+            <button onClick={addDomain} className="dj-btn px-3 py-1 text-xs">
               block
             </button>
           </div>
           {bl.domains.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {bl.domains.map((d) => (
-                <span key={d} className="ps-tag">
-                  <span className="ps-tag-label">{d}</span>
+                <span key={d} className="dj-tag">
+                  <span className="dj-tag-label">{d}</span>
                   <button
                     onClick={() => removeDomain(d)}
                     aria-label={`unblock ${d}`}
@@ -149,9 +149,9 @@ export function Settings() {
               }}
               onKeyDown={(e) => e.key === 'Enter' && addPattern()}
               placeholder="e.g. sk-[a-zA-Z0-9]{20,}"
-              className="ps-input font-mono text-sm"
+              className="dj-input font-mono text-sm"
             />
-            <button onClick={addPattern} className="ps-btn px-3 py-1 text-xs">
+            <button onClick={addPattern} className="dj-btn px-3 py-1 text-xs">
               add
             </button>
           </div>
@@ -169,8 +169,8 @@ export function Settings() {
                   valid = false
                 }
                 return (
-                  <span key={p} className="ps-tag">
-                    <span className="ps-tag-label">{p}</span>
+                  <span key={p} className="dj-tag">
+                    <span className="dj-tag-label">{p}</span>
                     {!valid && <span className="text-danger">invalid</span>}
                     <button
                       onClick={() => removePattern(p)}
@@ -196,7 +196,7 @@ export function Settings() {
           erase it for good.
         </p>
         <div className="flex items-center gap-3">
-          <button onClick={onPurgeDeleted} className="ps-btn px-3 py-1.5 text-sm hover:text-danger">
+          <button onClick={onPurgeDeleted} className="dj-btn px-3 py-1.5 text-sm hover:text-danger">
             purge deleted now
           </button>
           {purged != null && (
@@ -221,7 +221,7 @@ export function Settings() {
             // aria-live so screen-reader / keyboard users hear the armed state
             // when the label swaps to its destructive confirmation.
             aria-live="polite"
-            className={`ps-btn px-3 py-1.5 text-sm ${
+            className={`dj-btn px-3 py-1.5 text-sm ${
               confirmClear ? 'border-danger text-danger' : 'hover:text-danger'
             }`}
           >
@@ -230,7 +230,7 @@ export function Settings() {
           {confirmClear && (
             <button
               onClick={() => setConfirmClear(false)}
-              className="ps-btn ps-btn-ghost px-2 py-1 text-xs"
+              className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
             >
               cancel
             </button>

@@ -10,37 +10,37 @@
    with system fallbacks.
    ────────────────────────────────────────────────────────────── */
 :root {
-  --ps-bg: #faf8f3; /* warm paper */
-  --ps-surface: #ffffff; /* raised cards */
-  --ps-sunk: #f1ede4; /* inset wells, hover */
-  --ps-text: #1c1b19; /* ink */
-  --ps-text-soft: #6b6862; /* secondary */
-  --ps-text-faint: #9a968d; /* tertiary / meta */
-  --ps-accent: #5b54f0; /* indigo */
-  --ps-accent-soft: #ecebfe; /* accent fills */
-  --ps-accent-hover: #4a43e0;
-  --ps-line: #e7e2d8; /* hairline borders */
-  --ps-danger: #c0392b;
-  --ps-ok: #2f9e63; /* capture healthy */
+  --dj-bg: #faf8f3; /* warm paper */
+  --dj-surface: #ffffff; /* raised cards */
+  --dj-sunk: #f1ede4; /* inset wells, hover */
+  --dj-text: #1c1b19; /* ink */
+  --dj-text-soft: #6b6862; /* secondary */
+  --dj-text-faint: #9a968d; /* tertiary / meta */
+  --dj-accent: #5b54f0; /* indigo */
+  --dj-accent-soft: #ecebfe; /* accent fills */
+  --dj-accent-hover: #4a43e0;
+  --dj-line: #e7e2d8; /* hairline borders */
+  --dj-danger: #c0392b;
+  --dj-ok: #2f9e63; /* capture healthy */
 
-  --ps-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --ps-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --dj-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --dj-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ps-bg: #16151a;
-    --ps-surface: #201f27;
-    --ps-sunk: #1b1a21;
-    --ps-text: #f3f1ea;
-    --ps-text-soft: #a8a49b;
-    --ps-text-faint: #6e6a62;
-    --ps-accent: #8983f5;
-    --ps-accent-soft: #272534;
-    --ps-accent-hover: #9c97f7;
-    --ps-line: #2e2c36;
-    --ps-danger: #e06c5d;
-    --ps-ok: #56c98a;
+    --dj-bg: #16151a;
+    --dj-surface: #201f27;
+    --dj-sunk: #1b1a21;
+    --dj-text: #f3f1ea;
+    --dj-text-soft: #a8a49b;
+    --dj-text-faint: #6e6a62;
+    --dj-accent: #8983f5;
+    --dj-accent-soft: #272534;
+    --dj-accent-hover: #9c97f7;
+    --dj-line: #2e2c36;
+    --dj-danger: #e06c5d;
+    --dj-ok: #56c98a;
   }
 }
 
@@ -51,54 +51,54 @@ body {
 
 /* Component primitives ------------------------------------------------ */
 @layer components {
-  .ps-card {
+  .dj-card {
     @apply rounded-card border border-line bg-surface shadow-card;
   }
 
-  .ps-chip {
+  .dj-chip {
     @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium;
     @apply bg-accent-soft text-accent;
   }
 
-  .ps-input {
+  .dj-input {
     @apply w-full rounded-btn border border-line bg-surface px-3 py-2 text-sm text-ink;
     @apply placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent;
   }
 
-  .ps-btn {
+  .dj-btn {
     @apply inline-flex items-center justify-center gap-1.5 rounded-btn px-3 py-1.5 text-sm font-medium;
     @apply border border-line text-ink transition-colors hover:bg-sunk;
     @apply focus:outline-none focus:ring-2 focus:ring-accent;
   }
 
-  .ps-btn-primary {
+  .dj-btn-primary {
     @apply border-transparent bg-accent text-white hover:bg-accent-hover;
   }
 
-  .ps-btn-ghost {
+  .dj-btn-ghost {
     @apply border-transparent text-ink-soft hover:bg-sunk hover:text-ink;
   }
 
   /* tab / filter pill */
-  .ps-pill {
+  .dj-pill {
     @apply rounded-full border border-line px-2.5 py-1 text-xs font-medium text-ink-soft;
     @apply transition-colors hover:bg-sunk;
   }
-  .ps-pill-active {
+  .dj-pill-active {
     @apply border-accent bg-accent text-white hover:bg-accent;
   }
 
   /* user tag — small, quiet, clickable to filter */
-  .ps-tag {
+  .dj-tag {
     @apply inline-flex items-center gap-1 rounded-full border border-line bg-sunk px-2 py-0.5;
     @apply font-mono text-[11px] text-ink-soft transition-colors hover:text-ink;
   }
-  .ps-tag-active {
+  .dj-tag-active {
     @apply border-accent bg-accent-soft text-accent;
   }
   /* Truncate only the tag label so a long pasted tag can't stretch the row;
      the × remove button is a sibling and stays fully visible/clickable. */
-  .ps-tag-label {
+  .dj-tag-label {
     @apply block max-w-[12rem] overflow-hidden text-ellipsis whitespace-nowrap;
   }
 }
@@ -106,13 +106,13 @@ body {
 /* Thin, unobtrusive scrollbars to match the calm aesthetic */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--ps-line) transparent;
+  scrollbar-color: var(--dj-line) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--ps-line);
+  background: var(--dj-line);
   border-radius: 4px;
 }

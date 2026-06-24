@@ -321,20 +321,20 @@ export function Library() {
             className="hidden"
             aria-hidden
           />
-          <button onClick={onPickImport} className="ps-btn ps-btn-ghost px-2 py-1 text-xs">
+          <button onClick={onPickImport} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
             import json
           </button>
           <button
             onClick={onExportMarkdown}
             disabled={prompts.length === 0}
-            className="ps-btn px-2 py-1 text-xs disabled:opacity-40"
+            className="dj-btn px-2 py-1 text-xs disabled:opacity-40"
           >
             export md
           </button>
           <button
             onClick={onExport}
             disabled={prompts.length === 0}
-            className="ps-btn px-2 py-1 text-xs disabled:opacity-40"
+            className="dj-btn px-2 py-1 text-xs disabled:opacity-40"
           >
             export json
           </button>
@@ -357,7 +357,7 @@ export function Library() {
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search your prompts"
           placeholder="search your prompts…"
-          className="ps-input pr-12 font-mono"
+          className="dj-input pr-12 font-mono"
         />
         <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">
           ⌘K
@@ -373,7 +373,7 @@ export function Library() {
                 role="tab"
                 aria-selected={platform === p.key}
                 onClick={() => setPlatform(p.key)}
-                className={`ps-pill ${platform === p.key ? 'ps-pill-active' : ''}`}
+                className={`dj-pill ${platform === p.key ? 'dj-pill-active' : ''}`}
               >
                 {p.label}
               </button>
@@ -411,7 +411,7 @@ export function Library() {
           value={sort}
           onChange={(e) => setSort(e.target.value as Sort)}
           aria-label="Sort prompts"
-          className="ps-input w-auto py-1 font-mono text-xs"
+          className="dj-input w-auto py-1 font-mono text-xs"
         >
           {SORTS.map((s) => (
             <option key={s.key} value={s.key}>
@@ -430,7 +430,7 @@ export function Library() {
                 key={t}
                 aria-pressed={active}
                 onClick={() => onTagClick(t)}
-                className={`ps-tag ${active ? 'ps-tag-active' : ''}`}
+                className={`dj-tag ${active ? 'dj-tag-active' : ''}`}
               >
                 {t}
               </button>
@@ -439,7 +439,7 @@ export function Library() {
           {activeTags.length > 0 && (
             <button
               onClick={() => setActiveTags([])}
-              className="ps-btn ps-btn-ghost px-2 py-0.5 font-mono text-[11px]"
+              className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-[11px]"
             >
               clear tags
             </button>
@@ -452,13 +452,13 @@ export function Library() {
           <>
             <span className="font-mono text-xs text-ink-faint">{checkedIds.size} selected</span>
             <div className="flex gap-2">
-              <button onClick={exitSelecting} className="ps-btn ps-btn-ghost px-2 py-1 text-xs">
+              <button onClick={exitSelecting} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
                 cancel
               </button>
               <button
                 onClick={onBulkDelete}
                 disabled={checkedIds.size === 0}
-                className="ps-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
+                className="dj-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
               >
                 delete selected
               </button>
@@ -467,7 +467,7 @@ export function Library() {
         ) : (
           <button
             onClick={() => setSelecting(true)}
-            className="ps-btn ps-btn-ghost px-2 py-1 font-mono text-xs"
+            className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs"
           >
             select
           </button>
@@ -477,7 +477,7 @@ export function Library() {
       {undoId != null && (
         <div className="flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
           <span className="text-ink-soft">prompt deleted</span>
-          <button onClick={onUndoDelete} className="ps-btn ps-btn-ghost px-2 py-1 font-mono text-xs">
+          <button onClick={onUndoDelete} className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs">
             undo
           </button>
         </div>
@@ -488,7 +488,7 @@ export function Library() {
           <span className="text-ink-soft">
             {undoBatch.length} {undoBatch.length === 1 ? 'prompt' : 'prompts'} deleted
           </span>
-          <button onClick={onUndoBatch} className="ps-btn ps-btn-ghost px-2 py-1 font-mono text-xs">
+          <button onClick={onUndoBatch} className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs">
             undo
           </button>
         </div>

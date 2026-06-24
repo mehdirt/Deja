@@ -12,16 +12,16 @@ Reference via Tailwind classes (`bg-bg`, `text-ink`, `text-ink-soft`, `bg-surfac
 
 | Token | Light | Dark | Use |
 | --- | --- | --- | --- |
-| `--ps-bg` | `#faf8f3` | `#16151a` | page background (warm paper) |
-| `--ps-surface` | `#ffffff` | `#201f27` | raised cards |
-| `--ps-sunk` | `#f1ede4` | `#1b1a21` | wells, hover, skeletons |
-| `--ps-text` | `#1c1b19` | `#f3f1ea` | primary ink |
-| `--ps-text-soft` | `#6b6862` | `#a8a49b` | secondary |
-| `--ps-text-faint` | `#9a968d` | `#6e6a62` | meta / tertiary |
-| `--ps-accent` | `#5b54f0` | `#8983f5` | primary action, focus, brand |
-| `--ps-accent-soft` | `#ecebfe` | `#272534` | accent fills (chips) |
-| `--ps-line` | `#e7e2d8` | `#2e2c36` | hairline borders (always distinct from surface) |
-| `--ps-danger` | `#c0392b` | `#e06c5d` | destructive only |
+| `--dj-bg` | `#faf8f3` | `#16151a` | page background (warm paper) |
+| `--dj-surface` | `#ffffff` | `#201f27` | raised cards |
+| `--dj-sunk` | `#f1ede4` | `#1b1a21` | wells, hover, skeletons |
+| `--dj-text` | `#1c1b19` | `#f3f1ea` | primary ink |
+| `--dj-text-soft` | `#6b6862` | `#a8a49b` | secondary |
+| `--dj-text-faint` | `#9a968d` | `#6e6a62` | meta / tertiary |
+| `--dj-accent` | `#5b54f0` | `#8983f5` | primary action, focus, brand |
+| `--dj-accent-soft` | `#ecebfe` | `#272534` | accent fills (chips) |
+| `--dj-line` | `#e7e2d8` | `#2e2c36` | hairline borders (always distinct from surface) |
+| `--dj-danger` | `#c0392b` | `#e06c5d` | destructive only |
 
 Dark mode is driven by `prefers-color-scheme` — one set of variables, no class toggling.
 
@@ -47,7 +47,7 @@ Scale: `text-xs` 12 · `text-sm` 13–14 · `text-base` 15 · `text-lg` 18 · `t
 
 Defined in `globals.css` `@layer components` — compose these instead of re-styling:
 
-`.ps-card` · `.ps-chip` · `.ps-input` · `.ps-btn` / `.ps-btn-primary` / `.ps-btn-ghost` · `.ps-pill` / `.ps-pill-active`
+`.dj-card` · `.dj-chip` · `.dj-input` · `.dj-btn` / `.dj-btn-primary` / `.dj-btn-ghost` · `.dj-pill` / `.dj-pill-active`
 
 ## Logo
 

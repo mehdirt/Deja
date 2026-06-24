@@ -13,13 +13,13 @@ interface Props {
 export function LogoMark({ size = 24 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="var(--ps-accent)" />
+      <rect width="32" height="32" rx="8" fill="var(--dj-accent)" />
       {/* echo: the ghosted prior card behind */}
       <rect x="7" y="7" width="13" height="13" rx="3.5" fill="white" opacity="0.4" />
       {/* the card you're on now */}
       <rect x="12" y="12" width="13" height="13" rx="3.5" fill="white" opacity="0.95" />
       {/* terminal cursor tick on the front card */}
-      <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--ps-accent)" />
+      <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--dj-accent)" />
     </svg>
   )
 }

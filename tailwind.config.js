@@ -5,26 +5,26 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: 'var(--ps-bg)',
-        surface: 'var(--ps-surface)',
-        sunk: 'var(--ps-sunk)',
+        bg: 'var(--dj-bg)',
+        surface: 'var(--dj-surface)',
+        sunk: 'var(--dj-sunk)',
         ink: {
-          DEFAULT: 'var(--ps-text)',
-          soft: 'var(--ps-text-soft)',
-          faint: 'var(--ps-text-faint)',
+          DEFAULT: 'var(--dj-text)',
+          soft: 'var(--dj-text-soft)',
+          faint: 'var(--dj-text-faint)',
         },
         accent: {
-          DEFAULT: 'var(--ps-accent)',
-          soft: 'var(--ps-accent-soft)',
-          hover: 'var(--ps-accent-hover)',
+          DEFAULT: 'var(--dj-accent)',
+          soft: 'var(--dj-accent-soft)',
+          hover: 'var(--dj-accent-hover)',
         },
-        line: 'var(--ps-line)',
-        danger: 'var(--ps-danger)',
-        ok: 'var(--ps-ok)',
+        line: 'var(--dj-line)',
+        danger: 'var(--dj-danger)',
+        ok: 'var(--dj-ok)',
       },
       fontFamily: {
-        sans: 'var(--ps-font-sans)',
-        mono: 'var(--ps-font-mono)',
+        sans: 'var(--dj-font-sans)',
+        mono: 'var(--dj-font-mono)',
       },
       borderRadius: {
         card: '10px',

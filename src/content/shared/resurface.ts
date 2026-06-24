@@ -64,67 +64,67 @@ function createTooltip(onDismiss: () => void): Tooltip {
     const shadow = host.attachShadow({ mode: 'open' })
 
     const style = document.createElement('style')
-    // Colors are hardcoded to mirror the --ps-* tokens in src/styles/globals.css
+    // Colors are hardcoded to mirror the --dj-* tokens in src/styles/globals.css
     // (shadow DOM + :host{all:initial} blocks variable inheritance). If the
     // palette there changes, update these to match.
     style.textContent = `
       :host{all:initial}
-      .ps-rs{position:fixed;left:0;top:0;max-width:min(420px,calc(100vw - 16px));pointer-events:auto;
+      .dj-rs{position:fixed;left:0;top:0;max-width:min(420px,calc(100vw - 16px));pointer-events:auto;
         display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer;
         background:#faf8f3;color:#1c1b19;border:1px solid #e7e2d8;
         border-radius:10px;padding:8px 10px;box-shadow:0 8px 28px rgba(0,0,0,.18);
         font:13px/1.4 'Inter',system-ui,-apple-system,sans-serif;
-        animation:ps-rs-in .14s ease-out;transition:opacity .1s ease}
-      .ps-rs:hover{background:#f1ede4}
-      .ps-rs:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
-      .ps-rs-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
-      .ps-rs-lead{display:flex;align-items:center;gap:6px;color:#5b54f0;font-weight:600;white-space:nowrap}
-      .ps-rs-dot{width:6px;height:6px;border-radius:50%;background:#5b54f0;flex:none}
-      .ps-rs-preview{color:#6b6862;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+        animation:dj-rs-in .14s ease-out;transition:opacity .1s ease}
+      .dj-rs:hover{background:#f1ede4}
+      .dj-rs:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
+      .dj-rs-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+      .dj-rs-lead{display:flex;align-items:center;gap:6px;color:#5b54f0;font-weight:600;white-space:nowrap}
+      .dj-rs-dot{width:6px;height:6px;border-radius:50%;background:#5b54f0;flex:none}
+      .dj-rs-preview{color:#6b6862;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
         font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(380px,calc(100vw - 80px))}
-      .ps-rs-x{pointer-events:auto;flex:none;background:none;border:none;cursor:pointer;
+      .dj-rs-x{pointer-events:auto;flex:none;background:none;border:none;cursor:pointer;
         color:#9a968d;font:600 14px/1 'JetBrains Mono',ui-monospace,monospace;
         padding:2px 4px;border-radius:6px;align-self:flex-start}
-      .ps-rs-x:hover{background:#e7e2d8;color:#1c1b19}
-      .ps-rs-x:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
-      @keyframes ps-rs-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-      @media (prefers-reduced-motion: reduce){.ps-rs{animation:none}}
+      .dj-rs-x:hover{background:#e7e2d8;color:#1c1b19}
+      .dj-rs-x:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
+      @keyframes dj-rs-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+      @media (prefers-reduced-motion: reduce){.dj-rs{animation:none}}
       @media (prefers-color-scheme: dark){
-        .ps-rs{background:#201f27;color:#f3f1ea;border-color:#2e2c36;box-shadow:0 8px 28px rgba(0,0,0,.4)}
-        .ps-rs:hover{background:#272534}
-        .ps-rs-lead{color:#9c97f7}
-        .ps-rs-dot{background:#8983f5}
-        .ps-rs-preview{color:#a8a49b}
-        .ps-rs-x{color:#6e6a62}
-        .ps-rs-x:hover{background:#2e2c36;color:#f3f1ea}
+        .dj-rs{background:#201f27;color:#f3f1ea;border-color:#2e2c36;box-shadow:0 8px 28px rgba(0,0,0,.4)}
+        .dj-rs:hover{background:#272534}
+        .dj-rs-lead{color:#9c97f7}
+        .dj-rs-dot{background:#8983f5}
+        .dj-rs-preview{color:#a8a49b}
+        .dj-rs-x{color:#6e6a62}
+        .dj-rs-x:hover{background:#2e2c36;color:#f3f1ea}
       }
     `
     shadow.appendChild(style)
 
     card = document.createElement('button')
     card.type = 'button'
-    card.className = 'ps-rs'
+    card.className = 'dj-rs'
     card.setAttribute('aria-label', 'Copy a similar prompt you saved before')
     card.style.display = 'none'
 
     const body = document.createElement('div')
-    body.className = 'ps-rs-body'
+    body.className = 'dj-rs-body'
 
     const lead = document.createElement('span')
-    lead.className = 'ps-rs-lead'
+    lead.className = 'dj-rs-lead'
     const dot = document.createElement('span')
-    dot.className = 'ps-rs-dot'
+    dot.className = 'dj-rs-dot'
     const leadText = document.createElement('span')
     leadText.textContent = "You've asked something like this before →"
     lead.append(dot, leadText)
 
     previewEl = document.createElement('span')
-    previewEl.className = 'ps-rs-preview'
+    previewEl.className = 'dj-rs-preview'
 
     body.append(lead, previewEl)
 
     const close = document.createElement('span')
-    close.className = 'ps-rs-x'
+    close.className = 'dj-rs-x'
     close.setAttribute('aria-label', 'Dismiss')
     close.textContent = '×'
     close.addEventListener('click', (e) => {

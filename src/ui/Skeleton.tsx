@@ -1,6 +1,6 @@
 export function CardSkeleton() {
   return (
-    <div className="ps-card flex flex-col gap-3 p-4">
+    <div className="dj-card flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
         <div className="h-4 w-16 animate-pulse rounded-full bg-sunk" />
         <div className="h-3 w-12 animate-pulse rounded bg-sunk" />
