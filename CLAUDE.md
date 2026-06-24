@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-PromptShelf is a Manifest V3 Chrome extension that **passively captures prompts** sent on ChatGPT, Claude, and Gemini and stores them in a local, searchable library. v1 is intentionally lean: no LLM calls, no backend, no accounts. Everything lives in IndexedDB on the user's machine.
+PromptShelf is a Manifest V3 Chrome extension that **passively captures prompts** sent on ChatGPT, Claude, Gemini, DeepSeek, and Grok and stores them in a local, searchable library. v1 is intentionally lean: no LLM calls, no backend, no accounts. Everything lives in IndexedDB on the user's machine.
 
 ## Commands
 
@@ -27,7 +27,7 @@ There is no CI yet and no test framework conventions beyond Vitest + happy-dom.
 1. `npm run build` (or `npm run dev` for HMR)
 2. Open `chrome://extensions`, enable Developer mode
 3. "Load unpacked" → select the `dist/` directory
-4. Visit chatgpt.com, claude.ai, or gemini.google.com and send a prompt; it should appear in the popup
+4. Visit chatgpt.com, claude.ai, gemini.google.com, chat.deepseek.com, or grok.com and send a prompt; it should appear in the popup
 
 ## Architecture
 
@@ -49,7 +49,7 @@ The path alias `@/` resolves to `src/` (configured in `tsconfig.json` and `vite.
 
 ## Things to keep in mind when editing
 
-- **Site selectors break.** ChatGPT/Claude/Gemini change their DOM regularly. Selectors live in `src/content/<platform>/index.ts` so they're easy to update; resist scattering them elsewhere.
+- **Site selectors break.** Every supported site (ChatGPT, Claude, Gemini, DeepSeek, Grok) changes its DOM regularly. Selectors live in `src/content/<platform>/index.ts` so they're easy to update; resist scattering them elsewhere. A per-platform capture-health signal (`src/lib/health.ts`) flags silent breakage in the library.
 - **Never block the host page.** The content scripts must fail silently. `sendCapture` already swallows runtime errors; preserve that.
 - **Local-first is a feature, not an oversight.** Do not add network calls, telemetry, or third-party services without an explicit user-facing opt-in. Cloud sync, LLM scoring, and auto-categorization were intentionally deferred from v1 — see the concept doc for the deferred roadmap.
 - **Capture only the prompt text.** v1 does not record AI responses; don't add that without a product decision.
