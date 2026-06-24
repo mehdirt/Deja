@@ -1,7 +1,6 @@
 {
   "manifest_version": 3,
   "name": "Deja",
-  "version": "0.1.0",
   "description": "Your personal prompt library — passive capture from ChatGPT, Claude, Gemini, DeepSeek, and Grok. Local-first.",
   "action": {
     "default_popup": "src/popup/index.html",
