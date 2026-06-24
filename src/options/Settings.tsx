@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { clearAllData } from '@/lib/db'
+import { clearAllData, purgeDeleted } from '@/lib/db'
 import {
   readBlocklist,
   writeBlocklist,
@@ -17,6 +17,7 @@ export function Settings() {
   const [patternError, setPatternError] = useState<string | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
   const [cleared, setCleared] = useState(false)
+  const [purged, setPurged] = useState<number | null>(null)
 
   useEffect(() => {
     void readBlocklist().then(setBl)
@@ -66,6 +67,12 @@ export function Settings() {
     setConfirmClear(false)
     setCleared(true)
     window.setTimeout(() => setCleared(false), 4000)
+  }
+
+  const onPurgeDeleted = async () => {
+    const n = await purgeDeleted()
+    setPurged(n)
+    window.setTimeout(() => setPurged(null), 5000)
   }
 
   return (
@@ -176,6 +183,26 @@ export function Settings() {
                 )
               })}
             </div>
+          )}
+        </div>
+      </section>
+
+      {/* Purge deleted — true erase of soft-deleted rows */}
+      <section className="flex flex-col gap-2">
+        <h2 className="font-mono text-sm text-ink">purge deleted prompts</h2>
+        <p className="text-sm text-ink-soft">
+          deleting a prompt hides it but keeps the text on disk so you can undo. if something
+          sensitive was captured (a password, a key), delete it in the library, then purge here to
+          erase it for good.
+        </p>
+        <div className="flex items-center gap-3">
+          <button onClick={onPurgeDeleted} className="ps-btn px-3 py-1.5 text-sm hover:text-danger">
+            purge deleted now
+          </button>
+          {purged != null && (
+            <span className="font-mono text-xs text-ink-faint">
+              {purged === 0 ? 'nothing to purge.' : `purged ${purged} deleted prompt${purged === 1 ? '' : 's'}.`}
+            </span>
           )}
         </div>
       </section>

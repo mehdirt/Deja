@@ -1,7 +1,7 @@
 {
   "name": "promptshelf",
   "version": "0.1.0",
-  "description": "Your personal prompt library — passive capture from ChatGPT, Claude, and Gemini. Local-first.",
+  "description": "Your personal prompt library — passive capture from ChatGPT, Claude, Gemini, DeepSeek, and Grok. Local-first.",
   "private": true,
   "type": "module",
   "scripts": {

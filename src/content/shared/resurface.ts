@@ -10,6 +10,7 @@
 // a handful of hardcoded colors and a dark-mode media query.
 
 import type { Platform, SimilarMatch, SimilarResponse } from '@/lib/types'
+import { isCapturableField } from '@/lib/sensitive'
 
 // Quiet by default — the host page's console must stay clean (Principle 5:
 // fail silent to them). Flip to true only when debugging locally.
@@ -22,8 +23,12 @@ function log(...args: unknown[]) {
   if (DEBUG) console.log('[PromptShelf:resurface]', ...args)
 }
 
+// Read only what we're allowed to read. Like capture, resurface must never
+// touch an <input> (so a password field's value is unreachable) — it only ever
+// reads the textarea/contenteditable composer. Inputs are gated out upstream
+// by isCapturableField, but we also refuse to read .value here as a backstop.
 function readText(el: HTMLElement): string {
-  if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) return el.value
+  if (el instanceof HTMLTextAreaElement) return el.value
   return el.innerText
 }
 
@@ -294,6 +299,13 @@ export function attachResurface(
     if (dismissed) return
     const el = getInput()
     if (!el) return
+    // Same gate as capture: never read a sensitive or non-composer field, so a
+    // password/OTP/credential the user types can't be sent to the worker even
+    // for an in-memory similarity check.
+    if (!isCapturableField(el)) {
+      hide()
+      return
+    }
     // Only react to typing in the prompt input itself.
     const target = e.target as Node | null
     if (target && target !== el && !el.contains(target)) {

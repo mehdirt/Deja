@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "PromptShelf",
   "version": "0.1.0",
-  "description": "Your personal prompt library — passive capture from ChatGPT, Claude, and Gemini. Local-first.",
+  "description": "Your personal prompt library — passive capture from ChatGPT, Claude, Gemini, DeepSeek, and Grok. Local-first.",
   "action": {
     "default_popup": "src/popup/index.html",
     "default_title": "PromptShelf"

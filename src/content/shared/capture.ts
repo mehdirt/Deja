@@ -1,10 +1,13 @@
 import type { CaptureResponse, CapturedPromptMessage, Platform } from '@/lib/types'
 import { writeHealth } from '@/lib/health'
 import { isBlocked } from '@/lib/blocklist'
+import { isCapturableField, withinComposer, looksLikeAuthPath, safeCaptureUrl } from '@/lib/sensitive'
 import { getBlocklist } from './blocklist'
 import { showSavedToast } from './toast'
 
-const DEBUG = true
+// Quiet by default — the host page's console must stay clean, and capture
+// activity (even just lengths) shouldn't be narrated on chatgpt.com et al.
+const DEBUG = false
 
 function log(...args: unknown[]) {
   if (DEBUG) console.log('[PromptShelf]', ...args)
@@ -22,7 +25,8 @@ export function sendCapture(text: string, platform: Platform): void {
   }
   const msg: CapturedPromptMessage = {
     type: 'PROMPT_CAPTURED',
-    payload: { text: trimmed, platform, url: location.href },
+    // Store only origin+path — query/hash can carry OAuth/magic-link tokens.
+    payload: { text: trimmed, platform, url: safeCaptureUrl(location.href) },
   }
   log('capturing', trimmed.length, 'chars on', platform)
   // After an extension reload, an old content script is orphaned and
@@ -58,27 +62,24 @@ export function sendCapture(text: string, platform: Platform): void {
   }
 }
 
-function isEditable(el: Element | null): el is HTMLElement {
-  if (!el) return false
-  if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) return true
-  return el instanceof HTMLElement && el.isContentEditable
-}
-
 function readText(el: HTMLElement): string {
-  if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) return el.value
+  if (el instanceof HTMLTextAreaElement) return el.value
   return el.innerText
 }
 
-// Find the editable the user is actually typing in. composedPath() pierces
-// Shadow DOM and gives us the real target even when the event is retargeted.
+// Find the capturable editable the user is actually typing in. composedPath()
+// pierces Shadow DOM and gives us the real target even when the event is
+// retargeted. isCapturableField excludes <input> entirely (so password/email/
+// search fields can never match) and refuses credential/OTP/payment fields.
 function editableFromEvent(e: Event): HTMLElement | null {
   const path = (e.composedPath?.() ?? []) as Element[]
   for (const node of path) {
-    if (isEditable(node as Element)) return node as HTMLElement
+    if (isCapturableField(node as Element)) return node as HTMLElement
   }
   const target = e.target as Element | null
-  const closest = target?.closest?.('textarea, input, [contenteditable="true"]')
-  if (isEditable(closest ?? null)) return closest as HTMLElement
+  // Note: no bare "input" in this selector — inputs are never the composer.
+  const closest = target?.closest?.('textarea, [contenteditable="true"]')
+  if (isCapturableField(closest ?? null)) return closest as HTMLElement
   return null
 }
 
@@ -105,10 +106,24 @@ export function attachSubmitHook(
     sendCapture(text, platform)
   }
 
+  // Only capture an editable that belongs to the site's known composer. If the
+  // composer can't be found (login page, selector drift), `withinComposer`
+  // returns true and we rely on isCapturableField alone — which already refuses
+  // inputs and credential fields, so a login screen captures nothing.
+  const captureIfComposer = (el: Element | null, via: string) => {
+    if (!isCapturableField(el)) return
+    const composer = getElementFallback()
+    // If we can't find the composer and the page looks like a login/auth
+    // screen, refuse — don't fall back to capturing a stray editable there.
+    if (!composer && looksLikeAuthPath(location.pathname)) return
+    if (!withinComposer(el, composer)) return
+    capture(el, via)
+  }
+
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.isComposing) return
     const el = editableFromEvent(e) ?? document.activeElement
-    if (isEditable(el as Element)) capture(el as HTMLElement, 'enter')
+    captureIfComposer(el, 'enter')
   }
 
   const onClick = (e: MouseEvent) => {
@@ -123,10 +138,9 @@ export function attachSubmitHook(
     ).toLowerCase()
     if (!/send|submit/.test(label)) return
     // The button isn't the editable — find it by focus, then fallback selector.
-    const el =
-      (isEditable(document.activeElement as Element) ? (document.activeElement as HTMLElement) : null) ??
-      getElementFallback()
-    capture(el, 'send-button')
+    const focused = document.activeElement
+    const el = isCapturableField(focused) ? (focused as HTMLElement) : getElementFallback()
+    captureIfComposer(el, 'send-button')
   }
 
   document.addEventListener('keydown', onKeyDown, true)

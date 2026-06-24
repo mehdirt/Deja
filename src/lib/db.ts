@@ -197,6 +197,17 @@ export async function importPrompts(rows: unknown): Promise<ImportResult> {
   return { imported: toAdd.length, skipped }
 }
 
+// Purge deleted -------------------------------------------------------
+// Permanently remove every soft-deleted row. Surgical counterpart to
+// clearAllData: a user can soft-delete a specific prompt in the library and
+// then erase it for good here — without wiping everything. This matters when
+// the thing to erase is a secret that must not linger in IndexedDB, since the
+// normal delete path is a tombstone (deletedAt) that keeps the text on disk.
+// Returns how many rows were purged. Pure hard-delete; never soft.
+export async function purgeDeleted(): Promise<number> {
+  return db.prompts.filter((p) => p.deletedAt != null).delete()
+}
+
 // Clear all ------------------------------------------------------------
 // Hard wipe of the entire prompts table. This is the ONE place a hard delete of
 // real prompts is acceptable, because it is an explicit, user-initiated,
