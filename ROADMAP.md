@@ -106,13 +106,20 @@ Make it impossible to feel locked in.
 
 ---
 
-## Phase 5 — Ship it *(target: 1 week)*
+## Phase 5 — Ship it *(in progress — artifacts prepared, submission pending)*
 
-- Chrome Web Store listing (screenshots, demo video, copy)
-- Landing page (one page, no signup, link to install)
-- Open the repo (or don't — decide based on team size)
-- Optional: write one blog post about the "prompt graveyard" idea — the framing sells the product
-- Invite the first ~50 users from communities you're already in (no broad launch yet)
+Prepared in-repo (the parts that can be authored from code):
+- Chrome Web Store listing **copy** ✅ — `store/listing.md` (summary, description, permission justifications, single-purpose + data-safety answers, pre-submission checklist).
+- Landing page ✅ — `site/index.html` (one self-contained file, no signup, no third-party requests; install CTA + "load from source"). Has `REPLACE_*` placeholders to swap once the listing/repo are live.
+- Asset & launch plan ✅ — `store/assets.md` (screenshot shot list, promo-tile specs, demo-video script).
+- Ship-readiness fix ✅ — dropped the unused `activeTab` permission; the extension now requests only `storage` + the five content-script hosts.
+
+Still requires a live browser / human (can't be done from the repo):
+- Capture screenshots and record the demo video.
+- Write/host the privacy-policy URL; create the Web Store dev account and submit zipped `dist/`.
+- **Open the repo (or don't)** — undecided; if opening, add a `LICENSE` and keep the source links, else remove them (see `store/assets.md`).
+- Optional: the "prompt graveyard" blog post.
+- Invite the first ~50 users from communities you're already in (no broad launch yet).
 
 **Exit criteria:** 50 weekly-active users with no support emails. Then broaden.
 
