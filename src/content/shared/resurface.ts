@@ -25,6 +25,24 @@ function log(...args: unknown[]) {
   if (DEBUG) console.log('[Deja:resurface]', ...args)
 }
 
+// A small rotation of openers so the moment doesn't feel robotic — one is
+// picked at random each time the tooltip appears (not while stepping through
+// candidates). Keep them calm and short; the trailing arrow is part of the copy.
+const LEAD_PHRASES = [
+  "You've asked something like this before →",
+  "You've been here before →",
+  "You've written something like this →",
+  'This looks familiar →',
+  'Seen this one before →',
+  'Déjà vu — you saved a prompt like this →',
+  'An earlier prompt of yours fits →',
+  "Wait — you've done this before →",
+]
+
+function randomLead(): string {
+  return LEAD_PHRASES[Math.floor(Math.random() * LEAD_PHRASES.length)]
+}
+
 // Read only what we're allowed to read. Like capture, resurface must never
 // touch an <input> (so a password field's value is unreachable) — it only ever
 // reads the textarea/contenteditable composer. Inputs are gated out upstream
@@ -32,6 +50,24 @@ function log(...args: unknown[]) {
 function readText(el: HTMLElement): string {
   if (el instanceof HTMLTextAreaElement) return el.value
   return el.innerText
+}
+
+// The editable the user is actually typing in, resolved from the event path —
+// the same approach capture.ts uses. This is what makes resurface react
+// wherever capture does: trusting the page selector alone is fragile, because a
+// site's composer node can differ from what the selector resolves to (or drift
+// over time), and then the old "is the typed element the selector element?"
+// check would silently bail and never query. composedPath() also pierces Shadow
+// DOM. Returns null if the event isn't in a capturable (textarea/contenteditable,
+// non-sensitive) field, so password/OTP fields are still never read.
+function editableFromEvent(e: Event): HTMLElement | null {
+  const path = (e.composedPath?.() ?? []) as Element[]
+  for (const node of path) {
+    if (isCapturableField(node)) return node
+  }
+  const target = e.target as Element | null
+  const closest = target?.closest?.('textarea, [contenteditable="true"]') ?? null
+  return isCapturableField(closest) ? closest : null
 }
 
 // ── Shadow-DOM tooltip ──────────────────────────────────────────────────────
@@ -61,6 +97,7 @@ interface Tooltip {
 function createTooltip(onDismiss: () => void): Tooltip {
   let host: HTMLDivElement | null = null
   let card: HTMLButtonElement | null = null
+  let leadEl: HTMLSpanElement | null = null
   let previewEl: HTMLSpanElement | null = null
   let metaEl: HTMLSpanElement | null = null
   let countEl: HTMLSpanElement | null = null
@@ -140,9 +177,10 @@ function createTooltip(onDismiss: () => void): Tooltip {
     lead.className = 'dj-rs-lead'
     const dot = document.createElement('span')
     dot.className = 'dj-rs-dot'
-    const leadText = document.createElement('span')
-    leadText.textContent = "You've asked something like this before →"
-    lead.append(dot, leadText)
+    leadEl = document.createElement('span')
+    // The opener text is chosen at random in show(), so each appearance varies.
+    leadEl.textContent = LEAD_PHRASES[0]
+    lead.append(dot, leadEl)
 
     previewEl = document.createElement('span')
     previewEl.className = 'dj-rs-preview'
@@ -207,6 +245,9 @@ function createTooltip(onDismiss: () => void): Tooltip {
       ensure()
       copyHandler = handlers.onCopy
       nextHandler = handlers.onNext
+      // Pick a fresh opener each time the tooltip appears (kept stable while
+      // the user steps through candidates via update()).
+      if (leadEl) leadEl.textContent = randomLead()
       render(view)
       if (card) card.style.display = 'flex'
       visible = true
@@ -245,6 +286,7 @@ function createTooltip(onDismiss: () => void): Tooltip {
       }
       host = null
       card = null
+      leadEl = null
       previewEl = null
       metaEl = null
       countEl = null
@@ -273,6 +315,10 @@ export function attachResurface(
   let lastQueried = ''
   let repositionTimer: number | undefined
   let queryToken = 0
+  // The editable the user is currently typing in, as resolved from the input
+  // event. We anchor and re-read from this (falling back to the page selector)
+  // so resurface tracks the real composer even when it differs from getInput().
+  let activeEl: HTMLElement | null = null
 
   const viewFor = (i: number): CandidateView => ({
     preview: currentMatches[i].text.replace(/\s+/g, ' ').trim(),
@@ -282,7 +328,7 @@ export function attachResurface(
   })
 
   const anchorRect = (): DOMRect | null => {
-    const el = getInput()
+    const el = activeEl ?? getInput()
     if (!el) return null
     const r = el.getBoundingClientRect()
     if (r.width === 0 && r.height === 0) return null
@@ -302,6 +348,7 @@ export function attachResurface(
     currentMatches = []
     currentIndex = 0
     lastQueried = ''
+    activeEl = null
     // Invalidate any in-flight query so a late response (debounce + worker
     // wake latency) can't re-show the tooltip after submit/blur/dismiss.
     queryToken += 1
@@ -387,22 +434,19 @@ export function attachResurface(
 
   const onInput = (e: Event) => {
     if (dismissed) return
-    const el = getInput()
+    // Resolve the editable from the event first (robust to composers that
+    // differ from the page selector or have drifted), falling back to the
+    // platform selector. This is the same resolution capture uses, so resurface
+    // now fires wherever capture does. isCapturableField on the event path
+    // already excludes <input>/password/OTP fields, so credentials are never
+    // read even for an in-memory similarity check.
+    const el = editableFromEvent(e) ?? getInput()
     if (!el) return
-    // Same gate as capture: never read a sensitive or non-composer field, so a
-    // password/OTP/credential the user types can't be sent to the worker even
-    // for an in-memory similarity check.
     if (!isCapturableField(el)) {
       hide()
       return
     }
-    // Only react to typing in the prompt input itself.
-    const target = e.target as Node | null
-    if (target && target !== el && !el.contains(target)) {
-      // composedPath fallback for retargeted contenteditable events
-      const path = (e.composedPath?.() ?? []) as Node[]
-      if (!path.includes(el)) return
-    }
+    activeEl = el
     const text = readText(el)
     window.clearTimeout(debounceTimer)
     debounceTimer = window.setTimeout(() => runQuery(text), DEBOUNCE_MS)
@@ -432,7 +476,7 @@ export function attachResurface(
   const onFocusOut = () => {
     // If the input is cleared or focus leaves it, the prompt is gone — hide.
     window.setTimeout(() => {
-      const el = getInput()
+      const el = activeEl ?? getInput()
       if (!el || readText(el).trim().length < MIN_CHARS) hide()
     }, 0)
   }
