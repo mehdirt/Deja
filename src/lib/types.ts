@@ -30,7 +30,19 @@ export type SimilarQueryMessage = {
   text: string
 }
 
-export type RuntimeMessage = CapturedPromptMessage | UndoCaptureMessage | SimilarQueryMessage
+// Open the full library (options page) pre-searched with the user's in-progress
+// text — fired by the resurface tooltip's "see all" affordance when there are
+// more matches than it surfaces inline.
+export type OpenLibraryMessage = {
+  type: 'OPEN_LIBRARY'
+  query: string
+}
+
+export type RuntimeMessage =
+  | CapturedPromptMessage
+  | UndoCaptureMessage
+  | SimilarQueryMessage
+  | OpenLibraryMessage
 
 export type CaptureResponse = { ok: true; id: number } | { ok: false; error: string }
 
@@ -46,9 +58,11 @@ export type SimilarMatch = {
 }
 
 // The top candidates above the similarity threshold, best first (empty if none
-// clear it). The tooltip shows the first and lets the user step through the rest.
+// clear it). `matches` is capped to the few the tooltip surfaces; `total` is how
+// many cleared the threshold overall, so the tooltip can offer "see all" when
+// there are more than it shows.
 export type SimilarResponse =
-  | { ok: true; matches: SimilarMatch[] }
+  | { ok: true; matches: SimilarMatch[]; total: number }
   | { ok: false; error: string }
 
 export const PLATFORM_LABEL: Record<Platform, string> = {

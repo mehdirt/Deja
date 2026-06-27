@@ -37,7 +37,15 @@ const SORTS: Array<{ key: Sort; label: string }> = [
 export function Library() {
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [loading, setLoading] = useState(true)
-  const [query, setQuery] = useState('')
+  // Seed the search from a ?q= deep link (the resurface tooltip's "see all"
+  // opens the library pre-searched with the user's in-progress text).
+  const [query, setQuery] = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('q') ?? ''
+    } catch {
+      return ''
+    }
+  })
   const deferredQuery = useDeferredValue(query)
   const [platform, setPlatform] = useState<Platform | 'all'>('all')
   const [sort, setSort] = useState<Sort>('newest')

@@ -6,7 +6,13 @@ import {
   onBlocklistChange,
   type Blocklist,
 } from '@/lib/blocklist'
+import { readPrefs, writePrefs, onPrefsChange, type ResurfaceClick } from '@/lib/prefs'
 import { CaptureStatus } from '@/ui/CaptureStatus'
+
+const RESURFACE_OPTIONS: Array<{ key: ResurfaceClick; label: string; hint: string }> = [
+  { key: 'copy', label: 'copy to clipboard', hint: 'click a match to copy it — paste it yourself' },
+  { key: 'insert', label: 'insert at cursor', hint: 'click a match to drop it into the box at your cursor' },
+]
 
 // Settings — data controls + the capture blocklist + a capture-health view.
 // Calm and lowercase, on-voice. Destructive actions ask twice.
@@ -18,11 +24,22 @@ export function Settings() {
   const [confirmClear, setConfirmClear] = useState(false)
   const [cleared, setCleared] = useState(false)
   const [purged, setPurged] = useState<number | null>(null)
+  const [resurfaceClick, setResurfaceClick] = useState<ResurfaceClick>('copy')
 
   useEffect(() => {
     void readBlocklist().then(setBl)
     return onBlocklistChange(setBl)
   }, [])
+
+  useEffect(() => {
+    void readPrefs().then((p) => setResurfaceClick(p.resurfaceClick))
+    return onPrefsChange((p) => setResurfaceClick(p.resurfaceClick))
+  }, [])
+
+  const setResurface = async (next: ResurfaceClick) => {
+    setResurfaceClick(next)
+    await writePrefs({ resurfaceClick: next })
+  }
 
   const persist = async (next: Blocklist) => {
     setBl(next)
@@ -85,6 +102,30 @@ export function Settings() {
           prompt box; red means the site changed and capture may be paused there.
         </p>
         <CaptureStatus />
+      </section>
+
+      {/* Resurface behavior */}
+      <section className="flex flex-col gap-2">
+        <h2 className="font-mono text-sm text-ink">when you click a resurfaced match</h2>
+        <p className="text-sm text-ink-soft">
+          deja can suggest a similar prompt you saved before as you type. choose what a click does.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {RESURFACE_OPTIONS.map((o) => (
+            <button
+              key={o.key}
+              onClick={() => setResurface(o.key)}
+              aria-pressed={resurfaceClick === o.key}
+              title={o.hint}
+              className={`dj-pill ${resurfaceClick === o.key ? 'dj-pill-active' : ''}`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        <p className="font-mono text-xs text-ink-faint">
+          {RESURFACE_OPTIONS.find((o) => o.key === resurfaceClick)?.hint}
+        </p>
       </section>
 
       {/* Blocklist */}

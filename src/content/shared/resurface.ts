@@ -1,10 +1,15 @@
 // "You've Been Here Before" — the resurface moment. As the user types, we
 // debounce, ask the background worker for the closest prior prompts, and float
-// a gentle tooltip above the input. Clicking it copies the OLD prompt to the
-// clipboard (we never auto-fill — respect the user). When more than one prompt
-// matches, the user can step through them; each one shows the words it shares
-// with what they're typing, so the match isn't a black box. Dismissible per
-// page session, never nags. Read-only: this file captures nothing.
+// a gentle tooltip above the input. Clicking a match COPIES it to the clipboard
+// by default (and confirms it did); if the user opts into "insert at cursor" in
+// settings, the click instead inserts it at the caret in the composer. Either
+// way it's an explicit click — we never silently auto-fill, and never overwrite
+// what's already typed. When more than one prompt matches, the user can step
+// through them, and when more match than we surface, a "see all" jumps to the
+// library. Dismissible per page session, never nags.
+//
+// This file never captures (saves) anything. The only time it writes to the
+// host page is the opt-in insert, on an explicit click.
 //
 // Rendered inside a Shadow DOM so host-page CSS can't break the tooltip and
 // our CSS can't leak into the host page. Mirrors the "notebook meets terminal"
@@ -13,6 +18,7 @@
 
 import type { Platform, SimilarMatch, SimilarResponse } from '@/lib/types'
 import { isCapturableField } from '@/lib/sensitive'
+import { readPrefs, onPrefsChange } from '@/lib/prefs'
 
 // Quiet by default — the host page's console must stay clean (Principle 5:
 // fail silent to them). Flip to true only when debugging locally.
@@ -20,6 +26,7 @@ const DEBUG = false
 const DEBOUNCE_MS = 400
 const MIN_CHARS = 15
 const REPOSITION_THROTTLE_MS = 100
+const COPIED_CONFIRM_MS = 1100
 
 function log(...args: unknown[]) {
   if (DEBUG) console.log('[Deja:resurface]', ...args)
@@ -52,6 +59,31 @@ function readText(el: HTMLElement): string {
   return el.innerText
 }
 
+// Insert text at the caret in the composer the user is typing in (opt-in path).
+// execCommand('insertText') is deprecated but remains the most reliable way to
+// insert at the caret across both <textarea> and rich contenteditable editors
+// (ProseMirror, Quill) — it's undoable and the site's framework registers it as
+// real input. Falls back to a manual splice for plain textareas. Returns false
+// if nothing could be inserted (caller then falls back to copy). Never throws.
+function insertAtCaret(el: HTMLElement, text: string): boolean {
+  try {
+    el.focus()
+    if (document.execCommand('insertText', false, text)) return true
+    if (el instanceof HTMLTextAreaElement) {
+      const start = el.selectionStart ?? el.value.length
+      const end = el.selectionEnd ?? el.value.length
+      el.value = el.value.slice(0, start) + text + el.value.slice(end)
+      const caret = start + text.length
+      el.selectionStart = el.selectionEnd = caret
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+      return true
+    }
+    return false
+  } catch {
+    return false
+  }
+}
+
 // The editable the user is actually typing in, resolved from the event path —
 // the same approach capture.ts uses. This is what makes resurface react
 // wherever capture does: trusting the page selector alone is fragile, because a
@@ -78,16 +110,21 @@ interface CandidateView {
   terms: string[]
   index: number
   total: number
+  // How many additional matches exist beyond the ones surfaced inline (drives
+  // the "see all" affordance). 0 means the tooltip shows everything that matched.
+  more: number
 }
 
 interface TooltipHandlers {
-  onCopy: () => void
+  onAction: () => void
   onNext: () => void
+  onSeeAll: () => void
 }
 
 interface Tooltip {
   show: (view: CandidateView, handlers: TooltipHandlers) => void
   update: (view: CandidateView) => void
+  confirm: (message: string) => void
   hide: () => void
   reposition: (anchor: DOMRect) => void
   isVisible: () => boolean
@@ -100,10 +137,13 @@ function createTooltip(onDismiss: () => void): Tooltip {
   let leadEl: HTMLSpanElement | null = null
   let previewEl: HTMLSpanElement | null = null
   let metaEl: HTMLSpanElement | null = null
+  let ctlEl: HTMLSpanElement | null = null
   let countEl: HTMLSpanElement | null = null
   let nextEl: HTMLSpanElement | null = null
-  let copyHandler: (() => void) | null = null
+  let seeAllEl: HTMLSpanElement | null = null
+  let actionHandler: (() => void) | null = null
   let nextHandler: (() => void) | null = null
+  let seeAllHandler: (() => void) | null = null
   let visible = false
 
   const ensure = () => {
@@ -144,11 +184,14 @@ function createTooltip(onDismiss: () => void): Tooltip {
       .dj-rs-meta:empty{display:none}
       .dj-rs-ctl{display:flex;align-items:center;gap:4px;flex:none;align-self:flex-start}
       .dj-rs-count{color:#9a968d;font:600 10px/1 'JetBrains Mono',ui-monospace,monospace;white-space:nowrap}
+      .dj-rs-all{pointer-events:auto;flex:none;background:none;border:none;cursor:pointer;white-space:nowrap;
+        color:#5b54f0;font:600 11px/1 'Inter',system-ui,sans-serif;padding:2px 5px;border-radius:6px}
+      .dj-rs-all:hover{background:#ecebfe}
       .dj-rs-next,.dj-rs-x{pointer-events:auto;flex:none;background:none;border:none;cursor:pointer;
         color:#9a968d;font:600 14px/1 'JetBrains Mono',ui-monospace,monospace;
         padding:2px 4px;border-radius:6px}
       .dj-rs-next:hover,.dj-rs-x:hover{background:#e7e2d8;color:#1c1b19}
-      .dj-rs-next:focus-visible,.dj-rs-x:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
+      .dj-rs-all:focus-visible,.dj-rs-next:focus-visible,.dj-rs-x:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
       @keyframes dj-rs-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
       @media (prefers-reduced-motion: reduce){.dj-rs{animation:none}}
       @media (prefers-color-scheme: dark){
@@ -158,6 +201,8 @@ function createTooltip(onDismiss: () => void): Tooltip {
         .dj-rs-dot{background:#8983f5}
         .dj-rs-preview{color:#a8a49b}
         .dj-rs-meta,.dj-rs-count{color:#6e6a62}
+        .dj-rs-all{color:#9c97f7}
+        .dj-rs-all:hover{background:#272534}
         .dj-rs-next,.dj-rs-x{color:#6e6a62}
         .dj-rs-next:hover,.dj-rs-x:hover{background:#2e2c36;color:#f3f1ea}
       }
@@ -167,8 +212,12 @@ function createTooltip(onDismiss: () => void): Tooltip {
     card = document.createElement('button')
     card.type = 'button'
     card.className = 'dj-rs'
-    card.setAttribute('aria-label', 'Copy a similar prompt you saved before')
+    card.setAttribute('aria-label', 'Reuse a similar prompt you saved before')
     card.style.display = 'none'
+    // Keep the composer focused when the card is pressed: preventing the default
+    // mousedown stops focus from moving to the button, so the opt-in insert can
+    // write at the caret of the field the user was typing in.
+    card.addEventListener('mousedown', (e) => e.preventDefault())
 
     const body = document.createElement('div')
     body.className = 'dj-rs-body'
@@ -190,13 +239,21 @@ function createTooltip(onDismiss: () => void): Tooltip {
 
     body.append(lead, previewEl, metaEl)
 
-    // Right-side controls: a "1/3" counter and a "›" step button (both shown
-    // only when there's more than one match), then the dismiss ×. These are
-    // <span>s — not interactive content per HTML, so nesting them inside the
-    // <button> card is valid — and each stops propagation so it doesn't trip
-    // the card's copy action.
-    const ctl = document.createElement('span')
-    ctl.className = 'dj-rs-ctl'
+    // Right-side controls: a "see all" link (only when more matched than we
+    // surface), a "1/3" counter and a "›" step button (only when >1 surfaced),
+    // then the dismiss ×. These are <span>s — not interactive content per HTML,
+    // so nesting them inside the <button> card is valid — and each stops
+    // propagation so it doesn't trip the card's primary action.
+    ctlEl = document.createElement('span')
+    ctlEl.className = 'dj-rs-ctl'
+
+    seeAllEl = document.createElement('span')
+    seeAllEl.className = 'dj-rs-all'
+    seeAllEl.textContent = 'see all →'
+    seeAllEl.addEventListener('click', (e) => {
+      e.stopPropagation()
+      seeAllHandler?.()
+    })
 
     countEl = document.createElement('span')
     countEl.className = 'dj-rs-count'
@@ -220,11 +277,11 @@ function createTooltip(onDismiss: () => void): Tooltip {
       onDismiss()
     })
 
-    ctl.append(countEl, nextEl, close)
+    ctlEl.append(seeAllEl, countEl, nextEl, close)
 
-    card.addEventListener('click', () => copyHandler?.())
+    card.addEventListener('click', () => actionHandler?.())
 
-    card.append(body, ctl)
+    card.append(body, ctlEl)
     shadow.appendChild(card)
     document.documentElement.appendChild(host)
   }
@@ -238,13 +295,20 @@ function createTooltip(onDismiss: () => void): Tooltip {
       countEl.style.display = multi ? '' : 'none'
     }
     if (nextEl) nextEl.style.display = multi ? '' : 'none'
+    if (seeAllEl) seeAllEl.style.display = view.more > 0 ? '' : 'none'
   }
 
   return {
     show(view, handlers) {
       ensure()
-      copyHandler = handlers.onCopy
+      actionHandler = handlers.onAction
       nextHandler = handlers.onNext
+      seeAllHandler = handlers.onSeeAll
+      // Restore the normal layout in case the card was last left in a "copied"
+      // confirmation state (which hides the preview/meta/controls).
+      if (previewEl) previewEl.style.display = ''
+      if (metaEl) metaEl.style.display = ''
+      if (ctlEl) ctlEl.style.display = ''
       // Pick a fresh opener each time the tooltip appears (kept stable while
       // the user steps through candidates via update()).
       if (leadEl) leadEl.textContent = randomLead()
@@ -255,6 +319,15 @@ function createTooltip(onDismiss: () => void): Tooltip {
     update(view) {
       if (!visible) return
       render(view)
+    },
+    confirm(message) {
+      if (!visible) return
+      // Collapse to a single confirmation line ("copied to clipboard ✓"); the
+      // caller hides the tooltip shortly after.
+      if (leadEl) leadEl.textContent = message
+      if (previewEl) previewEl.style.display = 'none'
+      if (metaEl) metaEl.style.display = 'none'
+      if (ctlEl) ctlEl.style.display = 'none'
     },
     hide() {
       if (card) card.style.display = 'none'
@@ -289,10 +362,13 @@ function createTooltip(onDismiss: () => void): Tooltip {
       leadEl = null
       previewEl = null
       metaEl = null
+      ctlEl = null
       countEl = null
       nextEl = null
-      copyHandler = null
+      seeAllEl = null
+      actionHandler = null
       nextHandler = null
+      seeAllHandler = null
       visible = false
     },
   }
@@ -312,19 +388,32 @@ export function attachResurface(
   let dismissed = false // dismissed for this page session — never nag again
   let currentMatches: SimilarMatch[] = []
   let currentIndex = 0
+  let grandTotal = 0 // total matches above threshold, incl. those not surfaced
   let lastQueried = ''
   let repositionTimer: number | undefined
+  let confirmTimer: number | undefined
+  let confirming = false // showing the "copied" confirmation; suppress re-query
   let queryToken = 0
+  // Click behavior, from prefs: copy to clipboard (default) or insert at caret.
+  let insertMode = false
   // The editable the user is currently typing in, as resolved from the input
   // event. We anchor and re-read from this (falling back to the page selector)
   // so resurface tracks the real composer even when it differs from getInput().
   let activeEl: HTMLElement | null = null
+
+  void readPrefs().then((p) => {
+    insertMode = p.resurfaceClick === 'insert'
+  })
+  const unsubPrefs = onPrefsChange((p) => {
+    insertMode = p.resurfaceClick === 'insert'
+  })
 
   const viewFor = (i: number): CandidateView => ({
     preview: currentMatches[i].text.replace(/\s+/g, ' ').trim(),
     terms: currentMatches[i].terms,
     index: i,
     total: currentMatches.length,
+    more: Math.max(0, grandTotal - currentMatches.length),
   })
 
   const anchorRect = (): DOMRect | null => {
@@ -347,8 +436,11 @@ export function attachResurface(
   const hide = () => {
     currentMatches = []
     currentIndex = 0
+    grandTotal = 0
     lastQueried = ''
     activeEl = null
+    confirming = false
+    window.clearTimeout(confirmTimer)
     // Invalidate any in-flight query so a late response (debounce + worker
     // wake latency) can't re-show the tooltip after submit/blur/dismiss.
     queryToken += 1
@@ -360,31 +452,57 @@ export function attachResurface(
     hide()
   }
 
-  const onClickCopy = () => {
+  // Primary click on a match: insert at the caret if the user opted in (and the
+  // composer is still around), otherwise copy to the clipboard and confirm it.
+  const onAction = () => {
     const match = currentMatches[currentIndex]
     if (!match) return
+    const el = activeEl ?? getInput()
+    if (insertMode && el && insertAtCaret(el, match.text)) {
+      log('inserted prior prompt at caret')
+      hide()
+      return
+    }
+    // Copy (the default, or insert fell back). Confirm in-place so the user
+    // knows it landed on the clipboard, then tuck the tooltip away.
     try {
       void navigator.clipboard?.writeText(match.text)?.catch(() => {})
     } catch {
       /* clipboard unavailable — fail silently, never disturb the host page */
     }
     log('copied prior prompt to clipboard')
-    // A copy is a successful resurface; tuck the tooltip away for now.
-    hide()
+    confirming = true
+    tooltip.confirm('copied to clipboard ✓')
+    window.clearTimeout(confirmTimer)
+    confirmTimer = window.setTimeout(hide, COPIED_CONFIRM_MS)
   }
 
   // Step to the next candidate, wrapping around. We don't swap in fresh query
   // results while the tooltip is up (that reads as pushy), so stepping only
   // ever cycles the set that was frozen when the tooltip first appeared.
   const onNext = () => {
-    if (currentMatches.length < 2) return
+    if (confirming || currentMatches.length < 2) return
     currentIndex = (currentIndex + 1) % currentMatches.length
     tooltip.update(viewFor(currentIndex))
     reposition()
   }
 
+  // Open the full library, pre-searched with what the user is typing, when more
+  // matched than we surfaced inline.
+  const onSeeAll = () => {
+    if (!chrome.runtime?.id) return
+    try {
+      void chrome.runtime
+        .sendMessage({ type: 'OPEN_LIBRARY', query: lastQueried })
+        .catch(() => {})
+    } catch {
+      /* orphaned content script — never throw into the host page */
+    }
+    hide()
+  }
+
   const runQuery = (text: string) => {
-    if (dismissed) return
+    if (dismissed || confirming) return
     const trimmed = text.trim()
     if (trimmed.length < MIN_CHARS) {
       hide()
@@ -421,7 +539,8 @@ export function attachResurface(
           }
           currentMatches = matches
           currentIndex = 0
-          tooltip.show(viewFor(0), { onCopy: onClickCopy, onNext })
+          grandTotal = resp.total
+          tooltip.show(viewFor(0), { onAction, onNext, onSeeAll })
           reposition()
         })
         .catch(() => {
@@ -475,7 +594,11 @@ export function attachResurface(
 
   const onFocusOut = () => {
     // If the input is cleared or focus leaves it, the prompt is gone — hide.
+    // While confirming a copy, leave the tooltip alone (clicking it blurred the
+    // composer); its own timer will dismiss it.
+    if (confirming) return
     window.setTimeout(() => {
+      if (confirming) return
       const el = activeEl ?? getInput()
       if (!el || readText(el).trim().length < MIN_CHARS) hide()
     }, 0)
@@ -492,6 +615,8 @@ export function attachResurface(
   return () => {
     window.clearTimeout(debounceTimer)
     window.clearTimeout(repositionTimer)
+    window.clearTimeout(confirmTimer)
+    unsubPrefs()
     document.removeEventListener('input', onInput, true)
     document.removeEventListener('keydown', onKeyDown, true)
     document.removeEventListener('focusout', onFocusOut, true)
