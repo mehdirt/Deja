@@ -250,7 +250,7 @@ function createTooltip(onDismiss: () => void): Tooltip {
 
     seeAllEl = document.createElement('span')
     seeAllEl.className = 'dj-rs-all'
-    seeAllEl.textContent = 'See all →'
+    seeAllEl.textContent = 'see all →'
     seeAllEl.addEventListener('click', (e) => {
       e.stopPropagation()
       seeAllHandler?.()
@@ -479,7 +479,7 @@ export function attachResurface(
     }
     log('copied prior prompt to clipboard')
     confirming = true
-    tooltip.confirm('Copied to clipboard ✓')
+    tooltip.confirm('copied to clipboard ✓')
     window.clearTimeout(confirmTimer)
     confirmTimer = window.setTimeout(hide, COPIED_CONFIRM_MS)
   }

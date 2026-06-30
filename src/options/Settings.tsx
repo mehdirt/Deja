@@ -14,14 +14,14 @@ import { PLATFORM_LABEL, type Platform, type FilterStrength } from '@/lib/types'
 const PLATFORMS = Object.keys(PLATFORM_LABEL) as Platform[]
 
 const RESURFACE_OPTIONS: Array<{ key: ResurfaceClick; label: string; hint: string }> = [
-  { key: 'copy', label: 'Copy to clipboard', hint: 'Click a match to copy it — paste it yourself' },
-  { key: 'insert', label: 'Insert at cursor', hint: 'Click a match to drop it into the box at your cursor' },
+  { key: 'copy', label: 'copy to clipboard', hint: 'Click a match to copy it — paste it yourself' },
+  { key: 'insert', label: 'insert at cursor', hint: 'Click a match to drop it into the box at your cursor' },
 ]
 
 const STRENGTHS: Array<{ key: FilterStrength; label: string; hint: string }> = [
-  { key: 'off', label: 'Keep everything', hint: 'Save and show every prompt — no filtering' },
-  { key: 'balanced', label: 'Balanced', hint: 'Hide obvious throwaways like “yes” or “continue” (default)' },
-  { key: 'strict', label: 'Strict', hint: 'Keep only longer, structured, substantial prompts' },
+  { key: 'off', label: 'keep everything', hint: 'Save and show every prompt — no filtering' },
+  { key: 'balanced', label: 'balanced', hint: 'Hide obvious throwaways like “yes” or “continue” (default)' },
+  { key: 'strict', label: 'strict', hint: 'Keep only longer, structured, substantial prompts' },
 ]
 
 function siteDot(health: CaptureHealth, p: Platform): string {
@@ -284,7 +284,7 @@ export function Settings() {
                 <span className={`text-sm ${sites[p] ? 'text-ink' : 'text-ink-faint'}`}>
                   {PLATFORM_LABEL[p]}
                 </span>
-                {!sites[p] && <span className="font-mono text-[10px] text-ink-faint">Off</span>}
+                {!sites[p] && <span className="font-mono text-[10px] text-ink-faint">off</span>}
               </span>
               <Switch
                 checked={sites[p]}
@@ -313,7 +313,7 @@ export function Settings() {
         {/* domains */}
         <div className="flex flex-col gap-2">
           <label className="font-mono text-xs text-ink-soft" htmlFor="bl-domain">
-            Blocked sites
+            blocked sites
           </label>
           <div className="flex gap-2">
             <input
@@ -325,7 +325,7 @@ export function Settings() {
               className="dj-input font-mono text-sm"
             />
             <button onClick={addDomain} className="dj-btn px-3 py-1 text-xs">
-              Block
+              block
             </button>
           </div>
           {bl.domains.length > 0 && (
@@ -349,7 +349,7 @@ export function Settings() {
         {/* patterns */}
         <div className="flex flex-col gap-2">
           <label className="font-mono text-xs text-ink-soft" htmlFor="bl-pattern">
-            Blocked patterns (regex)
+            blocked patterns (regex)
           </label>
           <div className="flex gap-2">
             <input
@@ -364,7 +364,7 @@ export function Settings() {
               className="dj-input font-mono text-sm"
             />
             <button onClick={addPattern} className="dj-btn px-3 py-1 text-xs">
-              Add
+              add
             </button>
           </div>
           {patternError && <p className="font-mono text-xs text-danger">{patternError}</p>}
@@ -383,7 +383,7 @@ export function Settings() {
                 return (
                   <span key={p} className="dj-tag">
                     <span className="dj-tag-label">{p}</span>
-                    {!valid && <span className="text-danger">Invalid</span>}
+                    {!valid && <span className="text-danger">invalid</span>}
                     <button
                       onClick={() => removePattern(p)}
                       aria-label={`Remove pattern ${p}`}
@@ -402,13 +402,13 @@ export function Settings() {
         {hasRules && (
           <div className="flex flex-col gap-2">
             <label className="font-mono text-xs text-ink-soft" htmlFor="bl-test">
-              Test a prompt against your rules
+              test a prompt against your rules
             </label>
             <input
               id="bl-test"
               value={testInput}
               onChange={(e) => setTestInput(e.target.value)}
-              placeholder="Paste a prompt to check…"
+              placeholder="paste a prompt to check…"
               className="dj-input font-mono text-sm"
             />
             {testMatch !== null && (
@@ -426,7 +426,7 @@ export function Settings() {
         {hasRules && (
           <div className="flex items-center gap-3">
             <button onClick={runDryRun} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-              Preview impact on saved prompts
+              preview impact on saved prompts
             </button>
             {dryRun && (
               <span className="font-mono text-xs text-ink-faint">
@@ -461,7 +461,7 @@ export function Settings() {
         </p>
         <div className="flex items-center gap-3">
           <button onClick={onPurgeDeleted} className="dj-btn px-3 py-1.5 text-sm hover:text-danger">
-            Purge deleted now
+            purge deleted now
           </button>
           {purged != null && (
             <span className="font-mono text-xs text-ink-faint">
@@ -489,14 +489,14 @@ export function Settings() {
               confirmClear ? 'border-danger text-danger' : 'hover:text-danger'
             }`}
           >
-            {confirmClear ? 'Are you sure? Click to erase' : 'Clear all'}
+            {confirmClear ? 'are you sure? click to erase' : 'clear all'}
           </button>
           {confirmClear && (
             <button
               onClick={() => setConfirmClear(false)}
               className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
             >
-              Cancel
+              cancel
             </button>
           )}
           {cleared && <span className="font-mono text-xs text-ink-faint">All prompts cleared.</span>}

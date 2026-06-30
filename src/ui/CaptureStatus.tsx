@@ -41,7 +41,7 @@ export function CaptureStatus() {
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-ink-faint">
-      <span className="text-ink-soft">Capture</span>
+      <span className="text-ink-soft">capture</span>
       {PLATFORMS.map((p) => {
         const state = stateFor(health, p)
         return (
@@ -55,7 +55,7 @@ export function CaptureStatus() {
       })}
       {broken.length > 0 && (
         <span className="text-danger">
-          · Capture looks broken on {broken.map((p) => PLATFORM_LABEL[p]).join(', ')}
+          · capture looks broken on {broken.map((p) => PLATFORM_LABEL[p]).join(', ')}
         </span>
       )}
     </div>

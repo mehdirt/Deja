@@ -96,7 +96,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
               className="dj-chip font-mono text-ink-faint"
               title="A short throwaway prompt — hidden from your library and resurface by default"
             >
-              Minor
+              minor
             </span>
           )}
         </span>
@@ -154,7 +154,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
                     setAdding(false)
                   }
                 }}
-                placeholder="Tag…"
+                placeholder="tag…"
                 aria-label="Add a tag"
                 className="dj-input w-24 px-2 py-0.5 font-mono text-[11px]"
               />
@@ -164,7 +164,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
                 aria-label="Add a tag"
                 className="dj-tag text-ink-faint hover:text-ink"
               >
-                + Tag
+                + tag
               </button>
             )
           )}
@@ -179,7 +179,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             title="Keep this in your library"
             className="dj-btn dj-btn-ghost px-2 py-1 text-xs hover:text-accent"
           >
-            Keep
+            keep
           </button>
         )}
         {onTogglePin && (
@@ -189,7 +189,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             aria-pressed={pinned}
             className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
           >
-            {pinned ? 'Unpin' : 'Pin'}
+            {pinned ? 'unpin' : 'pin'}
           </button>
         )}
         {onDelete && (
@@ -198,7 +198,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             aria-label="Delete prompt"
             className="dj-btn dj-btn-ghost px-2 py-1 text-xs hover:text-danger"
           >
-            Delete
+            delete
           </button>
         )}
         <button
@@ -207,7 +207,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
           aria-live="polite"
           className="dj-btn dj-btn-primary min-w-[68px] px-2 py-1 text-xs"
         >
-          {copied ? 'Copied ✓' : 'Copy'}
+          {copied ? 'copied ✓' : 'copy'}
         </button>
       </div>
     </div>

@@ -55,4 +55,9 @@ Defined in `globals.css` `@layer components` — compose these instead of re-sty
 
 ## Voice
 
-Sentence case, calm, no hype. Capitalize the first letter of each label, sentence, and button ("Saved to your library", "Your library is empty — that's fine", "Nothing to set up"); keep proper nouns and acronyms correct (ChatGPT, Claude, JSON, Markdown, Deja). The brand wordmark stays lowercase (`deja`). Never grade or nag the user.
+Calm, no hype. Two casing rules:
+
+- **Sentence case** for titles and full sentences — section headings, descriptions, empty states, tooltips, and status messages ("Your library is empty — that's fine", "Nothing to set up", "Couldn't read that file").
+- **lowercase** for terse controls — buttons, pills, field labels, sort/filter options, and badges ("copy", "export json", "favorites", "minor", "pause"). This keeps the calm "terminal" feel.
+
+Keep proper nouns and acronyms correct everywhere (ChatGPT, Claude, JSON, Markdown, Deja); the brand wordmark stays lowercase (`deja`). Never grade or nag the user.

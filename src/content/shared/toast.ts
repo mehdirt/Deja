@@ -56,14 +56,14 @@ export function showSavedToast(onUndo: () => void): void {
 
   const msg = document.createElement('span')
   msg.className = 'dj-msg'
-  msg.textContent = 'Remembered'
+  msg.textContent = 'remembered'
 
   const undo = document.createElement('button')
   undo.className = 'dj-undo'
-  undo.textContent = 'Undo'
+  undo.textContent = 'undo'
   undo.addEventListener('click', () => {
     onUndo()
-    msg.textContent = 'Removed'
+    msg.textContent = 'removed'
     undo.remove()
     window.clearTimeout(hideTimer)
     hideTimer = window.setTimeout(dismiss, 1200)

@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { readPrefs, writePrefs, onPrefsChange, PAUSE_FOREVER } from '@/lib/prefs'
 
 // The capture pause control. Lives in the popup (the natural "off switch"
-// surface). Pausing is the highest-leverage trust affordance: one click to stop
-// recording before a private session, with a visible, self-clearing state.
-//
-// Capture resumes on its own when a timed pause elapses (the content gate checks
-// the time live); this component only reflects/sets the stored pauseUntil and
-// ticks a live countdown while paused.
+// surface). It shows the current state plainly — a green "capturing" row, or an
+// amber "paused" row with a live countdown — and a small dropdown to choose how
+// long to pause. Capture resumes on its own when a timed pause elapses (the
+// content gate checks the time live); this only reflects/sets the stored
+// pauseUntil and ticks the countdown.
 
 const HOUR = 3_600_000
 
@@ -28,7 +27,8 @@ function remainingLabel(pauseUntil: number, now: number): string {
 export function PauseControl() {
   const [pauseUntil, setPauseUntil] = useState(0)
   const [now, setNow] = useState(() => Date.now())
-  const [choosing, setChoosing] = useState(false)
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     void readPrefs().then((p) => setPauseUntil(p.pauseUntil))
@@ -37,16 +37,33 @@ export function PauseControl() {
 
   const paused = pauseUntil > now
 
-  // Tick once a second while a timed pause is counting down, so the label stays
-  // honest and the control flips back to "active" the moment it elapses.
+  // Tick once a second while a timed pause counts down, so the label stays
+  // honest and the control flips back to "capturing" the moment it elapses.
   useEffect(() => {
     if (!paused || pauseUntil === PAUSE_FOREVER) return
     const t = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(t)
   }, [paused, pauseUntil])
 
+  // Close the menu on outside click or Escape.
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
   const pause = (until: number) => {
-    setChoosing(false)
+    setOpen(false)
     setNow(Date.now())
     setPauseUntil(until)
     void writePrefs({ pauseUntil: until })
@@ -60,53 +77,54 @@ export function PauseControl() {
     const label = remainingLabel(pauseUntil, now)
     return (
       <div className="flex items-center justify-between gap-2 rounded-btn border border-[#c98a2b]/40 bg-[#c98a2b]/10 px-3 py-1.5">
-        <span className="font-mono text-xs text-[#c98a2b]">
-          ⏸ Capture paused{label ? ` · ${label}` : ''}
+        <span className="inline-flex items-center gap-2 font-mono text-xs text-[#c98a2b]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#c98a2b]" aria-hidden />
+          capture paused{label ? ` · ${label}` : ''}
         </span>
         <button onClick={resume} className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-xs">
-          Resume
+          resume
         </button>
       </div>
     )
   }
 
-  if (choosing) {
-    return (
-      <div className="flex items-center justify-between gap-2 rounded-btn border border-line bg-sunk px-3 py-1.5">
-        <span className="font-mono text-xs text-ink-soft">Pause capture for…</span>
-        <div className="flex items-center gap-1">
+  return (
+    <div ref={ref} className="relative">
+      <div className="flex items-center justify-between gap-2 rounded-btn border border-line px-3 py-1.5">
+        <span className="inline-flex items-center gap-2 font-mono text-xs text-ink-soft">
+          <span className="h-1.5 w-1.5 rounded-full bg-ok" aria-hidden />
+          capturing
+        </span>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-xs"
+        >
+          ⏸ pause
+        </button>
+      </div>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-btn border border-line bg-surface shadow-pop"
+        >
           <button
+            role="menuitem"
             onClick={() => pause(Date.now() + HOUR)}
-            className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-xs"
+            className="block w-full px-3 py-2 text-left font-mono text-xs text-ink transition-colors hover:bg-sunk"
           >
-            1 hour
+            pause for 1 hour
           </button>
           <button
+            role="menuitem"
             onClick={() => pause(PAUSE_FOREVER)}
-            className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-xs"
+            className="block w-full px-3 py-2 text-left font-mono text-xs text-ink transition-colors hover:bg-sunk"
           >
-            Until I resume
-          </button>
-          <button
-            onClick={() => setChoosing(false)}
-            aria-label="Cancel"
-            className="dj-btn dj-btn-ghost px-1.5 py-0.5 font-mono text-xs text-ink-faint"
-          >
-            ×
+            pause until I resume
           </button>
         </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex justify-end">
-      <button
-        onClick={() => setChoosing(true)}
-        className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-xs text-ink-faint hover:text-ink"
-      >
-        ⏸ Pause capture
-      </button>
+      )}
     </div>
   )
 }
