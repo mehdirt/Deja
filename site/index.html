@@ -88,26 +88,23 @@
         -webkit-font-smoothing: antialiased;
         position: relative;
       }
-      /* Soft indigo aura behind the hero — the only flourish; pure decoration. */
       body::before {
         content: '';
-        position: absolute; inset: 0 0 auto 0; height: 720px; z-index: 0;
+        position: absolute; inset: 0 0 auto 0; height: 760px; z-index: 0;
         background: radial-gradient(58% 50% at 50% -4%, var(--glow), transparent 72%);
         pointer-events: none;
       }
       .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
       a { color: var(--accent); text-decoration: none; }
       a:hover { text-decoration: underline; }
-      a:focus-visible, .cta:focus-visible, .btn-ghost:focus-visible {
+      a:focus-visible, .cta:focus-visible {
         outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; text-decoration: none;
       }
 
-      /* Brand wordmark — wrap the text in ONE element so the header's flex gap
+      /* Brand wordmark — wrap the text in ONE element so the header flex gap
          doesn't insert space between "de" and "ja". */
       .brand { display: inline-flex; align-items: center; gap: 10px; }
-      .brand .word {
-        font-family: var(--mono); font-weight: 600; font-size: 19px; letter-spacing: -0.03em; color: var(--ink);
-      }
+      .brand .word { font-family: var(--mono); font-weight: 600; font-size: 19px; letter-spacing: -0.03em; color: var(--ink); }
       .brand .word .ja { color: var(--accent); }
 
       header { padding: 26px 0; }
@@ -115,111 +112,122 @@
       header nav a { color: var(--ink-soft); font-size: 14px; margin-left: 22px; }
       header nav a:hover { color: var(--ink); }
 
-      /* Hero */
-      .hero { text-align: center; padding: 60px 0 8px; }
       .eyebrow {
-        font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
-        color: var(--ink-faint); margin: 18px 0 0;
+        font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint);
       }
+
+      /* Hero */
+      .hero { text-align: center; padding: 58px 0 8px; }
+      .hero .eyebrow { display: block; margin: 18px 0 0; }
       .hero h1 {
-        font-size: clamp(36px, 6.2vw, 60px); line-height: 1.04; letter-spacing: -0.035em;
-        margin: 14px 0 16px; font-weight: 700;
+        font-size: clamp(36px, 6.2vw, 60px); line-height: 1.04; letter-spacing: -0.035em; margin: 14px 0 16px; font-weight: 700;
       }
       .hero h1 .accent { color: var(--accent); }
-      .hero p.lead {
-        font-size: clamp(17px, 2.4vw, 20px); color: var(--ink-soft);
-        max-width: 600px; margin: 0 auto 30px;
-      }
+      .hero p.lead { font-size: clamp(17px, 2.3vw, 20px); color: var(--ink-soft); max-width: 640px; margin: 0 auto 30px; }
       .cta-row { display: flex; gap: 16px; justify-content: center; align-items: center; flex-wrap: wrap; }
       .cta {
-        display: inline-flex; align-items: center; gap: 9px;
-        background: var(--accent); color: #fff; font-weight: 600;
-        padding: 14px 24px; border-radius: 11px; font-size: 16px;
-        box-shadow: var(--shadow-cta); transition: background 0.15s ease, transform 0.15s ease;
+        display: inline-flex; align-items: center; gap: 9px; background: var(--accent); color: #fff; font-weight: 600;
+        padding: 14px 24px; border-radius: 11px; font-size: 16px; box-shadow: var(--shadow-cta);
+        transition: background 0.15s ease, transform 0.15s ease;
       }
       .cta:hover { background: var(--accent-hover); text-decoration: none; transform: translateY(-1px); }
       .ghost-link { color: var(--ink-soft); font-size: 15px; }
       .ghost-link:hover { color: var(--ink); }
-      .cta-sub {
-        font-family: var(--mono); font-size: 12px; color: var(--ink-faint);
-        margin-top: 18px; display: inline-flex; gap: 10px; flex-wrap: wrap; justify-content: center;
-      }
-      .cta-sub .kbd {
-        border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--ink-soft);
-      }
+      .cta-sub { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); margin-top: 18px; display: inline-flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+      .cta-sub .kbd { border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--ink-soft); }
 
-      /* The moment, illustrated — tooltip sits ABOVE the composer in normal flow,
-         pointing down with an arrow, so it can never cover the text. */
-      .mock { max-width: 560px; margin: 48px auto 0; text-align: left; }
+      /* The moment, illustrated — animated. Tooltip sits ABOVE the composer in
+         normal flow (never covers it) and fades in/out with the typed text. */
+      .mock { max-width: 560px; margin: 46px auto 0; text-align: left; }
       .tooltip {
-        position: relative; align-self: flex-start; display: inline-flex; align-items: flex-start; gap: 11px;
-        background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
-        padding: 11px 13px; box-shadow: var(--shadow-pop); max-width: 96%; margin: 0 0 16px 14px;
+        position: relative; display: inline-flex; align-items: flex-start; gap: 11px;
+        background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px;
+        box-shadow: var(--shadow-pop); max-width: 96%; margin: 0 0 16px 14px;
+        opacity: 0; transform: translateY(6px); transition: opacity 0.35s ease, transform 0.35s ease;
       }
+      .tooltip.show { opacity: 1; transform: none; }
       .tooltip::after {
         content: ''; position: absolute; left: 26px; bottom: -7px; width: 12px; height: 12px;
-        background: var(--surface); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
-        transform: rotate(45deg);
+        background: var(--surface); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: rotate(45deg);
       }
       .tooltip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex: none; }
       .tooltip .t-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
       .tooltip .lead { color: var(--accent); font-weight: 600; font-size: 13px; }
-      .tooltip .preview {
-        color: var(--ink-soft); font-family: var(--mono); font-size: 11px;
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px;
-      }
+      .tooltip .preview { color: var(--ink-soft); font-family: var(--mono); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px; }
       .tooltip .meta { color: var(--ink-faint); font-size: 10px; }
       .tooltip .count { color: var(--ink-faint); font-family: var(--mono); font-weight: 600; font-size: 10px; flex: none; margin-top: 2px; }
       .composer {
-        display: flex; align-items: center; gap: 12px;
-        border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
-        padding: 16px 16px 16px 18px; box-shadow: var(--shadow-sm);
+        display: flex; align-items: center; gap: 11px; border: 1px solid var(--line); border-radius: 14px;
+        background: var(--surface); padding: 14px 14px 14px 14px; box-shadow: var(--shadow-sm);
       }
-      .composer .ctext { color: var(--ink); font-size: 15.5px; flex: 1; }
-      .composer .cursor {
-        display: inline-block; width: 2px; height: 1.05em; vertical-align: text-bottom;
-        background: var(--accent); margin-left: 1px; animation: blink 1.1s step-end infinite;
+      .composer .plat {
+        flex: none; display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px;
+        color: var(--ink-soft); background: var(--sunk); border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px;
       }
-      .composer .send {
-        flex: none; width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: #fff;
-        display: inline-flex; align-items: center; justify-content: center; font-size: 14px;
-      }
+      .composer .plat .pdot { width: 7px; height: 7px; border-radius: 50%; background: #10a37f; }
+      .composer .ctext { flex: 1; min-width: 0; color: var(--ink); font-size: 15px; white-space: nowrap; overflow: hidden; }
+      .composer .cursor { display: inline-block; width: 2px; height: 1.05em; vertical-align: text-bottom; background: var(--accent); margin-left: 1px; animation: blink 1.1s step-end infinite; }
+      .composer .send { flex: none; width: 30px; height: 30px; border-radius: 9px; background: #10a37f; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
       @keyframes blink { 50% { opacity: 0; } }
 
       /* Sections */
-      section { padding: 56px 0; position: relative; z-index: 1; }
-      .section-head { max-width: 640px; }
-      h2 { font-size: clamp(25px, 3.4vw, 33px); letter-spacing: -0.025em; margin: 0 0 10px; }
-      .section-lead { color: var(--ink-soft); margin: 0 0 32px; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
-      .card {
-        background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px;
-        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      section { padding: 58px 0; position: relative; z-index: 1; }
+      .section-head { max-width: 660px; }
+      .section-head.center { margin-left: auto; margin-right: auto; text-align: center; }
+      .section-head .eyebrow { display: block; margin: 0 0 10px; }
+      h2 { font-size: clamp(25px, 3.4vw, 34px); letter-spacing: -0.025em; margin: 0 0 12px; }
+      .section-lead { color: var(--ink-soft); margin: 0; font-size: 16.5px; }
+
+      /* How it works — numbered, connected steps */
+      .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 36px; position: relative; }
+      .steps::before {
+        content: ''; position: absolute; top: 54px; left: 14%; right: 14%; height: 2px;
+        background: repeating-linear-gradient(90deg, var(--line) 0 8px, transparent 8px 16px); z-index: 0;
       }
+      .step { position: relative; z-index: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+      .step:hover { transform: translateY(-3px); box-shadow: var(--shadow-pop); }
+      .step .num {
+        width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: #fff;
+        font-family: var(--mono); font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; justify-content: center;
+      }
+      .step .ic { color: var(--accent); margin: 16px 0 12px; display: block; }
+      .step h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -0.01em; }
+      .step p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+
+      /* Capability cards */
+      .caps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
+      .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
       .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-pop); border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
-      .card .ic {
-        width: 38px; height: 38px; border-radius: 10px; background: var(--accent-soft); color: var(--accent);
-        display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px;
-      }
+      .card .ic { width: 38px; height: 38px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px; }
       .card h3 { margin: 0 0 6px; font-size: 17px; letter-spacing: -0.01em; }
       .card p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
 
-      .pill-row { display: flex; flex-wrap: wrap; gap: 10px; }
-      .pill {
-        display: inline-flex; align-items: center; gap: 8px;
-        border: 1px solid var(--line); background: var(--surface);
-        border-radius: 999px; padding: 8px 15px; font-size: 14px; color: var(--ink);
+      /* Works where you work — a single framed bar */
+      .tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 30px; }
+      .tool {
+        display: inline-flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--line);
+        border-radius: 12px; padding: 13px 20px; font-size: 15px; font-weight: 500; color: var(--ink);
+        transition: border-color 0.15s ease, transform 0.15s ease;
       }
-      .pill .pdot { width: 8px; height: 8px; border-radius: 50%; }
+      .tool:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); transform: translateY(-2px); }
+      .tool .pdot { width: 9px; height: 9px; border-radius: 50%; }
+      .tools-note { text-align: center; color: var(--ink-faint); font-size: 13.5px; margin: 20px auto 0; max-width: 560px; }
 
-      .privacy {
-        background: var(--sunk); border: 1px solid var(--line); border-radius: var(--radius); padding: 34px;
-      }
+      /* Privacy */
+      .privacy { background: var(--sunk); border: 1px solid var(--line); border-radius: var(--radius); padding: 34px; }
       .privacy h2 { margin-top: 0; }
-      .privacy .plist { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 14px; }
+      .privacy .plist { list-style: none; margin: 20px 0 0; padding: 0; display: grid; gap: 14px; }
       .privacy .plist li { display: flex; gap: 12px; color: var(--ink-soft); align-items: flex-start; }
       .privacy .plist .chk { color: var(--ok); flex: none; margin-top: 2px; }
       .privacy .plist strong { color: var(--ink); font-weight: 600; }
+
+      /* Closing CTA */
+      .closing-card {
+        background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+        border-radius: 18px; padding: 50px 32px; text-align: center;
+      }
+      .closing-card h2 { margin: 0 0 10px; }
+      .closing-card p { color: var(--ink-soft); margin: 0 auto 24px; max-width: 520px; }
 
       footer { border-top: 1px solid var(--line); padding: 34px 0 56px; color: var(--ink-faint); font-size: 14px; position: relative; z-index: 1; }
       footer .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
@@ -227,10 +235,15 @@
       footer .credit a:hover { color: var(--accent); }
       .heart { color: var(--accent); }
 
+      @media (max-width: 720px) {
+        .steps, .caps { grid-template-columns: 1fr; }
+        .steps::before { display: none; }
+      }
       @media (prefers-reduced-motion: reduce) {
         html { scroll-behavior: auto; }
         .composer .cursor { animation: none; }
-        .cta:hover, .card:hover { transform: none; }
+        .cta:hover, .card:hover, .step:hover, .tool:hover { transform: none; }
+        .tooltip { transition: none; }
       }
     </style>
   </head>
@@ -263,12 +276,12 @@
             <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity="0.95" />
             <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--accent)" />
           </svg>
-          <p class="eyebrow">your prompts · every ai · one library</p>
+          <span class="eyebrow">your prompts · every ai · one library</span>
           <h1>Your prompts are work.<br />Stop <span class="accent">losing</span> them.</h1>
           <p class="lead">
-            Deja quietly saves every prompt you send to ChatGPT, Claude, Gemini, DeepSeek, and
-            Grok — then resurfaces the right one while you type the next. Local-first. No account.
-            No cloud.
+            You perfect a prompt, get a great answer — then it's gone in the scroll. Deja saves every
+            prompt you send across ChatGPT, Claude, Gemini, DeepSeek, and Grok, and slips the right
+            one back to you the moment you start to type it again.
           </p>
           <div class="cta-row">
             <a class="cta" href="https://chromewebstore.google.com/detail/REPLACE_EXTENSION_ID">
@@ -283,20 +296,21 @@
             <span>·</span><span>open with <span class="kbd">⌘⇧K</span></span>
           </p>
 
-          <!-- the moment, illustrated -->
-          <div class="mock" aria-hidden="true">
-            <div class="tooltip">
+          <!-- animated demo -->
+          <div class="mock" id="mock" aria-hidden="true">
+            <div class="tooltip show" id="m-pop">
               <span class="dot"></span>
               <div class="t-body">
-                <div class="lead">You've asked something like this before →</div>
-                <div class="preview">write a bash script that backs up my postgres db every night…</div>
-                <div class="meta">matched on backup, postgres</div>
+                <div class="lead" id="m-lead">You've asked something like this before →</div>
+                <div class="preview" id="m-prev">write a bash script that backs up my postgres db every night…</div>
+                <div class="meta" id="m-meta">matched on backup, postgres</div>
               </div>
-              <span class="count">1/3</span>
+              <span class="count" id="m-count">1/3</span>
             </div>
             <div class="composer">
-              <span class="ctext">write a script to back up my database nightly<span class="cursor"></span></span>
-              <span class="send" aria-hidden="true">↵</span>
+              <span class="plat"><span class="pdot" id="m-pdot"></span><span id="m-pname">ChatGPT</span></span>
+              <span class="ctext"><span id="m-type">back up my postgres db nightly</span><span class="cursor"></span></span>
+              <span class="send" id="m-send" aria-hidden="true">↵</span>
             </div>
           </div>
         </div>
@@ -305,75 +319,85 @@
       <section id="how">
         <div class="wrap">
           <div class="section-head">
+            <span class="eyebrow">how it works</span>
             <h2>It works the way memory should — quietly</h2>
             <p class="section-lead">
-              No buttons to press, no copy-paste, no folders to maintain. You keep using your AI
-              tools exactly as you do today; Deja does the remembering.
+              Three steps, and you only do the first one. No buttons, no copy-paste, no folders to
+              keep tidy — you work exactly as you do today and Deja does the remembering.
             </p>
           </div>
-          <div class="grid">
-            <div class="card">
-              <span class="ic" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>
-              </span>
-              <h3>Captures automatically</h3>
-              <p>Every prompt you send is saved the moment you hit Enter — across five AI tools, with no effort from you.</p>
-            </div>
-            <div class="card">
-              <span class="ic" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7.5" width="11" height="11" rx="2.5"/><rect x="9.5" y="3.5" width="11" height="11" rx="2.5"/></svg>
-              </span>
-              <h3>Resurfaces in context</h3>
-              <p>Start typing and Deja floats a gentle reminder when you've asked something similar before. Click to copy — it never types into your box unless you ask it to.</p>
-            </div>
+
+          <ol class="steps">
+            <li class="step">
+              <span class="num">1</span>
+              <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 3z"/><path d="M8 10h8M8 13h5"/></svg>
+              <h3>Prompt like you always do</h3>
+              <p>Keep using ChatGPT, Claude, Gemini, DeepSeek, and Grok. Hit Enter — there's nothing new to learn and nothing to click.</p>
+            </li>
+            <li class="step">
+              <span class="num">2</span>
+              <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7.5" width="11" height="11" rx="2.5"/><rect x="9.5" y="3.5" width="11" height="11" rx="2.5"/></svg>
+              <h3>Deja remembers — privately</h3>
+              <p>Every prompt lands in a local library on your machine. Searchable, taggable, and never sent anywhere.</p>
+            </li>
+            <li class="step">
+              <span class="num">3</span>
+              <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-8.5 6"/><path d="M3 4v4h4"/><path d="m12 8 0 4 3 2"/></svg>
+              <h3>The right one comes back</h3>
+              <p>Start typing something you've asked before and your best past version floats up — one click to reuse it.</p>
+            </li>
+          </ol>
+
+          <div class="caps">
             <div class="card">
               <span class="ic" aria-hidden="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m20.5 20.5-4-4"/></svg>
               </span>
-              <h3>Finds anything fast</h3>
-              <p>Fuzzy search, tags, pins, and favorites. Sort by newest, most useful, most-used, or longest-unseen. Built for a library of hundreds.</p>
-            </div>
-            <div class="card">
-              <span class="ic" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
-              </span>
-              <h3>Yours to keep</h3>
-              <p>Export and import JSON, export Markdown, blocklist sites you don't want captured, or wipe everything in one click.</p>
+              <h3>Find it in seconds</h3>
+              <p>Fuzzy search, tags, pins, and favorites. Sort by newest, most-used, or longest-unseen — built for a library of hundreds.</p>
             </div>
             <div class="card">
               <span class="ic" aria-hidden="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="17" r="2"/></svg>
               </span>
               <h3>Yours to control</h3>
-              <p>Pause capture with one click, switch off any site, or auto-pause in incognito. Filter out throwaway prompts so only the keepers stay.</p>
+              <p>Pause capture in one click, switch off any site, or auto-pause in incognito. Filter out throwaways so only the keepers stay.</p>
+            </div>
+            <div class="card">
+              <span class="ic" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
+              </span>
+              <h3>Yours to keep</h3>
+              <p>Export and import JSON, export Markdown, or wipe everything instantly. No lock-in, ever.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section>
+      <section id="tools">
         <div class="wrap">
-          <div class="section-head">
+          <div class="section-head center">
+            <span class="eyebrow">one library, every assistant</span>
             <h2>Works where you already work</h2>
-            <p class="section-lead">One library across every assistant you use.</p>
+            <p class="section-lead">No single AI lab will let your prompt history follow you to a competitor. Deja will.</p>
           </div>
-          <div class="pill-row">
-            <span class="pill"><span class="pdot" style="background:#10a37f"></span> ChatGPT</span>
-            <span class="pill"><span class="pdot" style="background:#d97757"></span> Claude</span>
-            <span class="pill"><span class="pdot" style="background:#4285f4"></span> Gemini</span>
-            <span class="pill"><span class="pdot" style="background:#4d6bfe"></span> DeepSeek</span>
-            <span class="pill"><span class="pdot" style="background:#71767b"></span> Grok</span>
+          <div class="tools">
+            <span class="tool"><span class="pdot" style="background:#10a37f"></span> ChatGPT</span>
+            <span class="tool"><span class="pdot" style="background:#d97757"></span> Claude</span>
+            <span class="tool"><span class="pdot" style="background:#4285f4"></span> Gemini</span>
+            <span class="tool"><span class="pdot" style="background:#4d6bfe"></span> DeepSeek</span>
+            <span class="tool"><span class="pdot" style="background:#71767b"></span> Grok</span>
           </div>
+          <p class="tools-note">Switch tools whenever you like — your craft comes with you, the same library on every site.</p>
         </div>
       </section>
 
       <section id="privacy">
         <div class="wrap">
           <div class="privacy">
-            <h2>Private by design — not by promise</h2>
-            <p class="section-lead" style="margin-bottom: 0">
-              Deja can't leak what it never sends. Everything stays in your browser.
-            </p>
+            <span class="eyebrow">privacy</span>
+            <h2 style="margin-top: 8px">Private by design — not by promise</h2>
+            <p class="section-lead">Deja can't leak what it never sends. Everything stays in your browser.</p>
             <ul class="plist">
               <li>
                 <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
@@ -399,6 +423,17 @@
           </div>
         </div>
       </section>
+
+      <section id="get">
+        <div class="wrap">
+          <div class="closing-card">
+            <h2>Stop rewriting prompts you've already perfected.</h2>
+            <p>Install once, keep working exactly as you do, and let Deja remember the rest.</p>
+            <a class="cta" href="https://chromewebstore.google.com/detail/REPLACE_EXTENSION_ID">Add to Chrome — free</a>
+            <p class="cta-sub"><span>free</span><span>·</span><span>local-first</span><span>·</span><span>no sign-up</span></p>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer>
@@ -419,5 +454,78 @@
         </span>
       </div>
     </footer>
+
+    <script>
+      // Animated hero demo: cycle through a few composers, typing then deleting,
+      // with the resurface tooltip fading in/out according to the typed length —
+      // a live illustration of the real moment. Decorative (the mock is
+      // aria-hidden); honors prefers-reduced-motion by leaving the static first
+      // sample in place.
+      (function () {
+        var pop = document.getElementById('m-pop');
+        var typeEl = document.getElementById('m-type');
+        if (!pop || !typeEl) return;
+        var lead = document.getElementById('m-lead');
+        var prev = document.getElementById('m-prev');
+        var meta = document.getElementById('m-meta');
+        var count = document.getElementById('m-count');
+        var pdot = document.getElementById('m-pdot');
+        var pname = document.getElementById('m-pname');
+        var send = document.getElementById('m-send');
+
+        var samples = [
+          { platform: 'ChatGPT', color: '#10a37f', typed: 'back up my postgres db nightly',
+            lead: "You've asked something like this before →",
+            preview: 'write a bash script that backs up my postgres db every night…',
+            meta: 'matched on backup, postgres', count: '1/3' },
+          { platform: 'Claude', color: '#d97757', typed: 'summarize these notes',
+            lead: "You've written something like this →",
+            preview: 'summarize the attached notes into five key bullet points…',
+            meta: 'matched on notes, summary', count: '1/2' },
+          { platform: 'Gemini', color: '#4285f4', typed: 'make this function pure',
+            lead: 'Seen this one before →',
+            preview: 'refactor this code into a pure, testable function…',
+            meta: 'matched on function, pure', count: '1/4' }
+        ];
+
+        // Set the static first sample's platform colors immediately.
+        pdot.style.background = samples[0].color;
+        send.style.background = samples[0].color;
+
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        var THRESH = 12, TYPE = 46, DEL = 22, HOLD = 2300, FADE = 420, GAP = 320;
+        function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+        function setPlatform(s) { pdot.style.background = s.color; pname.textContent = s.platform; send.style.background = s.color; }
+        function setMeta(s) { lead.textContent = s.lead; prev.textContent = s.preview; meta.textContent = s.meta; count.textContent = s.count; }
+
+        async function typeText(s) {
+          setPlatform(s);
+          for (var k = 1; k <= s.typed.length; k++) {
+            typeEl.textContent = s.typed.slice(0, k);
+            if (k === THRESH) { setMeta(s); pop.classList.add('show'); }
+            await sleep(TYPE);
+          }
+        }
+        async function deleteText() {
+          var t = typeEl.textContent;
+          for (var k = t.length; k >= 0; k--) { typeEl.textContent = t.slice(0, k); await sleep(DEL); }
+        }
+
+        (async function loop() {
+          var i = 0; // sample 0 is already typed + shown in the HTML
+          await sleep(HOLD);
+          while (true) {
+            pop.classList.remove('show');
+            await sleep(FADE);
+            await deleteText();
+            await sleep(GAP);
+            i = (i + 1) % samples.length;
+            await typeText(samples[i]);
+            await sleep(HOLD);
+          }
+        })();
+      })();
+    </script>
   </body>
 </html>
