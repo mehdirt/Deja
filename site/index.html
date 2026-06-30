@@ -178,19 +178,16 @@
       h2 { font-size: clamp(25px, 3.4vw, 34px); letter-spacing: -0.025em; margin: 0 0 12px; }
       .section-lead { color: var(--ink-soft); margin: 0; font-size: 16.5px; }
 
-      /* How it works — numbered, connected steps */
-      .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 36px; position: relative; }
-      .steps::before {
-        content: ''; position: absolute; top: 54px; left: 14%; right: 14%; height: 2px;
-        background: repeating-linear-gradient(90deg, var(--line) 0 8px, transparent 8px 16px); z-index: 0;
-      }
-      .step { position: relative; z-index: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+      /* How it works — numbered steps */
+      .steps { list-style: none; margin: 36px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+      .step { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; transition: transform 0.15s ease, box-shadow 0.15s ease; }
       .step:hover { transform: translateY(-3px); box-shadow: var(--shadow-pop); }
+      .step-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
       .step .num {
         width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: #fff;
         font-family: var(--mono); font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; justify-content: center;
       }
-      .step .ic { color: var(--accent); margin: 16px 0 12px; display: block; }
+      .step .ic { color: var(--ink-faint); }
       .step h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -0.01em; }
       .step p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
 
@@ -237,7 +234,6 @@
 
       @media (max-width: 720px) {
         .steps, .caps { grid-template-columns: 1fr; }
-        .steps::before { display: none; }
       }
       @media (prefers-reduced-motion: reduce) {
         html { scroll-behavior: auto; }
@@ -308,7 +304,7 @@
               <span class="count" id="m-count">1/3</span>
             </div>
             <div class="composer">
-              <span class="plat"><span class="pdot" id="m-pdot"></span><span id="m-pname">ChatGPT</span></span>
+              <span class="plat"><span class="pdot" id="m-pdot" style="background:#fff; box-shadow: inset 0 0 0 1px var(--line)"></span><span id="m-pname">ChatGPT</span></span>
               <span class="ctext"><span id="m-type">back up my postgres db nightly</span><span class="cursor"></span></span>
               <span class="send" id="m-send" aria-hidden="true">↵</span>
             </div>
@@ -329,20 +325,26 @@
 
           <ol class="steps">
             <li class="step">
-              <span class="num">1</span>
-              <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 3z"/><path d="M8 10h8M8 13h5"/></svg>
+              <div class="step-top">
+                <span class="num">1</span>
+                <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 3z"/><path d="M8 10h8M8 13h5"/></svg>
+              </div>
               <h3>Prompt like you always do</h3>
               <p>Keep using ChatGPT, Claude, Gemini, DeepSeek, and Grok. Hit Enter — there's nothing new to learn and nothing to click.</p>
             </li>
             <li class="step">
-              <span class="num">2</span>
-              <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7.5" width="11" height="11" rx="2.5"/><rect x="9.5" y="3.5" width="11" height="11" rx="2.5"/></svg>
+              <div class="step-top">
+                <span class="num">2</span>
+                <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7.5" width="11" height="11" rx="2.5"/><rect x="9.5" y="3.5" width="11" height="11" rx="2.5"/></svg>
+              </div>
               <h3>Deja remembers — privately</h3>
               <p>Every prompt lands in a local library on your machine. Searchable, taggable, and never sent anywhere.</p>
             </li>
             <li class="step">
-              <span class="num">3</span>
-              <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-8.5 6"/><path d="M3 4v4h4"/><path d="m12 8 0 4 3 2"/></svg>
+              <div class="step-top">
+                <span class="num">3</span>
+                <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-8.5 6"/><path d="M3 4v4h4"/><path d="m12 8 0 4 3 2"/></svg>
+              </div>
               <h3>The right one comes back</h3>
               <p>Start typing something you've asked before and your best past version floats up — one click to reuse it.</p>
             </li>
@@ -382,7 +384,7 @@
             <p class="section-lead">No single AI lab will let your prompt history follow you to a competitor. Deja will.</p>
           </div>
           <div class="tools">
-            <span class="tool"><span class="pdot" style="background:#10a37f"></span> ChatGPT</span>
+            <span class="tool"><span class="pdot" style="background:#fff; box-shadow: inset 0 0 0 1px var(--line)"></span> ChatGPT</span>
             <span class="tool"><span class="pdot" style="background:#d97757"></span> Claude</span>
             <span class="tool"><span class="pdot" style="background:#4285f4"></span> Gemini</span>
             <span class="tool"><span class="pdot" style="background:#4d6bfe"></span> DeepSeek</span>
@@ -473,30 +475,37 @@
         var pname = document.getElementById('m-pname');
         var send = document.getElementById('m-send');
 
+        // `dot` is the circle next to the platform name (white + ring for
+        // ChatGPT); `color` is the brand color used for the send button.
         var samples = [
-          { platform: 'ChatGPT', color: '#10a37f', typed: 'back up my postgres db nightly',
+          { platform: 'ChatGPT', color: '#10a37f', dot: '#fff', typed: 'back up my postgres db nightly',
             lead: "You've asked something like this before →",
             preview: 'write a bash script that backs up my postgres db every night…',
             meta: 'matched on backup, postgres', count: '1/3' },
-          { platform: 'Claude', color: '#d97757', typed: 'summarize these notes',
+          { platform: 'Claude', color: '#d97757', dot: '#d97757', typed: 'summarize these notes',
             lead: "You've written something like this →",
             preview: 'summarize the attached notes into five key bullet points…',
             meta: 'matched on notes, summary', count: '1/2' },
-          { platform: 'Gemini', color: '#4285f4', typed: 'make this function pure',
+          { platform: 'Gemini', color: '#4285f4', dot: '#4285f4', typed: 'make this function pure',
             lead: 'Seen this one before →',
             preview: 'refactor this code into a pure, testable function…',
             meta: 'matched on function, pure', count: '1/4' }
         ];
 
+        function paintDot(s) {
+          pdot.style.background = s.dot;
+          pdot.style.boxShadow = s.dot === '#fff' ? 'inset 0 0 0 1px var(--line)' : 'none';
+        }
+
         // Set the static first sample's platform colors immediately.
-        pdot.style.background = samples[0].color;
+        paintDot(samples[0]);
         send.style.background = samples[0].color;
 
         if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
         var THRESH = 12, TYPE = 46, DEL = 22, HOLD = 2300, FADE = 420, GAP = 320;
         function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-        function setPlatform(s) { pdot.style.background = s.color; pname.textContent = s.platform; send.style.background = s.color; }
+        function setPlatform(s) { paintDot(s); pname.textContent = s.platform; send.style.background = s.color; }
         function setMeta(s) { lead.textContent = s.lead; prev.textContent = s.preview; meta.textContent = s.meta; count.textContent = s.count; }
 
         async function typeText(s) {
