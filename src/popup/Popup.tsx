@@ -4,6 +4,7 @@ import { buildIndex, searchPrompts } from '@/lib/search'
 import { PromptCard } from '@/ui/PromptCard'
 import { SkeletonList } from '@/ui/Skeleton'
 import { Logo } from '@/ui/Logo'
+import { PauseControl } from '@/ui/PauseControl'
 import type { Prompt } from '@/lib/types'
 
 export function Popup() {
@@ -49,6 +50,10 @@ export function Popup() {
           library →
         </button>
       </header>
+
+      <div className="px-3 pt-3">
+        <PauseControl />
+      </div>
 
       <div className="px-3 pt-3">
         <input

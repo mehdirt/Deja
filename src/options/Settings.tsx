@@ -1,20 +1,80 @@
-import { useEffect, useState } from 'react'
-import { clearAllData, purgeDeleted } from '@/lib/db'
+import { useEffect, useMemo, useState } from 'react'
+import { clearAllData, purgeDeleted, listPrompts } from '@/lib/db'
 import {
   readBlocklist,
   writeBlocklist,
   onBlocklistChange,
+  isBlocked,
   type Blocklist,
 } from '@/lib/blocklist'
 import { readPrefs, writePrefs, onPrefsChange, type ResurfaceClick } from '@/lib/prefs'
-import { CaptureStatus } from '@/ui/CaptureStatus'
+import { readHealth, onHealthChange, type CaptureHealth } from '@/lib/health'
+import { PLATFORM_LABEL, type Platform, type FilterStrength } from '@/lib/types'
+
+const PLATFORMS = Object.keys(PLATFORM_LABEL) as Platform[]
 
 const RESURFACE_OPTIONS: Array<{ key: ResurfaceClick; label: string; hint: string }> = [
   { key: 'copy', label: 'copy to clipboard', hint: 'click a match to copy it — paste it yourself' },
   { key: 'insert', label: 'insert at cursor', hint: 'click a match to drop it into the box at your cursor' },
 ]
 
-// Settings — data controls + the capture blocklist + a capture-health view.
+const STRENGTHS: Array<{ key: FilterStrength; label: string; hint: string }> = [
+  { key: 'off', label: 'keep everything', hint: 'save and show every prompt — no filtering' },
+  { key: 'balanced', label: 'balanced', hint: 'hide obvious throwaways like “yes” or “continue” (default)' },
+  { key: 'strict', label: 'strict', hint: 'keep only longer, structured, substantial prompts' },
+]
+
+function siteDot(health: CaptureHealth, p: Platform): string {
+  const h = health[p]
+  if (!h) return 'bg-ink-faint/40'
+  return h.ok ? 'bg-ok' : 'bg-danger'
+}
+
+function siteTitle(health: CaptureHealth, p: Platform): string {
+  const h = health[p]
+  const label = PLATFORM_LABEL[p]
+  if (!h) return `not checked yet — open ${label} and deja starts listening`
+  return h.ok
+    ? `capture is working on ${label}`
+    : `couldn't find the prompt box on ${label} — the site may have changed`
+}
+
+// A small reusable on/off switch matching the library's favorites toggle.
+function Switch({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean
+  onChange: () => void
+  label: string
+}) {
+  return (
+    <button
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onChange}
+      className="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-accent rounded-full"
+    >
+      <span
+        className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+          checked ? 'bg-accent' : 'bg-line'
+        }`}
+      >
+        <span
+          className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
+            checked ? 'translate-x-[14px]' : 'translate-x-0.5'
+          }`}
+        />
+      </span>
+    </button>
+  )
+}
+
+// Settings — capture controls grouped by intent: what to capture (don't-capture
+// rules: per-site switches + blocklist) and what to keep (keep-but-hide: filter
+// strength), plus resurface behavior and the destructive data controls.
 // Calm and lowercase, on-voice. Destructive actions ask twice.
 export function Settings() {
   const [bl, setBl] = useState<Blocklist>({ domains: [], patterns: [] })
@@ -25,7 +85,15 @@ export function Settings() {
   const [cleared, setCleared] = useState(false)
   const [purged, setPurged] = useState<number | null>(null)
   const [resurfaceClick, setResurfaceClick] = useState<ResurfaceClick>('copy')
-  const [keepMinor, setKeepMinor] = useState(false)
+  const [strength, setStrength] = useState<FilterStrength>('balanced')
+  const [sites, setSites] = useState<Record<Platform, boolean>>(
+    () => Object.fromEntries(PLATFORMS.map((p) => [p, true])) as Record<Platform, boolean>,
+  )
+  const [health, setHealth] = useState<CaptureHealth>({})
+  const [testInput, setTestInput] = useState('')
+  const [dryRun, setDryRun] = useState<{ matched: number; total: number; samples: string[] } | null>(
+    null,
+  )
 
   useEffect(() => {
     void readBlocklist().then(setBl)
@@ -33,14 +101,18 @@ export function Settings() {
   }, [])
 
   useEffect(() => {
-    void readPrefs().then((p) => {
+    void readHealth().then(setHealth)
+    return onHealthChange(setHealth)
+  }, [])
+
+  useEffect(() => {
+    const apply = (p: { resurfaceClick: ResurfaceClick; filterStrength: FilterStrength; sites: Record<Platform, boolean> }) => {
       setResurfaceClick(p.resurfaceClick)
-      setKeepMinor(p.keepMinor)
-    })
-    return onPrefsChange((p) => {
-      setResurfaceClick(p.resurfaceClick)
-      setKeepMinor(p.keepMinor)
-    })
+      setStrength(p.filterStrength)
+      setSites(p.sites)
+    }
+    void readPrefs().then(apply)
+    return onPrefsChange(apply)
   }, [])
 
   const setResurface = async (next: ResurfaceClick) => {
@@ -48,14 +120,21 @@ export function Settings() {
     await writePrefs({ resurfaceClick: next })
   }
 
-  const setKeep = async (next: boolean) => {
-    setKeepMinor(next)
-    await writePrefs({ keepMinor: next })
+  const setFilter = async (next: FilterStrength) => {
+    setStrength(next)
+    await writePrefs({ filterStrength: next })
+  }
+
+  const toggleSite = async (p: Platform) => {
+    const next = { ...sites, [p]: !sites[p] }
+    setSites(next)
+    await writePrefs({ sites: next })
   }
 
   const persist = async (next: Blocklist) => {
     setBl(next)
     await writeBlocklist(next)
+    setDryRun(null) // rules changed — a stale preview would mislead
   }
 
   const addDomain = async () => {
@@ -87,6 +166,36 @@ export function Settings() {
   const removePattern = (p: string) =>
     persist({ ...bl, patterns: bl.patterns.filter((x) => x !== p) })
 
+  // Live test: which rule (if any) would catch the text the user is typing.
+  // null = empty box; '' = no rule matches (would be captured); else the
+  // matching domain/pattern source.
+  const testMatch = useMemo<string | null>(() => {
+    const text = testInput.trim()
+    if (!text) return null
+    for (const src of bl.patterns) {
+      if (!src.trim()) continue
+      try {
+        if (new RegExp(src).test(testInput)) return `pattern /${src}/`
+      } catch {
+        /* invalid pattern — skip, matches nothing */
+      }
+    }
+    return ''
+  }, [testInput, bl.patterns])
+
+  // Dry run: how many ALREADY-saved prompts these rules would catch — so a
+  // too-broad rule is visible before you rely on it. Informational only; the
+  // blocklist never deletes, it only prevents future capture.
+  const runDryRun = async () => {
+    const all = await listPrompts({ includeMinor: true })
+    const matched = all.filter((p) => isBlocked(p.url, p.text, bl))
+    setDryRun({
+      matched: matched.length,
+      total: all.length,
+      samples: matched.slice(0, 3).map((p) => p.text),
+    })
+  }
+
   const onClearAll = async () => {
     if (!confirmClear) {
       setConfirmClear(true)
@@ -104,16 +213,67 @@ export function Settings() {
     window.setTimeout(() => setPurged(null), 5000)
   }
 
+  const hasRules = bl.domains.length > 0 || bl.patterns.length > 0
+
   return (
     <div className="flex flex-col gap-8">
-      {/* Capture health, surfaced alongside the data controls */}
-      <section className="flex flex-col gap-2">
-        <h2 className="font-mono text-sm text-ink">capture health</h2>
-        <p className="text-sm text-ink-soft">
-          a quiet check that deja is still listening on each site. green means we can find the
-          prompt box; red means the site changed and capture may be paused there.
+      {/* Capture — per-site switches folded into the health view */}
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-mono text-sm text-ink">capture</h2>
+          <p className="text-sm text-ink-soft">
+            deja captures on these sites. the dot shows whether it can currently find the prompt box
+            (green) or the site may have changed (red). switch a site off to stop capturing there.
+          </p>
+        </div>
+        <div className="flex flex-col divide-y divide-line rounded-btn border border-line">
+          {PLATFORMS.map((p) => (
+            <div key={p} className="flex items-center justify-between gap-3 px-3 py-2">
+              <span className="inline-flex items-center gap-2" title={siteTitle(health, p)}>
+                <span className={`h-1.5 w-1.5 rounded-full ${siteDot(health, p)}`} aria-hidden />
+                <span className={`text-sm ${sites[p] ? 'text-ink' : 'text-ink-faint'}`}>
+                  {PLATFORM_LABEL[p]}
+                </span>
+                {!sites[p] && <span className="font-mono text-[10px] text-ink-faint">off</span>}
+              </span>
+              <Switch
+                checked={sites[p]}
+                onChange={() => toggleSite(p)}
+                label={`Capture on ${PLATFORM_LABEL[p]}`}
+              />
+            </div>
+          ))}
+        </div>
+        <p className="font-mono text-xs text-ink-faint">
+          tip: use the ⏸ pause in the toolbar popup to stop capture everywhere for a while.
         </p>
-        <CaptureStatus />
+      </section>
+
+      {/* Keep but hide — selective-capture strength */}
+      <section className="flex flex-col gap-2">
+        <h2 className="font-mono text-sm text-ink">filter short &amp; throwaway prompts</h2>
+        <p className="text-sm text-ink-soft">
+          deja always saves everything, but it can keep short throwaways out of your library and the
+          “you’ve been here before” suggestions so neither gets cluttered. nothing is lost — filtered
+          prompts sit under <span className="font-mono text-xs">filtered (n)</span> in the library,
+          where you can <span className="font-mono text-xs">keep</span> any of them.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {STRENGTHS.map((o) => (
+            <button
+              key={o.key}
+              onClick={() => setFilter(o.key)}
+              aria-pressed={strength === o.key}
+              title={o.hint}
+              className={`dj-pill ${strength === o.key ? 'dj-pill-active' : ''}`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        <p className="font-mono text-xs text-ink-faint">
+          {STRENGTHS.find((o) => o.key === strength)?.hint}
+        </p>
       </section>
 
       {/* Resurface behavior */}
@@ -140,44 +300,7 @@ export function Settings() {
         </p>
       </section>
 
-      {/* Selective capture */}
-      <section className="flex flex-col gap-2">
-        <h2 className="font-mono text-sm text-ink">short &amp; throwaway prompts</h2>
-        <p className="text-sm text-ink-soft">
-          deja still saves everything, but by default it keeps short throwaways (a bare “yes”,
-          “continue”, “thanks”, or a tiny fragment) out of your library and out of the “you&apos;ve
-          been here before” suggestions, so neither gets cluttered. nothing is lost — filtered
-          prompts sit under <span className="font-mono text-xs">filtered (n)</span> in the library,
-          where you can <span className="font-mono text-xs">keep</span> any of them.
-        </p>
-        <button
-          role="switch"
-          aria-checked={keepMinor}
-          aria-label="Keep every prompt, including short throwaways"
-          onClick={() => setKeep(!keepMinor)}
-          className="inline-flex w-fit items-center gap-2 rounded-full border border-line px-2.5 py-1 text-xs font-medium text-ink-soft transition-colors hover:bg-sunk focus:outline-none focus:ring-2 focus:ring-accent"
-        >
-          <span
-            className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
-              keepMinor ? 'bg-accent' : 'bg-line'
-            }`}
-          >
-            <span
-              className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
-                keepMinor ? 'translate-x-[14px]' : 'translate-x-0.5'
-              }`}
-            />
-          </span>
-          <span className={keepMinor ? 'text-ink' : undefined}>keep every prompt, even short ones</span>
-        </button>
-        <p className="font-mono text-xs text-ink-faint">
-          {keepMinor
-            ? 'on — every prompt is kept and shown, nothing is filtered.'
-            : 'off — short throwaways are saved but hidden until you ask for them.'}
-        </p>
-      </section>
-
-      {/* Blocklist */}
+      {/* Don't capture — blocklist */}
       <section className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <h2 className="font-mono text-sm text-ink">capture blocklist</h2>
@@ -275,6 +398,58 @@ export function Settings() {
             </div>
           )}
         </div>
+
+        {/* test box — see what a rule would do before trusting it */}
+        {hasRules && (
+          <div className="flex flex-col gap-2">
+            <label className="font-mono text-xs text-ink-soft" htmlFor="bl-test">
+              test a prompt against your rules
+            </label>
+            <input
+              id="bl-test"
+              value={testInput}
+              onChange={(e) => setTestInput(e.target.value)}
+              placeholder="paste a prompt to check…"
+              className="dj-input font-mono text-sm"
+            />
+            {testMatch !== null && (
+              <p
+                className={`font-mono text-xs ${testMatch ? 'text-danger' : 'text-ink-faint'}`}
+                aria-live="polite"
+              >
+                {testMatch ? `would be blocked · matches ${testMatch}` : 'would be captured ✓'}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* dry run — impact on prompts you already have */}
+        {hasRules && (
+          <div className="flex items-center gap-3">
+            <button onClick={runDryRun} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
+              preview impact on saved prompts
+            </button>
+            {dryRun && (
+              <span className="font-mono text-xs text-ink-faint">
+                {dryRun.matched === 0
+                  ? `none of your ${dryRun.total} saved prompts match.`
+                  : `${dryRun.matched} of ${dryRun.total} saved prompts match these rules.`}
+              </span>
+            )}
+          </div>
+        )}
+        {dryRun && dryRun.matched > 0 && (
+          <div className="flex flex-col gap-1 rounded-btn border border-line bg-sunk px-3 py-2">
+            <span className="font-mono text-[10px] text-ink-faint">
+              examples (these stay until you delete them — the blocklist only stops future capture):
+            </span>
+            {dryRun.samples.map((s, i) => (
+              <span key={i} className="truncate font-mono text-xs text-ink-soft">
+                {s.replace(/\s+/g, ' ').trim()}
+              </span>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Purge deleted — true erase of soft-deleted rows */}

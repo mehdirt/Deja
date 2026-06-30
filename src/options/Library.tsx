@@ -87,8 +87,10 @@ export function Library() {
   }, [reload])
 
   useEffect(() => {
-    void readPrefs().then((p) => setKeepMinor(p.keepMinor))
-    return onPrefsChange((p) => setKeepMinor(p.keepMinor))
+    // filterStrength === 'off' means the filter is disabled, so show every
+    // prompt by default (the library's local equivalent of the old keepMinor).
+    void readPrefs().then((p) => setKeepMinor(p.filterStrength === 'off'))
+    return onPrefsChange((p) => setKeepMinor(p.filterStrength === 'off'))
   }, [])
 
   const minorCount = useMemo(() => prompts.filter((p) => p.minor).length, [prompts])
