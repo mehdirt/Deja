@@ -12,35 +12,88 @@
 //   - 'copy'   → copy the prior prompt to the clipboard (default; non-destructive)
 //   - 'insert' → insert it at the caret in the composer (opt-in; the content
 //                script writes to the host page only on this explicit click)
+import { PLATFORM_LABEL, type FilterStrength, type Platform } from './types'
+
 export type ResurfaceClick = 'copy' | 'insert'
+
+const ALL_PLATFORMS = Object.keys(PLATFORM_LABEL) as Platform[]
+
+// Sentinel for "paused until I turn it back on" (no expiry). Any real timestamp
+// is far below this, so `pauseUntil > now` reads as paused forever.
+export const PAUSE_FOREVER = Number.MAX_SAFE_INTEGER
 
 export interface Prefs {
   resurfaceClick: ResurfaceClick
-  // Selective capture. When false (default), prompts the classifier judges
-  // "minor" (short throwaways) are stored but hidden from the library and
-  // resurface. When true, every prompt is kept and shown — the filter is off.
-  keepMinor: boolean
+  // Selective capture strength. 'balanced' (default) hides obvious throwaways;
+  // 'off' keeps everything; 'strict' keeps only substantial prompts. See
+  // classify.ts. (Replaces the earlier boolean `keepMinor`, migrated below.)
+  filterStrength: FilterStrength
   // Whether the user has already seen the one-time "we skipped a short prompt"
   // explanation. Set the first time a minor prompt is filtered so we inform
   // once and then stay quiet (never nag).
   minorNoticeSeen: boolean
+  // Pause capture. 0 = capturing; otherwise an epoch-ms instant capture is
+  // paused until (PAUSE_FOREVER = until manually resumed). The capture/resurface
+  // hot paths check this live, so capture resumes on its own when the time
+  // passes — no timer required for correctness (the toolbar badge uses an alarm
+  // only to look right).
+  pauseUntil: number
+  // Auto-pause in incognito windows (when the user has allowed the extension to
+  // run there at all). On by default — the safe choice for a private session.
+  autoPauseIncognito: boolean
+  // Per-site capture switches. A site set to false captures nothing (and
+  // resurface stays quiet there). Missing entry = enabled.
+  sites: Record<Platform, boolean>
+}
+
+function allSitesEnabled(): Record<Platform, boolean> {
+  return Object.fromEntries(ALL_PLATFORMS.map((p) => [p, true])) as Record<Platform, boolean>
 }
 
 export const DEFAULT_PREFS: Prefs = {
   resurfaceClick: 'copy',
-  keepMinor: false,
+  filterStrength: 'balanced',
   minorNoticeSeen: false,
+  pauseUntil: 0,
+  autoPauseIncognito: true,
+  sites: allSitesEnabled(),
 }
 
 const KEY = 'prefs'
 
+function coerceStrength(raw: Partial<Prefs> & { keepMinor?: unknown }): FilterStrength {
+  if (raw.filterStrength === 'off' || raw.filterStrength === 'strict' || raw.filterStrength === 'balanced')
+    return raw.filterStrength
+  // Migrate the legacy boolean: keepMinor === true meant "filter nothing".
+  if (raw.keepMinor === true) return 'off'
+  return 'balanced'
+}
+
+function coerceSites(raw: unknown): Record<Platform, boolean> {
+  const obj = (raw ?? {}) as Partial<Record<Platform, unknown>>
+  const out = allSitesEnabled()
+  for (const p of ALL_PLATFORMS) if (obj[p] === false) out[p] = false
+  return out
+}
+
 function coerce(raw: unknown): Prefs {
-  const obj = (raw ?? {}) as Partial<Prefs>
+  const obj = (raw ?? {}) as Partial<Prefs> & { keepMinor?: unknown }
   return {
     resurfaceClick: obj.resurfaceClick === 'insert' ? 'insert' : 'copy',
-    keepMinor: obj.keepMinor === true,
+    filterStrength: coerceStrength(obj),
     minorNoticeSeen: obj.minorNoticeSeen === true,
+    pauseUntil:
+      typeof obj.pauseUntil === 'number' && Number.isFinite(obj.pauseUntil) && obj.pauseUntil > 0
+        ? obj.pauseUntil
+        : 0,
+    autoPauseIncognito: obj.autoPauseIncognito !== false,
+    sites: coerceSites(obj.sites),
   }
+}
+
+/** True when capture is currently paused by the pause-until timer. Pure. */
+export function isPaused(prefs: Prefs, now = Date.now()): boolean {
+  return prefs.pauseUntil > now
 }
 
 export async function readPrefs(): Promise<Prefs> {

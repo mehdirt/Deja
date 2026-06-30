@@ -56,4 +56,26 @@ describe('classifyPrompt', () => {
   it('keeps a short-but-wordy prompt (>= RICH_WORDS words)', () => {
     expect(classifyPrompt('write a poem about a small cat').minor).toBe(false)
   })
+
+  it("strength 'off' keeps everything, even bare glue", () => {
+    expect(classifyPrompt('yes', 'off').minor).toBe(false)
+    expect(classifyPrompt('', 'off').minor).toBe(false)
+    expect(classifyPrompt('make it blue', 'off').minor).toBe(false)
+  })
+
+  it("strength 'strict' hides medium prompts that 'balanced' keeps", () => {
+    const p = 'write a short poem about the sea'
+    expect(classifyPrompt(p, 'balanced').minor).toBe(false)
+    expect(classifyPrompt(p, 'strict').minor).toBe(true)
+  })
+
+  it("strength 'strict' still keeps long or structured prompts", () => {
+    expect(
+      classifyPrompt(
+        'Act as a senior reviewer and critique this function for correctness and clarity',
+        'strict',
+      ).minor,
+    ).toBe(false)
+    expect(classifyPrompt('fix `const x = 1`', 'strict').minor).toBe(false)
+  })
 })

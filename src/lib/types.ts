@@ -1,5 +1,13 @@
 export type Platform = 'chatgpt' | 'claude' | 'gemini' | 'deepseek' | 'grok'
 
+// How aggressively selective capture hides "minor" (throwaway) prompts:
+//   - 'off'      → filter nothing; keep and show every prompt
+//   - 'balanced' → hide obvious throwaways only (default; conservative)
+//   - 'strict'   → keep only longer / structured / substantial prompts
+// Lives here (not prefs.ts) so the pure classifier can import it without
+// depending on the storage layer.
+export type FilterStrength = 'off' | 'balanced' | 'strict'
+
 export interface Prompt {
   id?: number
   text: string

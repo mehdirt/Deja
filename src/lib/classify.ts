@@ -16,10 +16,13 @@
 //   - Local, pure, zero-dependency, unit-testable. The constants are PROVISIONAL
 //     and centralized here so tuning is a one-line change once we have real data.
 
+import type { FilterStrength } from './types'
+
 // At/under this many characters a prompt is "short" and must show some substance
-// (see hasSubstance) — or carry at least RICH_WORDS words — to be kept.
-const SHORT_CHARS = 35
-const RICH_WORDS = 6
+// (see hasSubstance) — or carry at least the words threshold — to be kept. The
+// 'strict' strength raises both bars so only longer / structured prompts survive.
+const SHORT_CHARS: Record<Exclude<FilterStrength, 'off'>, number> = { balanced: 35, strict: 80 }
+const RICH_WORDS: Record<Exclude<FilterStrength, 'off'>, number> = { balanced: 6, strict: 12 }
 
 // Exact throwaway prompts: conversational glue that is never worth reusing.
 // Matched against the WHOLE normalized text (sans trailing punctuation), never
@@ -63,16 +66,19 @@ export interface Classification {
   reason: 'trivial' | 'short' | null
 }
 
-/** Classify a prompt for selective capture. Pure; safe to call in the capture
- *  hot path. Conservative by design — only obvious throwaways are flagged. */
-export function classifyPrompt(text: string): Classification {
+/** Classify a prompt for selective capture at the given strength. Pure; safe to
+ *  call in the capture hot path. Conservative by design — only obvious
+ *  throwaways are flagged at 'balanced'; 'strict' also drops short non-structured
+ *  prompts; 'off' keeps everything. */
+export function classifyPrompt(text: string, strength: FilterStrength = 'balanced'): Classification {
+  if (strength === 'off') return { minor: false, reason: null }
   const norm = normalize(text)
   if (!norm) return { minor: true, reason: 'short' }
   // Strip trailing punctuation so "yes." / "continue!" still match the list.
   const bare = norm.replace(/[.!?…]+$/, '').trim()
   if (TRIVIAL.has(bare)) return { minor: true, reason: 'trivial' }
   const words = bare ? bare.split(' ').length : 0
-  if (norm.length <= SHORT_CHARS && words < RICH_WORDS && !hasSubstance(text)) {
+  if (norm.length <= SHORT_CHARS[strength] && words < RICH_WORDS[strength] && !hasSubstance(text)) {
     return { minor: true, reason: 'short' }
   }
   return { minor: false, reason: null }
