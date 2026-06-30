@@ -49,6 +49,10 @@ export function Privacy() {
         <ul className="flex list-disc flex-col gap-1 pl-5 text-ink-soft">
           <li>export everything to json or markdown anytime, and import it back.</li>
           <li>
+            pause capture with one click, switch off any site, or auto-pause in incognito — record
+            only what you want.
+          </li>
+          <li>
             block a site or a regex pattern in settings so sensitive prompts are never stored.
           </li>
           <li>clear all data in settings to erase the whole library permanently.</li>

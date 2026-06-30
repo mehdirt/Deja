@@ -68,7 +68,9 @@ body {
   .dj-btn {
     @apply inline-flex items-center justify-center gap-1.5 rounded-btn px-3 py-1.5 text-sm font-medium;
     @apply border border-line text-ink transition-colors hover:bg-sunk;
-    @apply focus:outline-none focus:ring-2 focus:ring-accent;
+    /* focus-visible (not focus): show the ring for keyboard users, not on every
+       mouse click — quieter, and the calm aesthetic depends on it. */
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent;
   }
 
   .dj-btn-primary {
@@ -83,6 +85,7 @@ body {
   .dj-pill {
     @apply rounded-full border border-line px-2.5 py-1 text-xs font-medium text-ink-soft;
     @apply transition-colors hover:bg-sunk;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent;
   }
   .dj-pill-active {
     @apply border-accent bg-accent text-white hover:bg-accent;
@@ -115,4 +118,18 @@ body {
 *::-webkit-scrollbar-thumb {
   background: var(--dj-line);
   border-radius: 4px;
+}
+
+/* Honor reduced-motion across the React app too (the injected toast/resurface
+   overlays already do this inline). Near-instant instead of fully zero so
+   state changes still register; the standard a11y pattern. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

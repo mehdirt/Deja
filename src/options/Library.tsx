@@ -94,6 +94,10 @@ export function Library() {
   }, [])
 
   const minorCount = useMemo(() => prompts.filter((p) => p.minor).length, [prompts])
+  // Headline count reflects the current scope: with minors hidden, don't count
+  // them (the "filtered (N)" chip surfaces them separately) so the number always
+  // matches what the user sees.
+  const shownCount = keepMinor || showMinor ? prompts.length : prompts.length - minorCount
 
   // Every tag in use across the (platform-scoped) library, for the filter row.
   const allTags = useMemo(() => {
@@ -348,7 +352,7 @@ export function Library() {
     <div className="flex flex-col gap-5">
       <header className="flex items-center justify-between gap-2">
         <p className="font-mono text-xs text-ink-faint">
-          {prompts.length} {prompts.length === 1 ? 'prompt' : 'prompts'} · stored locally
+          {shownCount} {shownCount === 1 ? 'prompt' : 'prompts'} · stored locally
         </p>
         <div className="flex items-center gap-2">
           <input

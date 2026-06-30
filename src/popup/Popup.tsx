@@ -51,11 +51,8 @@ export function Popup() {
         </button>
       </header>
 
-      <div className="px-3 pt-3">
+      <div className="flex flex-col gap-2.5 px-3 pt-3">
         <PauseControl />
-      </div>
-
-      <div className="px-3 pt-3">
         <input
           type="search"
           autoFocus
