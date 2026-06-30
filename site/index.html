@@ -133,7 +133,10 @@
       .cta:hover { background: var(--accent-hover); text-decoration: none; transform: translateY(-1px); }
       .ghost-link { color: var(--ink-soft); font-size: 15px; }
       .ghost-link:hover { color: var(--ink); }
-      .cta-sub { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); margin-top: 18px; display: inline-flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+      /* Block-level (display:flex, not inline-flex) so the caption always sits on
+         its OWN line under the button — inline-flex let it ride up beside the
+         button when there was room. */
+      .cta-sub { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
       .cta-sub .kbd { border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--ink-soft); }
 
       /* The moment, illustrated — animated. Tooltip sits ABOVE the composer in
@@ -238,7 +241,7 @@
       }
       .cta-inv:hover { transform: translateY(-1px); background: #f3f2ff; text-decoration: none; }
       .cta-inv:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 11px; }
-      .closing-card .cta-sub { color: rgba(255, 255, 255, 0.72); margin-top: 28px; }
+      .closing-card .cta-sub { color: rgba(255, 255, 255, 0.72); margin-top: 22px; }
       .closing-card .cta-sub .kbd { border-color: rgba(255, 255, 255, 0.32); color: rgba(255, 255, 255, 0.85); }
 
       footer { border-top: 1px solid var(--line); padding: 50px 0 40px; color: var(--ink-faint); font-size: 14px; position: relative; z-index: 1; }
