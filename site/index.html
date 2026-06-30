@@ -223,7 +223,7 @@
          in both light and dark. */
       .closing-card {
         position: relative; overflow: hidden; isolation: isolate; text-align: center;
-        background: linear-gradient(135deg, #5b54f0, #4038d6);
+        background: linear-gradient(135deg, #6a64e6, #524ccb);
         border-radius: 20px; padding: 56px 32px; box-shadow: var(--shadow-cta);
       }
       .closing-card .echo { position: absolute; right: -22px; bottom: -44px; width: 210px; height: 210px; opacity: 0.13; z-index: 0; }
@@ -238,13 +238,25 @@
       }
       .cta-inv:hover { transform: translateY(-1px); background: #f3f2ff; text-decoration: none; }
       .cta-inv:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 11px; }
-      .closing-card .cta-sub { color: rgba(255, 255, 255, 0.72); margin-top: 18px; }
+      .closing-card .cta-sub { color: rgba(255, 255, 255, 0.72); margin-top: 28px; }
       .closing-card .cta-sub .kbd { border-color: rgba(255, 255, 255, 0.32); color: rgba(255, 255, 255, 0.85); }
 
-      footer { border-top: 1px solid var(--line); padding: 34px 0 56px; color: var(--ink-faint); font-size: 14px; position: relative; z-index: 1; }
-      footer .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
-      footer .credit a { color: var(--ink-soft); font-weight: 600; }
-      footer .credit a:hover { color: var(--accent); }
+      footer { border-top: 1px solid var(--line); padding: 50px 0 40px; color: var(--ink-faint); font-size: 14px; position: relative; z-index: 1; }
+      .footer-grid { display: flex; justify-content: space-between; gap: 48px; flex-wrap: wrap; }
+      .footer-brand { max-width: 320px; }
+      .footer-brand .brand { margin-bottom: 14px; }
+      .footer-brand p { margin: 0; color: var(--ink-soft); line-height: 1.6; }
+      .footer-brand .footer-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); margin-top: 14px; }
+      .footer-cols { display: flex; gap: 56px; flex-wrap: wrap; }
+      .footer-col h4 { margin: 0 0 12px; font-size: 11px; font-family: var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; }
+      .footer-col a { display: block; color: var(--ink-soft); padding: 4px 0; }
+      .footer-col a:hover { color: var(--accent); text-decoration: none; }
+      .footer-bottom {
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+        margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 13px;
+      }
+      .footer-bottom .credit a { color: var(--ink-soft); font-weight: 600; }
+      .footer-bottom .credit a:hover { color: var(--accent); }
       .heart { color: var(--accent); }
 
       @media (max-width: 720px) {
@@ -462,20 +474,39 @@
 
     <footer>
       <div class="wrap">
-        <span class="brand">
-          <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-            <rect width="32" height="32" rx="8" fill="var(--accent)" />
-            <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity="0.4" />
-            <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity="0.95" />
-            <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--accent)" />
-          </svg>
-          <span class="word">de<span class="ja">ja</span></span>
-        </span>
-        <span class="credit">Crafted with <span class="heart">♥</span> by <a href="https://github.com/mehdirt">mehdirt</a></span>
-        <span>
-          <a href="https://github.com/mehdirt/deja">Source</a> ·
-          <a href="#privacy">Privacy</a>
-        </span>
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <span class="brand">
+              <svg width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                <rect width="32" height="32" rx="8" fill="var(--accent)" />
+                <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity="0.4" />
+                <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity="0.95" />
+                <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--accent)" />
+              </svg>
+              <span class="word">de<span class="ja">ja</span></span>
+            </span>
+            <p>Your personal prompt library — quietly captured across every AI you use, and resurfaced the moment you need it.</p>
+            <p class="footer-meta">Local-first · No account · No cloud</p>
+          </div>
+          <div class="footer-cols">
+            <div class="footer-col">
+              <h4>Product</h4>
+              <a href="#how">How it works</a>
+              <a href="#tools">Supported sites</a>
+              <a href="#privacy">Privacy</a>
+            </div>
+            <div class="footer-col">
+              <h4>Get it</h4>
+              <a href="https://chromewebstore.google.com/detail/REPLACE_EXTENSION_ID">Add to Chrome</a>
+              <a href="https://github.com/mehdirt/deja#install-load-unpacked">Load from source</a>
+              <a href="https://github.com/mehdirt/deja">Source on GitHub</a>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <span>© 2026 Deja</span>
+          <span class="credit">Crafted with <span class="heart">♥</span> by <a href="https://github.com/mehdirt">mehdirt</a></span>
+        </div>
       </div>
     </footer>
 
