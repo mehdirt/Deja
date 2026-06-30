@@ -33,7 +33,7 @@ There is no CI yet and no test framework conventions beyond Vitest + happy-dom.
 
 Four execution contexts, all in TypeScript, bundled by Vite via `@crxjs/vite-plugin`:
 
-- **Content scripts** (`src/content/<platform>/index.ts`) — one per supported site. Each one's only job is to locate the prompt input element with a site-specific selector and hand it to `attachSubmitHook` from `src/content/shared/capture.ts`. The shared helper watches for Enter keypresses and clicks on send-like buttons, debounces duplicates within 2 s, and `chrome.runtime.sendMessage`s a `PROMPT_CAPTURED` payload.
+- **Content scripts** (`src/content/<platform>/index.ts`) — one per supported site. Each one's only job is to locate the prompt input element with a site-specific selector and hand it to `attachSubmitHook` from `src/content/shared/capture.ts`. The shared helper watches for Enter keypresses and clicks on send-like buttons, debounces duplicates within 2 s, and `chrome.runtime.sendMessage`s a `PROMPT_CAPTURED` payload. Capture and resurface also consult `src/content/shared/captureGate.ts` — a synchronous, fail-open snapshot of pause / per-site / incognito state so the hot path adds no latency (incognito auto-pause is the one deliberate fail-*closed* case).
 - **Background service worker** (`src/background/index.ts`) — listens for `PROMPT_CAPTURED` and writes to Dexie. The service worker is the *only* writer to the DB from outside the UI.
 - **Popup** (`src/popup/`) — small React app: search box + top 5 recent. Opens the options page for the full library.
 - **Options / Library page** (`src/options/`) — full-page React app: search, platform filter, copy, soft-delete, JSON export.
@@ -44,6 +44,8 @@ Shared core lives under `src/lib/`:
 - `search.ts` — MiniSearch fuzzy index, rebuilt in-memory from the current list of prompts.
 - `similarity.ts` — IDF-weighted trigram similarity with a length-aware threshold, powering the "You've Been Here Before" resurface tooltip (wired via the background worker's `SIMILAR_QUERY` handler → `src/content/shared/resurface.ts`).
 - `ranking.ts` — usefulness score (usage × recency) for the library's "most useful" sort.
+- `classify.ts` — selective-capture classifier: flags throwaway "minor" prompts by strength (`off`/`balanced`/`strict`). Pure; runs at capture time in the background worker.
+- `prefs.ts` — user preferences in `chrome.storage.local`: resurface click (copy/insert), filter strength, pause state (`pauseUntil`), per-site capture switches, incognito auto-pause. `writePrefs` merges partial updates.
 - `health.ts` — per-platform capture-health storage/signals (the content-side probe lives in `src/content/shared/health.ts`).
 - `sensitive.ts` — capture-eligibility: rejects password/OTP/credential and non-composer fields, and minimizes captured URLs.
 - `blocklist.ts` — user blocklist (domains + regex) storage/matching (the content-side sync cache lives in `src/content/shared/blocklist.ts`).
