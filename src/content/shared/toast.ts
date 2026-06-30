@@ -76,6 +76,34 @@ export function showSavedToast(onUndo: () => void): void {
   hideTimer = window.setTimeout(dismiss, 5000)
 }
 
+// A quiet, button-less toast — used once to explain that a short throwaway
+// prompt was filtered out (selective capture), so the behavior is never silent.
+// Auto-dismisses; no undo, because nothing was lost (the prompt is stored as
+// minor and recoverable in the library).
+export function showInfoToast(message: string): void {
+  const shadow = ensureHost()
+  const wrap = shadow.querySelector('.dj-wrap') as HTMLElement
+  wrap.replaceChildren()
+
+  const toast = document.createElement('div')
+  toast.className = 'dj-toast'
+  toast.setAttribute('role', 'status')
+  toast.setAttribute('aria-live', 'polite')
+
+  const dot = document.createElement('span')
+  dot.className = 'dj-dot'
+
+  const msg = document.createElement('span')
+  msg.className = 'dj-msg'
+  msg.textContent = message
+
+  toast.append(dot, msg)
+  wrap.appendChild(toast)
+
+  window.clearTimeout(hideTimer)
+  hideTimer = window.setTimeout(dismiss, 6000)
+}
+
 function dismiss(): void {
   const wrap = host?.shadowRoot?.querySelector('.dj-wrap') as HTMLElement | null
   wrap?.replaceChildren()

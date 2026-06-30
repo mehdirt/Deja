@@ -3,7 +3,7 @@ import { writeHealth } from '@/lib/health'
 import { isBlocked } from '@/lib/blocklist'
 import { isCapturableField, withinComposer, looksLikeAuthPath, safeCaptureUrl } from '@/lib/sensitive'
 import { getBlocklist } from './blocklist'
-import { showSavedToast } from './toast'
+import { showSavedToast, showInfoToast } from './toast'
 
 // Quiet by default — the host page's console must stay clean, and capture
 // activity (even just lengths) shouldn't be narrated on chatgpt.com et al.
@@ -42,8 +42,18 @@ export function sendCapture(text: string, platform: Platform): void {
           return
         }
         // A stored prompt is the strongest possible proof capture works —
-        // stronger than finding the input. Mark this platform healthy.
+        // stronger than finding the input. Mark this platform healthy. (The
+        // prompt is always stored, even when filtered, so this holds.)
         void writeHealth(platform, true)
+        // Selective capture: a "filtered" prompt was a short throwaway, saved
+        // but kept out of the library/resurface. Don't show the "remembered"
+        // toast for it (that would be noise on every "yes"/"continue"); the
+        // first time it happens, show a one-time explanation so it's never
+        // silent. A kept prompt gets the usual toast with undo.
+        if (resp.filtered) {
+          if (resp.notice) showInfoToast('skipped a short prompt · change in deja settings')
+          return
+        }
         const savedId = resp.id
         showSavedToast(() => {
           if (!chrome.runtime?.id) return

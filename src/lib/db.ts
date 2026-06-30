@@ -43,9 +43,21 @@ export async function savePrompt(input: Omit<Prompt, 'id' | 'usageCount' | 'last
   return db.prompts.add({ ...input, usageCount: 0, lastUsedAt: now })
 }
 
-export async function listPrompts(): Promise<Prompt[]> {
+// Default view excludes soft-deleted rows AND "minor" (selectively-filtered)
+// prompts, so the popup, resurface pool, and the library's default list stay
+// tidy. Pass { includeMinor: true } to also return minor prompts — the library
+// uses this to offer a "show filtered" view and a per-prompt "keep" action, and
+// the background includes them in resurface when the user opts to keep minors.
+export async function listPrompts(opts: { includeMinor?: boolean } = {}): Promise<Prompt[]> {
   const all = await db.prompts.orderBy('createdAt').reverse().toArray()
-  return all.filter((p) => !p.deletedAt)
+  return all.filter((p) => !p.deletedAt && (opts.includeMinor || !p.minor))
+}
+
+// Promote a minor (filtered) prompt to a normal one, or demote a normal prompt.
+// Used by the library's "keep" affordance so a user can rescue anything the
+// selective-capture heuristic hid.
+export async function setMinor(id: number, minor: boolean): Promise<void> {
+  await db.prompts.update(id, { minor })
 }
 
 export async function softDelete(id: number): Promise<void> {
@@ -158,10 +170,11 @@ export function normalizeImportedRow(raw: unknown): Omit<Prompt, 'id'> | null {
   const url = typeof r.url === 'string' ? r.url : ''
   const tags = Array.isArray(r.tags) ? normalizeTags(r.tags.filter((t): t is string => typeof t === 'string')) : []
   const pinned = r.pinned === true
+  const minor = r.minor === true
   // Preserve tombstones: a soft-deleted/deleted row must stay deleted on import,
   // never resurrected. Keep deletedAt only when it's a real (number) tombstone.
   const deletedAt = typeof r.deletedAt === 'number' ? r.deletedAt : null
-  return { text, platform, url, createdAt, usageCount, lastUsedAt, tags, pinned, deletedAt }
+  return { text, platform, url, createdAt, usageCount, lastUsedAt, tags, pinned, minor, deletedAt }
 }
 
 export interface ImportResult {

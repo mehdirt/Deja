@@ -16,16 +16,31 @@ export type ResurfaceClick = 'copy' | 'insert'
 
 export interface Prefs {
   resurfaceClick: ResurfaceClick
+  // Selective capture. When false (default), prompts the classifier judges
+  // "minor" (short throwaways) are stored but hidden from the library and
+  // resurface. When true, every prompt is kept and shown — the filter is off.
+  keepMinor: boolean
+  // Whether the user has already seen the one-time "we skipped a short prompt"
+  // explanation. Set the first time a minor prompt is filtered so we inform
+  // once and then stay quiet (never nag).
+  minorNoticeSeen: boolean
 }
 
-export const DEFAULT_PREFS: Prefs = { resurfaceClick: 'copy' }
+export const DEFAULT_PREFS: Prefs = {
+  resurfaceClick: 'copy',
+  keepMinor: false,
+  minorNoticeSeen: false,
+}
 
 const KEY = 'prefs'
 
 function coerce(raw: unknown): Prefs {
   const obj = (raw ?? {}) as Partial<Prefs>
-  const resurfaceClick: ResurfaceClick = obj.resurfaceClick === 'insert' ? 'insert' : 'copy'
-  return { resurfaceClick }
+  return {
+    resurfaceClick: obj.resurfaceClick === 'insert' ? 'insert' : 'copy',
+    keepMinor: obj.keepMinor === true,
+    minorNoticeSeen: obj.minorNoticeSeen === true,
+  }
 }
 
 export async function readPrefs(): Promise<Prefs> {
@@ -37,9 +52,14 @@ export async function readPrefs(): Promise<Prefs> {
   }
 }
 
-export async function writePrefs(prefs: Prefs): Promise<void> {
+// Merge a partial update into the stored prefs. Merging (rather than
+// overwriting) means a caller that only knows about one setting — e.g. the
+// settings UI saving `resurfaceClick`, or the background stamping
+// `minorNoticeSeen` — can never clobber another preference it didn't pass.
+export async function writePrefs(patch: Partial<Prefs>): Promise<void> {
   try {
-    await chrome.storage.local.set({ [KEY]: coerce(prefs) })
+    const current = await readPrefs()
+    await chrome.storage.local.set({ [KEY]: coerce({ ...current, ...patch }) })
   } catch {
     /* storage unavailable — never throw into the host page */
   }

@@ -13,6 +13,13 @@ export interface Prompt {
   // exports stay valid; treat undefined as [] / false everywhere.
   tags?: string[]
   pinned?: boolean
+  // Selective capture. A "minor" prompt is a throwaway one (a one-word
+  // follow-up, a bare "yes"/"continue", a tiny fragment) — still stored (soft
+  // capture, recoverable) but hidden from the library and resurface by default
+  // so they don't add clutter or noise. Optional: undefined means a normal
+  // ("major") prompt, so all pre-existing rows and old exports stay visible.
+  // See src/lib/classify.ts for how this is decided.
+  minor?: boolean
 }
 
 export type CapturedPromptMessage = {
@@ -44,7 +51,15 @@ export type RuntimeMessage =
   | SimilarQueryMessage
   | OpenLibraryMessage
 
-export type CaptureResponse = { ok: true; id: number } | { ok: false; error: string }
+// `filtered` is true when the captured prompt was classified "minor" and the
+// user hasn't opted to keep minors — i.e. it was saved but kept out of the
+// library/resurface by default, so the content script shows no "remembered"
+// toast for it. `notice` is true only the first time that happens, so the
+// content script can show a one-time explanation instead of silently swallowing
+// the prompt (informed, not silent).
+export type CaptureResponse =
+  | { ok: true; id: number; filtered: boolean; notice: boolean }
+  | { ok: false; error: string }
 
 // A prior prompt close enough to the in-progress text to resurface, carrying
 // its similarity score and the meaningful words it shares with the query (so
