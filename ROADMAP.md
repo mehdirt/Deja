@@ -125,9 +125,30 @@ Still requires a live browser / human (can't be done from the repo):
 
 ---
 
+## Post-0.2.0 — capture quality & resurface correctness ✅ *(built)*
+
+Two issues found in real use, both addressed before the wider invite.
+
+**Resurface echo bug — fixed.** Right after submitting a prompt, the tooltip could pop up suggesting the prompt you'd *just sent*. Root cause: the debounced similarity query was scheduled at keystroke time and never cancelled on submit, so it fired ~400 ms later against the just-sent (now-saved, identical) text. Fixes: cancel the pending debounce in `hide()`; re-read the composer's *live* text when the timer fires (covers Send-button submits that bypass the Enter handler); and a background backstop that never returns a prompt identical to the query.
+
+**Selective capture (soft filter) — built.** We no longer treat every keystroke-sized prompt as library-worthy. A local, zero-LLM classifier (`src/lib/classify.ts`) flags "minor" prompts — bare follow-ups ("yes", "continue", "thanks") and tiny fragments with no code/URL/structure. Design decisions:
+- **Soft capture, never a silent drop.** Minor prompts are still *stored* (flagged `minor`), just hidden from the library and resurface by default. This mirrors soft-delete, keeps the "remembers everything" promise intact, and — crucially — lets us *tune the threshold from real data* instead of guessing (same philosophy as the resurface threshold).
+- **Conservative bar.** Only obvious throwaways are flagged; a short prompt with code, a URL, a file path, list structure, or ≥6 words is kept. Constants are centralized and provisional.
+- **Informed, never naggy.** No "remembered" toast for a filtered prompt; a *one-time* explanation toast the first time it happens. The library shows `filtered (N)` to reveal/keep them, each with a `keep` action. Settings has a master "keep every prompt, even short ones" toggle (default off) that turns the filter off entirely.
+
+These two tracks below — named for the next round of work — build directly on this.
+
 ## Phase 6+ — Decide from data, not from this document
 
-After ~50 users have used the v1 for a few weeks, look at what they actually do and pick the next feature. Likely candidates, in rough order of value:
+After ~50 users have used the v1 for a few weeks, look at what they actually do and pick the next feature.
+
+**Two improvement tracks to revisit with data (named June 2026):**
+
+*The suggestion / "You've Been Here" system.* Now that it never echoes the just-sent prompt and the pool excludes throwaways, the next gains are in *recall and ranking*: rank matches by reuse/recency (a prompt you've copied before should beat a lexically-closer one you never touched), tune the similarity threshold from watched reactions, and — the big one — semantic recall via on-device embeddings to catch paraphrases trigrams miss (see #2 below).
+
+*The storing system.* Selective capture is the first step. Next: **dedupe near-identical captures** (edit-resubmit, retries currently each create a row beyond the 2 s debounce window — collapse them into one prompt with a usage count / variants); precompute and cache trigram sets + an inverted index in the worker for scale (already flagged in operating notes); store an embedding per prompt at capture to power semantic search; and consider auto-archival of stale minor prompts.
+
+Likely feature candidates, in rough order of value:
 
 1. **Optional LLM features** (bring-your-own-key)
    - "Improve this prompt" button on a card (on-demand, not automatic)
