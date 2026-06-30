@@ -136,6 +136,14 @@ Two issues found in real use, both addressed before the wider invite.
 - **Conservative bar.** Only obvious throwaways are flagged; a short prompt with code, a URL, a file path, list structure, or ≥6 words is kept. Constants are centralized and provisional.
 - **Informed, never naggy.** No "remembered" toast for a filtered prompt; a *one-time* explanation toast the first time it happens. The library shows `filtered (N)` to reveal/keep them, each with a `keep` action. Settings has a master "keep every prompt, even short ones" toggle (default off) that turns the filter off entirely.
 
+**Capture controls — built.** A small, principle-aligned set of "what gets captured" controls, organized in settings by intent (*don't capture* vs *keep but hide*):
+- **Pause capture** (`src/ui/PauseControl.tsx`) — a one-click off switch in the popup: pause for 1 hour or until you resume, with a live countdown and a toolbar badge (`||`, alarm-cleared on expiry). Capture resumes on its own — the content gate checks the pause time live, so the alarm is cosmetic only. The biggest trust affordance we have.
+- **Per-site switches** — fold into the capture-health view in settings: each site shows its health dot *and* an on/off switch. Auto-pause in incognito by default.
+- **Filter strength** — the minor classifier is now a three-stop segmented control (`off` / `balanced` / `strict`), replacing the earlier `keepMinor` boolean (migrated in `prefs.ts`).
+- **Blocklist made approachable** — a live "test a prompt against your rules" box and a "preview impact on saved prompts" dry-run, so a too-broad regex is visible before you trust it.
+
+The content hot path reads all of this through a synchronous, fail-open cache (`src/content/shared/captureGate.ts`, mirroring the blocklist cache); incognito auto-pause is the one deliberate fail-*closed* case. New permission: `alarms` (badge expiry only).
+
 These two tracks below — named for the next round of work — build directly on this.
 
 ## Phase 6+ — Decide from data, not from this document

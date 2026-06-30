@@ -56,11 +56,13 @@ shipped feature set; reviewers compare the listing against behavior.
 ## Permission justifications
 
 The store requires a short justification per permission. Deja requests the
-**minimum** — one API permission and host access only on the five supported AI
-sites.
+**minimum** — two small API permissions and host access only on the five
+supported AI sites.
 
 - **`storage`** — Save your prompt library and settings locally in the browser.
   No remote storage is used.
+- **`alarms`** — Clear the "capture paused" timer when it elapses, so the
+  toolbar badge stops showing paused. Local only; no network use.
 - **Host access** (`chatgpt.com`, `chat.openai.com`, `claude.ai`,
   `gemini.google.com`, `chat.deepseek.com`, `grok.com`) — Read the prompt you
   type into these sites' composer so it can be saved to your local library, and
@@ -110,7 +112,7 @@ at the landing page `#privacy` or a dedicated page and paste the URL here).
 ## Pre-submission checklist
 
 - [ ] `npm run build`, load `dist/`, smoke-test capture + resurface on all 5 sites
-- [ ] Confirm `dist/manifest.json` requests only `storage` + the 5 content-script hosts
+- [ ] Confirm `dist/manifest.json` requests only `storage`, `alarms` + the 5 content-script hosts
 - [ ] Version in `package.json` bumped (manifest version is injected from it)
 - [ ] Privacy policy URL is live and reachable
 - [ ] Screenshots captured at the required resolution
