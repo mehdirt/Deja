@@ -15,11 +15,26 @@
       content="Your prompts are work. Deja keeps them, makes them findable, and resurfaces the right one while you type the next. Local-first, no account, no cloud."
     />
     <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Deja — your personal prompt library" />
+    <meta
+      name="twitter:description"
+      content="Your prompts are work. Deja keeps them, makes them findable, and resurfaces the right one while you type the next. Local-first, no account, no cloud."
+    />
+    <!-- Theme the browser chrome to match light/dark; let form controls follow too. -->
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#16151a" media="(prefers-color-scheme: dark)" />
+    <!-- Inline SVG favicon (the deja mark) — no extra request, on-brand. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b54f0'/%3E%3Crect x='7' y='7' width='13' height='13' rx='3.5' fill='white' opacity='0.4'/%3E%3Crect x='12' y='12' width='13' height='13' rx='3.5' fill='white' opacity='0.95'/%3E%3Crect x='15' y='17' width='2.4' height='3.6' rx='0.6' fill='%235b54f0'/%3E%3C/svg%3E"
+    />
     <!--
       No web fonts, no analytics, no third-party requests — on purpose. A page
       that sells a privacy-first product shouldn't phone home either.
-      The "Add to Chrome" links point at REPLACE_EXTENSION_ID until the Web
-      Store listing is live; swap them then.
+      The "Add to Chrome" / Source links point at REPLACE_* until the Web Store
+      listing and repo are live; swap them then.
     -->
     <style>
       :root {
@@ -31,9 +46,17 @@
         --ink-faint: #9a968d;
         --accent: #5b54f0;
         --accent-hover: #4a43e0;
+        --accent-soft: #ecebfe;
         --line: #e7e2d8;
+        --ok: #2f9e63;
         --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        --maxw: 980px;
+        --radius: 16px;
+        --shadow-sm: 0 1px 2px rgba(28, 27, 25, 0.04), 0 1px 3px rgba(28, 27, 25, 0.06);
+        --shadow-pop: 0 16px 44px rgba(28, 27, 25, 0.14);
+        --shadow-cta: 0 10px 30px rgba(91, 84, 240, 0.30);
+        --glow: rgba(91, 84, 240, 0.1);
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -45,9 +68,15 @@
           --ink-faint: #6e6a62;
           --accent: #8983f5;
           --accent-hover: #9c97f7;
+          --accent-soft: #272534;
           --line: #2e2c36;
+          --ok: #56c98a;
+          --shadow-pop: 0 16px 44px rgba(0, 0, 0, 0.45);
+          --shadow-cta: 0 10px 30px rgba(137, 131, 245, 0.28);
+          --glow: rgba(137, 131, 245, 0.14);
         }
       }
+
       * { box-sizing: border-box; }
       html { scroll-behavior: smooth; }
       body {
@@ -55,114 +84,172 @@
         background: var(--bg);
         color: var(--ink);
         font-family: var(--sans);
-        line-height: 1.55;
+        line-height: 1.6;
         -webkit-font-smoothing: antialiased;
+        position: relative;
       }
+      /* Soft indigo aura behind the hero — the only flourish; pure decoration. */
+      body::before {
+        content: '';
+        position: absolute; inset: 0 0 auto 0; height: 720px; z-index: 0;
+        background: radial-gradient(58% 50% at 50% -4%, var(--glow), transparent 72%);
+        pointer-events: none;
+      }
+      .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
       a { color: var(--accent); text-decoration: none; }
       a:hover { text-decoration: underline; }
-      .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px; }
-      .brand {
-        display: flex; align-items: center; gap: 10px;
-        font-family: var(--mono); font-weight: 600; font-size: 18px;
-        letter-spacing: -0.02em;
+      a:focus-visible, .cta:focus-visible, .btn-ghost:focus-visible {
+        outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; text-decoration: none;
       }
-      .brand .ja { color: var(--accent); }
-      header { padding: 28px 0; }
+
+      /* Brand wordmark — wrap the text in ONE element so the header's flex gap
+         doesn't insert space between "de" and "ja". */
+      .brand { display: inline-flex; align-items: center; gap: 10px; }
+      .brand .word {
+        font-family: var(--mono); font-weight: 600; font-size: 19px; letter-spacing: -0.03em; color: var(--ink);
+      }
+      .brand .word .ja { color: var(--accent); }
+
+      header { padding: 26px 0; }
       header .wrap { display: flex; align-items: center; justify-content: space-between; }
-      header nav a { color: var(--ink-soft); font-size: 14px; margin-left: 20px; }
+      header nav a { color: var(--ink-soft); font-size: 14px; margin-left: 22px; }
+      header nav a:hover { color: var(--ink); }
 
       /* Hero */
-      .hero { text-align: center; padding: 56px 0 40px; }
+      .hero { text-align: center; padding: 60px 0 8px; }
+      .eyebrow {
+        font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+        color: var(--ink-faint); margin: 18px 0 0;
+      }
       .hero h1 {
-        font-size: clamp(34px, 6vw, 56px);
-        line-height: 1.05; letter-spacing: -0.03em;
-        margin: 22px 0 14px; font-weight: 700;
+        font-size: clamp(36px, 6.2vw, 60px); line-height: 1.04; letter-spacing: -0.035em;
+        margin: 14px 0 16px; font-weight: 700;
       }
       .hero h1 .accent { color: var(--accent); }
       .hero p.lead {
         font-size: clamp(17px, 2.4vw, 20px); color: var(--ink-soft);
-        max-width: 620px; margin: 0 auto 28px;
+        max-width: 600px; margin: 0 auto 30px;
       }
+      .cta-row { display: flex; gap: 16px; justify-content: center; align-items: center; flex-wrap: wrap; }
       .cta {
-        display: inline-flex; align-items: center; gap: 8px;
+        display: inline-flex; align-items: center; gap: 9px;
         background: var(--accent); color: #fff; font-weight: 600;
-        padding: 13px 22px; border-radius: 10px; font-size: 16px;
-        box-shadow: 0 8px 28px rgba(91, 84, 240, 0.28);
+        padding: 14px 24px; border-radius: 11px; font-size: 16px;
+        box-shadow: var(--shadow-cta); transition: background 0.15s ease, transform 0.15s ease;
       }
-      .cta:hover { background: var(--accent-hover); text-decoration: none; }
-      .cta-row { display: flex; gap: 14px; justify-content: center; align-items: center; flex-wrap: wrap; }
-      .cta-sub { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); margin-top: 16px; }
+      .cta:hover { background: var(--accent-hover); text-decoration: none; transform: translateY(-1px); }
       .ghost-link { color: var(--ink-soft); font-size: 15px; }
+      .ghost-link:hover { color: var(--ink); }
+      .cta-sub {
+        font-family: var(--mono); font-size: 12px; color: var(--ink-faint);
+        margin-top: 18px; display: inline-flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+      }
+      .cta-sub .kbd {
+        border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--ink-soft);
+      }
 
-      /* Resurface mock */
-      .mock {
-        margin: 52px auto 0; max-width: 600px; position: relative;
-        background: var(--surface); border: 1px solid var(--line);
-        border-radius: 14px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
-        text-align: left;
-      }
-      .mock .composer {
-        border: 1px solid var(--line); border-radius: 10px; background: var(--sunk);
-        padding: 14px 16px; color: var(--ink-soft); font-size: 15px;
-      }
-      .mock .composer .cursor { border-right: 2px solid var(--accent); padding-right: 2px; animation: blink 1.1s step-end infinite; }
-      @keyframes blink { 50% { border-color: transparent; } }
+      /* The moment, illustrated — tooltip sits ABOVE the composer in normal flow,
+         pointing down with an arrow, so it can never cover the text. */
+      .mock { max-width: 560px; margin: 48px auto 0; text-align: left; }
       .tooltip {
-        position: absolute; left: 18px; top: -18px;
-        background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
-        padding: 8px 10px; display: flex; align-items: flex-start; gap: 10px;
-        box-shadow: 0 8px 28px rgba(0,0,0,.18); max-width: 92%;
+        position: relative; align-self: flex-start; display: inline-flex; align-items: flex-start; gap: 11px;
+        background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+        padding: 11px 13px; box-shadow: var(--shadow-pop); max-width: 96%; margin: 0 0 16px 14px;
       }
-      .tooltip .lead { color: var(--accent); font-weight: 600; font-size: 13px; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
-      .tooltip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-      .tooltip .preview { color: var(--ink-soft); font-family: var(--mono); font-size: 11px; }
+      .tooltip::after {
+        content: ''; position: absolute; left: 26px; bottom: -7px; width: 12px; height: 12px;
+        background: var(--surface); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+        transform: rotate(45deg);
+      }
+      .tooltip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex: none; }
+      .tooltip .t-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+      .tooltip .lead { color: var(--accent); font-weight: 600; font-size: 13px; }
+      .tooltip .preview {
+        color: var(--ink-soft); font-family: var(--mono); font-size: 11px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px;
+      }
       .tooltip .meta { color: var(--ink-faint); font-size: 10px; }
-      .tooltip .count { color: var(--ink-faint); font-family: var(--mono); font-weight: 600; font-size: 10px; }
+      .tooltip .count { color: var(--ink-faint); font-family: var(--mono); font-weight: 600; font-size: 10px; flex: none; margin-top: 2px; }
+      .composer {
+        display: flex; align-items: center; gap: 12px;
+        border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+        padding: 16px 16px 16px 18px; box-shadow: var(--shadow-sm);
+      }
+      .composer .ctext { color: var(--ink); font-size: 15.5px; flex: 1; }
+      .composer .cursor {
+        display: inline-block; width: 2px; height: 1.05em; vertical-align: text-bottom;
+        background: var(--accent); margin-left: 1px; animation: blink 1.1s step-end infinite;
+      }
+      .composer .send {
+        flex: none; width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: #fff;
+        display: inline-flex; align-items: center; justify-content: center; font-size: 14px;
+      }
+      @keyframes blink { 50% { opacity: 0; } }
 
       /* Sections */
-      section { padding: 48px 0; }
-      h2 { font-size: clamp(24px, 3.4vw, 32px); letter-spacing: -0.02em; margin: 0 0 10px; }
-      .section-lead { color: var(--ink-soft); max-width: 640px; margin: 0 0 30px; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+      section { padding: 56px 0; position: relative; z-index: 1; }
+      .section-head { max-width: 640px; }
+      h2 { font-size: clamp(25px, 3.4vw, 33px); letter-spacing: -0.025em; margin: 0 0 10px; }
+      .section-lead { color: var(--ink-soft); margin: 0 0 32px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
       .card {
-        background: var(--surface); border: 1px solid var(--line);
-        border-radius: 12px; padding: 20px;
+        background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
       }
-      .card h3 { margin: 0 0 6px; font-size: 17px; }
+      .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-pop); border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
+      .card .ic {
+        width: 38px; height: 38px; border-radius: 10px; background: var(--accent-soft); color: var(--accent);
+        display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px;
+      }
+      .card h3 { margin: 0 0 6px; font-size: 17px; letter-spacing: -0.01em; }
       .card p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
-      .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+
+      .pill-row { display: flex; flex-wrap: wrap; gap: 10px; }
       .pill {
-        display: inline-flex; align-items: center; gap: 7px;
+        display: inline-flex; align-items: center; gap: 8px;
         border: 1px solid var(--line); background: var(--surface);
-        border-radius: 999px; padding: 7px 14px; font-size: 14px; color: var(--ink);
+        border-radius: 999px; padding: 8px 15px; font-size: 14px; color: var(--ink);
       }
       .pill .pdot { width: 8px; height: 8px; border-radius: 50%; }
+
       .privacy {
-        background: var(--sunk); border: 1px solid var(--line); border-radius: 14px;
-        padding: 30px;
+        background: var(--sunk); border: 1px solid var(--line); border-radius: var(--radius); padding: 34px;
       }
-      .privacy ul { margin: 14px 0 0; padding-left: 18px; color: var(--ink-soft); }
-      .privacy li { margin: 6px 0; }
-      footer { border-top: 1px solid var(--line); padding: 30px 0 50px; color: var(--ink-faint); font-size: 14px; }
-      footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+      .privacy h2 { margin-top: 0; }
+      .privacy .plist { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 14px; }
+      .privacy .plist li { display: flex; gap: 12px; color: var(--ink-soft); align-items: flex-start; }
+      .privacy .plist .chk { color: var(--ok); flex: none; margin-top: 2px; }
+      .privacy .plist strong { color: var(--ink); font-weight: 600; }
+
+      footer { border-top: 1px solid var(--line); padding: 34px 0 56px; color: var(--ink-faint); font-size: 14px; position: relative; z-index: 1; }
+      footer .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
+      footer .credit a { color: var(--ink-soft); font-weight: 600; }
+      footer .credit a:hover { color: var(--accent); }
+      .heart { color: var(--accent); }
+
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        .composer .cursor { animation: none; }
+        .cta:hover, .card:hover { transform: none; }
+      }
     </style>
   </head>
   <body>
     <header>
       <div class="wrap">
         <span class="brand">
-          <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
             <rect width="32" height="32" rx="8" fill="var(--accent)" />
             <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity="0.4" />
             <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity="0.95" />
             <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--accent)" />
           </svg>
-          de<span class="ja">ja</span>
+          <span class="word">de<span class="ja">ja</span></span>
         </span>
         <nav>
           <a href="#how">How it works</a>
           <a href="#privacy">Privacy</a>
-          <a href="https://github.com/REPLACE_OWNER/deja">Source</a>
+          <a href="https://github.com/mehdirt/deja">Source</a>
         </nav>
       </div>
     </header>
@@ -170,12 +257,13 @@
     <main>
       <section class="hero">
         <div class="wrap">
-          <svg width="64" height="64" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <svg width="68" height="68" viewBox="0 0 32 32" fill="none" aria-hidden="true">
             <rect width="32" height="32" rx="8" fill="var(--accent)" />
             <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity="0.4" />
             <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity="0.95" />
             <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--accent)" />
           </svg>
+          <p class="eyebrow">your prompts · every ai · one library</p>
           <h1>Your prompts are work.<br />Stop <span class="accent">losing</span> them.</h1>
           <p class="lead">
             Deja quietly saves every prompt you send to ChatGPT, Claude, Gemini, DeepSeek, and
@@ -186,50 +274,78 @@
             <a class="cta" href="https://chromewebstore.google.com/detail/REPLACE_EXTENSION_ID">
               Add to Chrome — free
             </a>
-            <a class="ghost-link" href="https://github.com/REPLACE_OWNER/deja#install-load-unpacked">
+            <a class="ghost-link" href="https://github.com/mehdirt/deja#install-load-unpacked">
               or load from source →
             </a>
           </div>
-          <p class="cta-sub">free · local-first · no sign-up · open the popup with ⌘⇧K</p>
+          <p class="cta-sub">
+            <span>free</span><span>·</span><span>local-first</span><span>·</span><span>no sign-up</span>
+            <span>·</span><span>open with <span class="kbd">⌘⇧K</span></span>
+          </p>
 
           <!-- the moment, illustrated -->
           <div class="mock" aria-hidden="true">
             <div class="tooltip">
-              <div>
-                <div class="lead"><span class="dot"></span> You've asked something like this before →</div>
+              <span class="dot"></span>
+              <div class="t-body">
+                <div class="lead">You've asked something like this before →</div>
                 <div class="preview">write a bash script that backs up my postgres db every night…</div>
                 <div class="meta">matched on backup, postgres</div>
               </div>
               <span class="count">1/3</span>
             </div>
-            <div class="composer">write a script to back up my database nightly<span class="cursor">&nbsp;</span></div>
+            <div class="composer">
+              <span class="ctext">write a script to back up my database nightly<span class="cursor"></span></span>
+              <span class="send" aria-hidden="true">↵</span>
+            </div>
           </div>
         </div>
       </section>
 
       <section id="how">
         <div class="wrap">
-          <h2>It works the way memory should — quietly</h2>
-          <p class="section-lead">
-            No buttons to press, no copy-paste, no folders to maintain. You keep using your AI
-            tools exactly as you do today; Deja does the remembering.
-          </p>
+          <div class="section-head">
+            <h2>It works the way memory should — quietly</h2>
+            <p class="section-lead">
+              No buttons to press, no copy-paste, no folders to maintain. You keep using your AI
+              tools exactly as you do today; Deja does the remembering.
+            </p>
+          </div>
           <div class="grid">
             <div class="card">
+              <span class="ic" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+              </span>
               <h3>Captures automatically</h3>
               <p>Every prompt you send is saved the moment you hit Enter — across five AI tools, with no effort from you.</p>
             </div>
             <div class="card">
+              <span class="ic" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7.5" width="11" height="11" rx="2.5"/><rect x="9.5" y="3.5" width="11" height="11" rx="2.5"/></svg>
+              </span>
               <h3>Resurfaces in context</h3>
-              <p>Start typing and Deja floats a gentle reminder when you've asked something similar before. Click to copy — it never types for you.</p>
+              <p>Start typing and Deja floats a gentle reminder when you've asked something similar before. Click to copy — it never types into your box unless you ask it to.</p>
             </div>
             <div class="card">
+              <span class="ic" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m20.5 20.5-4-4"/></svg>
+              </span>
               <h3>Finds anything fast</h3>
               <p>Fuzzy search, tags, pins, and favorites. Sort by newest, most useful, most-used, or longest-unseen. Built for a library of hundreds.</p>
             </div>
             <div class="card">
+              <span class="ic" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
+              </span>
               <h3>Yours to keep</h3>
               <p>Export and import JSON, export Markdown, blocklist sites you don't want captured, or wipe everything in one click.</p>
+            </div>
+            <div class="card">
+              <span class="ic" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+              </span>
+              <h3>Yours to control</h3>
+              <p>Pause capture with one click, switch off any site, or auto-pause in incognito. Filter out throwaway prompts so only the keepers stay.</p>
             </div>
           </div>
         </div>
@@ -237,8 +353,10 @@
 
       <section>
         <div class="wrap">
-          <h2>Works where you already work</h2>
-          <p class="section-lead">One library across every assistant you use.</p>
+          <div class="section-head">
+            <h2>Works where you already work</h2>
+            <p class="section-lead">One library across every assistant you use.</p>
+          </div>
           <div class="pill-row">
             <span class="pill"><span class="pdot" style="background:#10a37f"></span> ChatGPT</span>
             <span class="pill"><span class="pdot" style="background:#d97757"></span> Claude</span>
@@ -253,14 +371,30 @@
         <div class="wrap">
           <div class="privacy">
             <h2>Private by design — not by promise</h2>
-            <p class="section-lead" style="margin-bottom:0">
+            <p class="section-lead" style="margin-bottom: 0">
               Deja can't leak what it never sends. Everything stays in your browser.
             </p>
-            <ul>
-              <li><strong>No network calls, no telemetry, no analytics.</strong> Nothing you type ever leaves your machine.</li>
-              <li><strong>No accounts, no cloud, no third parties.</strong> Your library lives on your machine, in your browser (local IndexedDB).</li>
-              <li><strong>Only your prompt text</strong> is saved — never the AI's replies.</li>
-              <li><strong>Credential-aware.</strong> Password, one-time-code, and payment fields are never read.</li>
+            <ul class="plist">
+              <li>
+                <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
+                <span><strong>No network calls, no telemetry, no analytics.</strong> Nothing you type ever leaves your machine.</span>
+              </li>
+              <li>
+                <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
+                <span><strong>No accounts, no cloud, no third parties.</strong> Your library lives on your machine, in your browser (local IndexedDB).</span>
+              </li>
+              <li>
+                <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
+                <span><strong>Only your prompt text</strong> is saved — never the AI's replies.</span>
+              </li>
+              <li>
+                <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
+                <span><strong>Credential-aware.</strong> Password, one-time-code, and payment fields are never read.</span>
+              </li>
+              <li>
+                <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
+                <span><strong>Pause anytime.</strong> One click stops capture everywhere; incognito windows are paused by default.</span>
+              </li>
             </ul>
           </div>
         </div>
@@ -269,9 +403,18 @@
 
     <footer>
       <div class="wrap">
-        <span>Deja — your personal prompt library. Local-first.</span>
+        <span class="brand">
+          <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect width="32" height="32" rx="8" fill="var(--accent)" />
+            <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity="0.4" />
+            <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity="0.95" />
+            <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--accent)" />
+          </svg>
+          <span class="word">de<span class="ja">ja</span></span>
+        </span>
+        <span class="credit">Crafted with <span class="heart">♥</span> by <a href="https://github.com/mehdirt">mehdirt</a></span>
         <span>
-          <a href="https://github.com/REPLACE_OWNER/deja">Source</a> ·
+          <a href="https://github.com/mehdirt/deja">Source</a> ·
           <a href="#privacy">Privacy</a>
         </span>
       </div>
