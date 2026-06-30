@@ -441,6 +441,12 @@ export function attachResurface(
     activeEl = null
     confirming = false
     window.clearTimeout(confirmTimer)
+    // Cancel any pending debounced query. Without this, a query scheduled by the
+    // last keystroke before submit fires ~400 ms later — against the prompt that
+    // was just sent and saved — and resurfaces it as a "match" the instant the
+    // composer is empty again. (See onInput: we also re-read the live text at
+    // fire time, which covers Send-button submits that never trigger this hide.)
+    window.clearTimeout(debounceTimer)
     // Invalidate any in-flight query so a late response (debounce + worker
     // wake latency) can't re-show the tooltip after submit/blur/dismiss.
     queryToken += 1
@@ -566,9 +572,21 @@ export function attachResurface(
       return
     }
     activeEl = el
-    const text = readText(el)
     window.clearTimeout(debounceTimer)
-    debounceTimer = window.setTimeout(() => runQuery(text), DEBOUNCE_MS)
+    // Re-read the composer's text when the timer fires, not now. If a submit (or
+    // any clear) happened during the debounce window — including a Send-button
+    // click that never fires our Enter handler — the field is empty by fire time,
+    // so runQuery sees too little text and bails instead of querying the prompt
+    // that was just sent. Resolving the live element also keeps us on the right
+    // composer if it changed mid-debounce.
+    debounceTimer = window.setTimeout(() => {
+      const live = activeEl ?? getInput()
+      if (!live || !isCapturableField(live)) {
+        hide()
+        return
+      }
+      runQuery(readText(live))
+    }, DEBOUNCE_MS)
   }
 
   const onKeyDown = (e: KeyboardEvent) => {
