@@ -14,14 +14,14 @@ import { PLATFORM_LABEL, type Platform, type FilterStrength } from '@/lib/types'
 const PLATFORMS = Object.keys(PLATFORM_LABEL) as Platform[]
 
 const RESURFACE_OPTIONS: Array<{ key: ResurfaceClick; label: string; hint: string }> = [
-  { key: 'copy', label: 'copy to clipboard', hint: 'click a match to copy it — paste it yourself' },
-  { key: 'insert', label: 'insert at cursor', hint: 'click a match to drop it into the box at your cursor' },
+  { key: 'copy', label: 'Copy to clipboard', hint: 'Click a match to copy it — paste it yourself' },
+  { key: 'insert', label: 'Insert at cursor', hint: 'Click a match to drop it into the box at your cursor' },
 ]
 
 const STRENGTHS: Array<{ key: FilterStrength; label: string; hint: string }> = [
-  { key: 'off', label: 'keep everything', hint: 'save and show every prompt — no filtering' },
-  { key: 'balanced', label: 'balanced', hint: 'hide obvious throwaways like “yes” or “continue” (default)' },
-  { key: 'strict', label: 'strict', hint: 'keep only longer, structured, substantial prompts' },
+  { key: 'off', label: 'Keep everything', hint: 'Save and show every prompt — no filtering' },
+  { key: 'balanced', label: 'Balanced', hint: 'Hide obvious throwaways like “yes” or “continue” (default)' },
+  { key: 'strict', label: 'Strict', hint: 'Keep only longer, structured, substantial prompts' },
 ]
 
 function siteDot(health: CaptureHealth, p: Platform): string {
@@ -33,10 +33,10 @@ function siteDot(health: CaptureHealth, p: Platform): string {
 function siteTitle(health: CaptureHealth, p: Platform): string {
   const h = health[p]
   const label = PLATFORM_LABEL[p]
-  if (!h) return `not checked yet — open ${label} and deja starts listening`
+  if (!h) return `Not checked yet — open ${label} and Deja starts listening`
   return h.ok
-    ? `capture is working on ${label}`
-    : `couldn't find the prompt box on ${label} — the site may have changed`
+    ? `Capture is working on ${label}`
+    : `Couldn't find the prompt box on ${label} — the site may have changed`
 }
 
 // A small reusable on/off switch matching the library's favorites toggle.
@@ -55,7 +55,7 @@ function Switch({
       aria-checked={checked}
       aria-label={label}
       onClick={onChange}
-      className="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-accent rounded-full"
+      className="inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full"
     >
       <span
         className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
@@ -72,10 +72,9 @@ function Switch({
   )
 }
 
-// Settings — capture controls grouped by intent: what to capture (don't-capture
-// rules: per-site switches + blocklist) and what to keep (keep-but-hide: filter
-// strength), plus resurface behavior and the destructive data controls.
-// Calm and lowercase, on-voice. Destructive actions ask twice.
+// Settings — ordered light-first: the everyday suggestion/filter preferences
+// open the page; the heavier capture management sits in the middle; the
+// destructive data controls come last. Calm, sentence-cased, on-voice.
 export function Settings() {
   const [bl, setBl] = useState<Blocklist>({ domains: [], patterns: [] })
   const [domainInput, setDomainInput] = useState('')
@@ -154,7 +153,7 @@ export function Settings() {
     try {
       new RegExp(p)
     } catch (err) {
-      setPatternError(`invalid regex: ${String((err as Error).message ?? err)}`)
+      setPatternError(`Invalid regex: ${String((err as Error).message ?? err)}`)
       return
     }
     setPatternError(null)
@@ -168,7 +167,7 @@ export function Settings() {
 
   // Live test: which rule (if any) would catch the text the user is typing.
   // null = empty box; '' = no rule matches (would be captured); else the
-  // matching domain/pattern source.
+  // matching pattern source.
   const testMatch = useMemo<string | null>(() => {
     const text = testInput.trim()
     if (!text) return null
@@ -217,70 +216,11 @@ export function Settings() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Capture — per-site switches folded into the health view */}
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <h2 className="font-mono text-sm text-ink">capture</h2>
-          <p className="text-sm text-ink-soft">
-            deja captures on these sites. the dot shows whether it can currently find the prompt box
-            (green) or the site may have changed (red). switch a site off to stop capturing there.
-          </p>
-        </div>
-        <div className="flex flex-col divide-y divide-line rounded-btn border border-line">
-          {PLATFORMS.map((p) => (
-            <div key={p} className="flex items-center justify-between gap-3 px-3 py-2">
-              <span className="inline-flex items-center gap-2" title={siteTitle(health, p)}>
-                <span className={`h-1.5 w-1.5 rounded-full ${siteDot(health, p)}`} aria-hidden />
-                <span className={`text-sm ${sites[p] ? 'text-ink' : 'text-ink-faint'}`}>
-                  {PLATFORM_LABEL[p]}
-                </span>
-                {!sites[p] && <span className="font-mono text-[10px] text-ink-faint">off</span>}
-              </span>
-              <Switch
-                checked={sites[p]}
-                onChange={() => toggleSite(p)}
-                label={`Capture on ${PLATFORM_LABEL[p]}`}
-              />
-            </div>
-          ))}
-        </div>
-        <p className="font-mono text-xs text-ink-faint">
-          tip: use the ⏸ pause in the toolbar popup to stop capture everywhere for a while.
-        </p>
-      </section>
-
-      {/* Keep but hide — selective-capture strength */}
+      {/* Resurface behavior — the everyday preference, opens the page */}
       <section className="flex flex-col gap-2">
-        <h2 className="font-mono text-sm text-ink">filter short &amp; throwaway prompts</h2>
+        <h2 className="font-mono text-sm text-ink">When you click a resurfaced match</h2>
         <p className="text-sm text-ink-soft">
-          deja always saves everything, but it can keep short throwaways out of your library and the
-          “you’ve been here before” suggestions so neither gets cluttered. nothing is lost — filtered
-          prompts sit under <span className="font-mono text-xs">filtered (n)</span> in the library,
-          where you can <span className="font-mono text-xs">keep</span> any of them.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {STRENGTHS.map((o) => (
-            <button
-              key={o.key}
-              onClick={() => setFilter(o.key)}
-              aria-pressed={strength === o.key}
-              title={o.hint}
-              className={`dj-pill ${strength === o.key ? 'dj-pill-active' : ''}`}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
-        <p className="font-mono text-xs text-ink-faint">
-          {STRENGTHS.find((o) => o.key === strength)?.hint}
-        </p>
-      </section>
-
-      {/* Resurface behavior */}
-      <section className="flex flex-col gap-2">
-        <h2 className="font-mono text-sm text-ink">when you click a resurfaced match</h2>
-        <p className="text-sm text-ink-soft">
-          deja can suggest a similar prompt you saved before as you type. choose what a click does.
+          Deja can suggest a similar prompt you saved before as you type. Choose what a click does.
         </p>
         <div className="flex flex-wrap gap-2">
           {RESURFACE_OPTIONS.map((o) => (
@@ -300,21 +240,80 @@ export function Settings() {
         </p>
       </section>
 
+      {/* Keep but hide — selective-capture strength */}
+      <section className="flex flex-col gap-2">
+        <h2 className="font-mono text-sm text-ink">Filter short &amp; throwaway prompts</h2>
+        <p className="text-sm text-ink-soft">
+          Deja always saves everything, but it can keep short throwaways out of your library and the
+          “you’ve been here before” suggestions so neither gets cluttered. Nothing is lost — filtered
+          prompts sit under <span className="font-mono text-xs">Filtered (n)</span> in the library,
+          where you can <span className="font-mono text-xs">Keep</span> any of them.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {STRENGTHS.map((o) => (
+            <button
+              key={o.key}
+              onClick={() => setFilter(o.key)}
+              aria-pressed={strength === o.key}
+              title={o.hint}
+              className={`dj-pill ${strength === o.key ? 'dj-pill-active' : ''}`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        <p className="font-mono text-xs text-ink-faint">
+          {STRENGTHS.find((o) => o.key === strength)?.hint}
+        </p>
+      </section>
+
+      {/* Capture — per-site switches folded into the health view */}
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-mono text-sm text-ink">Capture</h2>
+          <p className="text-sm text-ink-soft">
+            Deja captures on these sites. The dot shows whether it can currently find the prompt box
+            (green) or the site may have changed (red). Switch a site off to stop capturing there.
+          </p>
+        </div>
+        <div className="flex flex-col divide-y divide-line rounded-btn border border-line">
+          {PLATFORMS.map((p) => (
+            <div key={p} className="flex items-center justify-between gap-3 px-3 py-2">
+              <span className="inline-flex items-center gap-2" title={siteTitle(health, p)}>
+                <span className={`h-1.5 w-1.5 rounded-full ${siteDot(health, p)}`} aria-hidden />
+                <span className={`text-sm ${sites[p] ? 'text-ink' : 'text-ink-faint'}`}>
+                  {PLATFORM_LABEL[p]}
+                </span>
+                {!sites[p] && <span className="font-mono text-[10px] text-ink-faint">Off</span>}
+              </span>
+              <Switch
+                checked={sites[p]}
+                onChange={() => toggleSite(p)}
+                label={`Capture on ${PLATFORM_LABEL[p]}`}
+              />
+            </div>
+          ))}
+        </div>
+        <p className="font-mono text-xs text-ink-faint">
+          Tip: use the ⏸ pause in the toolbar popup to stop capture everywhere for a while.
+        </p>
+      </section>
+
       {/* Don't capture — blocklist */}
       <section className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <h2 className="font-mono text-sm text-ink">capture blocklist</h2>
+          <h2 className="font-mono text-sm text-ink">Capture blocklist</h2>
           <p className="text-sm text-ink-soft">
-            opt-in protection on top of capture-everything. block a site so nothing is captured
+            Opt-in protection on top of capture-everything. Block a site so nothing is captured
             there, or add a regex so prompts that look like secrets (passwords, keys) are never
-            stored. nothing here leaves your machine.
+            stored. Nothing here leaves your machine.
           </p>
         </div>
 
         {/* domains */}
         <div className="flex flex-col gap-2">
           <label className="font-mono text-xs text-ink-soft" htmlFor="bl-domain">
-            blocked sites
+            Blocked sites
           </label>
           <div className="flex gap-2">
             <input
@@ -326,7 +325,7 @@ export function Settings() {
               className="dj-input font-mono text-sm"
             />
             <button onClick={addDomain} className="dj-btn px-3 py-1 text-xs">
-              block
+              Block
             </button>
           </div>
           {bl.domains.length > 0 && (
@@ -336,7 +335,7 @@ export function Settings() {
                   <span className="dj-tag-label">{d}</span>
                   <button
                     onClick={() => removeDomain(d)}
-                    aria-label={`unblock ${d}`}
+                    aria-label={`Unblock ${d}`}
                     className="text-ink-faint hover:text-danger"
                   >
                     ×
@@ -350,7 +349,7 @@ export function Settings() {
         {/* patterns */}
         <div className="flex flex-col gap-2">
           <label className="font-mono text-xs text-ink-soft" htmlFor="bl-pattern">
-            blocked patterns (regex)
+            Blocked patterns (regex)
           </label>
           <div className="flex gap-2">
             <input
@@ -365,7 +364,7 @@ export function Settings() {
               className="dj-input font-mono text-sm"
             />
             <button onClick={addPattern} className="dj-btn px-3 py-1 text-xs">
-              add
+              Add
             </button>
           </div>
           {patternError && <p className="font-mono text-xs text-danger">{patternError}</p>}
@@ -384,10 +383,10 @@ export function Settings() {
                 return (
                   <span key={p} className="dj-tag">
                     <span className="dj-tag-label">{p}</span>
-                    {!valid && <span className="text-danger">invalid</span>}
+                    {!valid && <span className="text-danger">Invalid</span>}
                     <button
                       onClick={() => removePattern(p)}
-                      aria-label={`remove pattern ${p}`}
+                      aria-label={`Remove pattern ${p}`}
                       className="text-ink-faint hover:text-danger"
                     >
                       ×
@@ -403,13 +402,13 @@ export function Settings() {
         {hasRules && (
           <div className="flex flex-col gap-2">
             <label className="font-mono text-xs text-ink-soft" htmlFor="bl-test">
-              test a prompt against your rules
+              Test a prompt against your rules
             </label>
             <input
               id="bl-test"
               value={testInput}
               onChange={(e) => setTestInput(e.target.value)}
-              placeholder="paste a prompt to check…"
+              placeholder="Paste a prompt to check…"
               className="dj-input font-mono text-sm"
             />
             {testMatch !== null && (
@@ -417,7 +416,7 @@ export function Settings() {
                 className={`font-mono text-xs ${testMatch ? 'text-danger' : 'text-ink-faint'}`}
                 aria-live="polite"
               >
-                {testMatch ? `would be blocked · matches ${testMatch}` : 'would be captured ✓'}
+                {testMatch ? `Would be blocked · matches ${testMatch}` : 'Would be captured ✓'}
               </p>
             )}
           </div>
@@ -427,12 +426,12 @@ export function Settings() {
         {hasRules && (
           <div className="flex items-center gap-3">
             <button onClick={runDryRun} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-              preview impact on saved prompts
+              Preview impact on saved prompts
             </button>
             {dryRun && (
               <span className="font-mono text-xs text-ink-faint">
                 {dryRun.matched === 0
-                  ? `none of your ${dryRun.total} saved prompts match.`
+                  ? `None of your ${dryRun.total} saved prompts match.`
                   : `${dryRun.matched} of ${dryRun.total} saved prompts match these rules.`}
               </span>
             )}
@@ -441,7 +440,7 @@ export function Settings() {
         {dryRun && dryRun.matched > 0 && (
           <div className="flex flex-col gap-1 rounded-btn border border-line bg-sunk px-3 py-2">
             <span className="font-mono text-[10px] text-ink-faint">
-              examples (these stay until you delete them — the blocklist only stops future capture):
+              Examples (these stay until you delete them — the blocklist only stops future capture):
             </span>
             {dryRun.samples.map((s, i) => (
               <span key={i} className="truncate font-mono text-xs text-ink-soft">
@@ -454,19 +453,19 @@ export function Settings() {
 
       {/* Purge deleted — true erase of soft-deleted rows */}
       <section className="flex flex-col gap-2">
-        <h2 className="font-mono text-sm text-ink">purge deleted prompts</h2>
+        <h2 className="font-mono text-sm text-ink">Purge deleted prompts</h2>
         <p className="text-sm text-ink-soft">
-          deleting a prompt hides it but keeps the text on disk so you can undo. if something
+          Deleting a prompt hides it but keeps the text on disk so you can undo. If something
           sensitive was captured (a password, a key), delete it in the library, then purge here to
           erase it for good.
         </p>
         <div className="flex items-center gap-3">
           <button onClick={onPurgeDeleted} className="dj-btn px-3 py-1.5 text-sm hover:text-danger">
-            purge deleted now
+            Purge deleted now
           </button>
           {purged != null && (
             <span className="font-mono text-xs text-ink-faint">
-              {purged === 0 ? 'nothing to purge.' : `purged ${purged} deleted prompt${purged === 1 ? '' : 's'}.`}
+              {purged === 0 ? 'Nothing to purge.' : `Purged ${purged} deleted prompt${purged === 1 ? '' : 's'}.`}
             </span>
           )}
         </div>
@@ -474,9 +473,9 @@ export function Settings() {
 
       {/* Clear all data */}
       <section className="flex flex-col gap-2">
-        <h2 className="font-mono text-sm text-ink">clear all data</h2>
+        <h2 className="font-mono text-sm text-ink">Clear all data</h2>
         <p className="text-sm text-ink-soft">
-          permanently erase every captured prompt from this machine. this can&apos;t be undone —
+          Permanently erase every captured prompt from this machine. This can&apos;t be undone —
           export first if you might want them back.
         </p>
         <div className="flex items-center gap-3">
@@ -490,17 +489,17 @@ export function Settings() {
               confirmClear ? 'border-danger text-danger' : 'hover:text-danger'
             }`}
           >
-            {confirmClear ? 'are you sure? click to erase' : 'clear all'}
+            {confirmClear ? 'Are you sure? Click to erase' : 'Clear all'}
           </button>
           {confirmClear && (
             <button
               onClick={() => setConfirmClear(false)}
               className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
             >
-              cancel
+              Cancel
             </button>
           )}
-          {cleared && <span className="font-mono text-xs text-ink-faint">all prompts cleared.</span>}
+          {cleared && <span className="font-mono text-xs text-ink-faint">All prompts cleared.</span>}
         </div>
       </section>
     </div>

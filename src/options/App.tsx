@@ -7,9 +7,9 @@ import { Privacy } from './Privacy'
 type View = 'library' | 'settings' | 'privacy'
 
 const NAV: Array<{ key: View; label: string }> = [
-  { key: 'library', label: 'library' },
-  { key: 'settings', label: 'settings' },
-  { key: 'privacy', label: 'privacy' },
+  { key: 'library', label: 'Library' },
+  { key: 'settings', label: 'Settings' },
+  { key: 'privacy', label: 'Privacy' },
 ]
 
 // Lightweight top-level shell for the options app. Library is the default

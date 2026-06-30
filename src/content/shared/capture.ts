@@ -59,7 +59,7 @@ export function sendCapture(text: string, platform: Platform): void {
         // first time it happens, show a one-time explanation so it's never
         // silent. A kept prompt gets the usual toast with undo.
         if (resp.filtered) {
-          if (resp.notice) showInfoToast('skipped a short prompt · change in deja settings')
+          if (resp.notice) showInfoToast('Skipped a short prompt · change in Deja settings')
           return
         }
         const savedId = resp.id

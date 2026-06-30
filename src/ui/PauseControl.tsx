@@ -61,10 +61,10 @@ export function PauseControl() {
     return (
       <div className="flex items-center justify-between gap-2 rounded-btn border border-[#c98a2b]/40 bg-[#c98a2b]/10 px-3 py-1.5">
         <span className="font-mono text-xs text-[#c98a2b]">
-          ⏸ capture paused{label ? ` · ${label}` : ''}
+          ⏸ Capture paused{label ? ` · ${label}` : ''}
         </span>
         <button onClick={resume} className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-xs">
-          resume
+          Resume
         </button>
       </div>
     )
@@ -73,7 +73,7 @@ export function PauseControl() {
   if (choosing) {
     return (
       <div className="flex items-center justify-between gap-2 rounded-btn border border-line bg-sunk px-3 py-1.5">
-        <span className="font-mono text-xs text-ink-soft">pause capture for…</span>
+        <span className="font-mono text-xs text-ink-soft">Pause capture for…</span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => pause(Date.now() + HOUR)}
@@ -85,7 +85,7 @@ export function PauseControl() {
             onClick={() => pause(PAUSE_FOREVER)}
             className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-xs"
           >
-            until I resume
+            Until I resume
           </button>
           <button
             onClick={() => setChoosing(false)}
@@ -105,7 +105,7 @@ export function PauseControl() {
         onClick={() => setChoosing(true)}
         className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-xs text-ink-faint hover:text-ink"
       >
-        ⏸ pause capture
+        ⏸ Pause capture
       </button>
     </div>
   )

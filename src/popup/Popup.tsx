@@ -47,7 +47,7 @@ export function Popup() {
       <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-line bg-bg/95 px-3 py-2.5 backdrop-blur">
         <Logo size={20} />
         <button onClick={openLibrary} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-          library →
+          Library →
         </button>
       </header>
 
@@ -59,7 +59,7 @@ export function Popup() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search your prompts"
-          placeholder="search your prompts…"
+          placeholder="Search your prompts…"
           className="dj-input font-mono"
         />
       </div>
@@ -71,14 +71,14 @@ export function Popup() {
           <div className="px-2 py-8 text-center text-sm text-ink-soft">
             {prompts.length === 0 ? (
               <>
-                <p className="text-ink">nothing here yet — that&apos;s fine.</p>
+                <p className="text-ink">Nothing here yet — that&apos;s fine.</p>
                 <p className="mt-1 text-ink-faint">
-                  nothing to set up. send a prompt on chatgpt, claude, gemini, deepseek, or grok and
+                  Nothing to set up. Send a prompt on ChatGPT, Claude, Gemini, DeepSeek, or Grok and
                   it lands here.
                 </p>
               </>
             ) : (
-              <p className="text-ink-faint">no matches.</p>
+              <p className="text-ink-faint">No matches.</p>
             )}
           </div>
         ) : (

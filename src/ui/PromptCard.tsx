@@ -94,9 +94,9 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
           {minor && (
             <span
               className="dj-chip font-mono text-ink-faint"
-              title="a short throwaway prompt — hidden from your library and resurface by default"
+              title="A short throwaway prompt — hidden from your library and resurface by default"
             >
-              minor
+              Minor
             </span>
           )}
         </span>
@@ -154,7 +154,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
                     setAdding(false)
                   }
                 }}
-                placeholder="tag…"
+                placeholder="Tag…"
                 aria-label="Add a tag"
                 className="dj-input w-24 px-2 py-0.5 font-mono text-[11px]"
               />
@@ -164,7 +164,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
                 aria-label="Add a tag"
                 className="dj-tag text-ink-faint hover:text-ink"
               >
-                + tag
+                + Tag
               </button>
             )
           )}
@@ -176,10 +176,10 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
           <button
             onClick={() => onKeepMinor(prompt)}
             aria-label="Keep this prompt in your library"
-            title="keep this in your library"
+            title="Keep this in your library"
             className="dj-btn dj-btn-ghost px-2 py-1 text-xs hover:text-accent"
           >
-            keep
+            Keep
           </button>
         )}
         {onTogglePin && (
@@ -189,7 +189,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             aria-pressed={pinned}
             className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
           >
-            {pinned ? 'unpin' : 'pin'}
+            {pinned ? 'Unpin' : 'Pin'}
           </button>
         )}
         {onDelete && (
@@ -198,7 +198,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             aria-label="Delete prompt"
             className="dj-btn dj-btn-ghost px-2 py-1 text-xs hover:text-danger"
           >
-            delete
+            Delete
           </button>
         )}
         <button
@@ -207,7 +207,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
           aria-live="polite"
           className="dj-btn dj-btn-primary min-w-[68px] px-2 py-1 text-xs"
         >
-          {copied ? 'copied ✓' : 'copy'}
+          {copied ? 'Copied ✓' : 'Copy'}
         </button>
       </div>
     </div>

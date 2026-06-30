@@ -30,10 +30,10 @@ const PLATFORMS: Array<{ key: Platform | 'all'; label: string }> = [
 
 type Sort = 'newest' | 'most-useful' | 'most-used' | 'longest-unseen'
 const SORTS: Array<{ key: Sort; label: string }> = [
-  { key: 'newest', label: 'newest' },
-  { key: 'most-useful', label: 'most useful' },
-  { key: 'most-used', label: 'most used' },
-  { key: 'longest-unseen', label: 'longest unseen' },
+  { key: 'newest', label: 'Newest' },
+  { key: 'most-useful', label: 'Most useful' },
+  { key: 'most-used', label: 'Most used' },
+  { key: 'longest-unseen', label: 'Longest unseen' },
 ]
 
 export function Library() {
@@ -337,14 +337,14 @@ export function Library() {
       // fine but isn't ours — say so plainly instead of reporting "imported 0",
       // which reads like a successful no-op.
       if (!Array.isArray(parsed)) {
-        setImportMsg("that file isn't a deja export")
+        setImportMsg("That file isn't a Deja export")
         return
       }
       const res = await importPrompts(parsed)
-      setImportMsg(`imported ${res.imported} · skipped ${res.skipped}`)
+      setImportMsg(`Imported ${res.imported} · skipped ${res.skipped}`)
       reload()
     } catch {
-      setImportMsg("couldn't read that file — expected a deja json export")
+      setImportMsg("Couldn't read that file — expected a Deja JSON export")
     }
   }
 
@@ -364,21 +364,21 @@ export function Library() {
             aria-hidden
           />
           <button onClick={onPickImport} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-            import json
+            Import JSON
           </button>
           <button
             onClick={onExportMarkdown}
             disabled={prompts.length === 0}
             className="dj-btn px-2 py-1 text-xs disabled:opacity-40"
           >
-            export md
+            Export Markdown
           </button>
           <button
             onClick={onExport}
             disabled={prompts.length === 0}
             className="dj-btn px-2 py-1 text-xs disabled:opacity-40"
           >
-            export json
+            Export JSON
           </button>
         </div>
       </header>
@@ -398,7 +398,7 @@ export function Library() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search your prompts"
-          placeholder="search your prompts…"
+          placeholder="Search your prompts…"
           className="dj-input pr-12 font-mono"
         />
         <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">
@@ -446,7 +446,7 @@ export function Library() {
               />
             </span>
             <PinIcon filled={favoritesOnly} />
-            <span className={favoritesOnly ? 'text-ink' : undefined}>favorites</span>
+            <span className={favoritesOnly ? 'text-ink' : undefined}>Favorites</span>
           </button>
         </div>
         <select
@@ -483,7 +483,7 @@ export function Library() {
               onClick={() => setActiveTags([])}
               className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-[11px]"
             >
-              clear tags
+              Clear tags
             </button>
           )}
         </div>
@@ -495,14 +495,14 @@ export function Library() {
             <span className="font-mono text-xs text-ink-faint">{checkedIds.size} selected</span>
             <div className="flex gap-2">
               <button onClick={exitSelecting} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-                cancel
+                Cancel
               </button>
               <button
                 onClick={onBulkDelete}
                 disabled={checkedIds.size === 0}
                 className="dj-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
               >
-                delete selected
+                Delete selected
               </button>
             </div>
           </>
@@ -512,7 +512,7 @@ export function Library() {
               onClick={() => setSelecting(true)}
               className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs"
             >
-              select
+              Select
             </button>
             {/* Selective capture: a quiet way to see (and rescue) the short
                 throwaway prompts deja filtered out — never a silent loss. Hidden
@@ -521,12 +521,12 @@ export function Library() {
               <button
                 onClick={() => setShowMinor((v) => !v)}
                 aria-pressed={showMinor}
-                title="short throwaway prompts deja kept out of your library"
+                title="Short throwaway prompts Deja kept out of your library"
                 className={`dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs ${
                   showMinor ? 'text-ink' : 'text-ink-faint'
                 }`}
               >
-                {showMinor ? 'hide filtered' : `filtered (${minorCount})`}
+                {showMinor ? 'Hide filtered' : `Filtered (${minorCount})`}
               </button>
             )}
           </div>
@@ -535,9 +535,9 @@ export function Library() {
 
       {undoId != null && (
         <div className="flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
-          <span className="text-ink-soft">prompt deleted</span>
+          <span className="text-ink-soft">Prompt deleted</span>
           <button onClick={onUndoDelete} className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs">
-            undo
+            Undo
           </button>
         </div>
       )}
@@ -548,7 +548,7 @@ export function Library() {
             {undoBatch.length} {undoBatch.length === 1 ? 'prompt' : 'prompts'} deleted
           </span>
           <button onClick={onUndoBatch} className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs">
-            undo
+            Undo
           </button>
         </div>
       )}
@@ -560,14 +560,14 @@ export function Library() {
           <div className="py-16 text-center text-sm">
             {prompts.length === 0 ? (
               <>
-                <p className="text-ink">nothing here yet — that&apos;s fine.</p>
+                <p className="text-ink">Nothing here yet — that&apos;s fine.</p>
                 <p className="mt-1 text-ink-faint">
-                  nothing to set up. send a prompt on chatgpt, claude, gemini, deepseek, or grok and
+                  Nothing to set up. Send a prompt on ChatGPT, Claude, Gemini, DeepSeek, or Grok and
                   it lands here automatically.
                 </p>
               </>
             ) : (
-              <p className="text-ink-faint">no matches for this filter.</p>
+              <p className="text-ink-faint">No matches for this filter.</p>
             )}
           </div>
         ) : (

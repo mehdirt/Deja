@@ -55,4 +55,4 @@ Defined in `globals.css` `@layer components` — compose these instead of re-sty
 
 ## Voice
 
-Lowercase, calm, no hype. "saved to your library", "your library is empty — that's fine", "nothing to set up". Never grade or nag the user.
+Sentence case, calm, no hype. Capitalize the first letter of each label, sentence, and button ("Saved to your library", "Your library is empty — that's fine", "Nothing to set up"); keep proper nouns and acronyms correct (ChatGPT, Claude, JSON, Markdown, Deja). The brand wordmark stays lowercase (`deja`). Never grade or nag the user.
