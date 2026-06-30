@@ -19,6 +19,7 @@
 import type { Platform, SimilarMatch, SimilarResponse } from '@/lib/types'
 import { isCapturableField } from '@/lib/sensitive'
 import { readPrefs, onPrefsChange } from '@/lib/prefs'
+import { shouldCapture } from './captureGate'
 
 // Quiet by default — the host page's console must stay clean (Principle 5:
 // fail silent to them). Flip to true only when debugging locally.
@@ -509,6 +510,13 @@ export function attachResurface(
 
   const runQuery = (text: string) => {
     if (dismissed || confirming) return
+    // Stay quiet when capture is paused or this site is switched off — resurface
+    // reads the in-progress text, so a paused/private session shouldn't trigger
+    // it either.
+    if (!shouldCapture()) {
+      hide()
+      return
+    }
     const trimmed = text.trim()
     if (trimmed.length < MIN_CHARS) {
       hide()

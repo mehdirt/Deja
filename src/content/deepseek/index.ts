@@ -2,6 +2,7 @@ import { attachSubmitHook } from '../shared/capture'
 import { startHealthProbe } from '../shared/health'
 import { attachResurface } from '../shared/resurface'
 import { startBlocklistSync } from '../shared/blocklist'
+import { startCaptureGate } from '../shared/captureGate'
 
 // DeepSeek's composer is a plain textarea; the broad fallbacks cover a
 // redesign toward contenteditable without scattering selectors elsewhere.
@@ -24,7 +25,8 @@ const getInput = (): HTMLElement | null => {
 // Arm capture only once the blocklist's first read lands (or its 1s fallback
 // fires), closing the page-load race where a blocklisted prompt could slip
 // through before the snapshot loads. Health + resurface stay immediate.
-const { ready } = startBlocklistSync()
-void ready.then(() => attachSubmitHook(getInput, 'deepseek'))
+const { ready: blocklistReady } = startBlocklistSync()
+const { ready: gateReady } = startCaptureGate('deepseek')
+void Promise.all([blocklistReady, gateReady]).then(() => attachSubmitHook(getInput, 'deepseek'))
 startHealthProbe(getInput, 'deepseek')
 attachResurface(getInput, 'deepseek')

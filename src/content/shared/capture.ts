@@ -3,6 +3,7 @@ import { writeHealth } from '@/lib/health'
 import { isBlocked } from '@/lib/blocklist'
 import { isCapturableField, withinComposer, looksLikeAuthPath, safeCaptureUrl } from '@/lib/sensitive'
 import { getBlocklist } from './blocklist'
+import { shouldCapture } from './captureGate'
 import { showSavedToast, showInfoToast } from './toast'
 
 // Quiet by default — the host page's console must stay clean, and capture
@@ -16,6 +17,13 @@ function log(...args: unknown[]) {
 export function sendCapture(text: string, platform: Platform): void {
   const trimmed = text.trim()
   if (trimmed.length < 2) return
+  // Honor the capture controls first (pause, per-site switch, incognito
+  // auto-pause). Synchronous, fail-open snapshot — no latency added. When paused
+  // or switched off we capture nothing: no write, no toast, no health change.
+  if (!shouldCapture()) {
+    log('capture paused or disabled — skipping on', platform)
+    return
+  }
   // Honor the capture blocklist (privacy-critical). Read the cached snapshot
   // synchronously — no latency added. If blocked, silently skip: capture
   // nothing, no toast, no health write. isBlocked is pure and never throws.
