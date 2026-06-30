@@ -11,7 +11,7 @@
     "service_worker": "src/background/index.ts",
     "type": "module"
   },
-  "permissions": ["storage"],
+  "permissions": ["storage", "alarms"],
   "content_scripts": [
     {
       "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"],

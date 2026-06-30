@@ -1,7 +1,7 @@
 import { savePrompt, hardDelete, listPrompts } from '@/lib/db'
 import { findSimilar } from '@/lib/similarity'
 import { classifyPrompt } from '@/lib/classify'
-import { readPrefs, writePrefs } from '@/lib/prefs'
+import { readPrefs, writePrefs, onPrefsChange, isPaused, PAUSE_FOREVER, type Prefs } from '@/lib/prefs'
 import type { RuntimeMessage } from '@/lib/types'
 
 // How many matches the resurface tooltip shows inline before offering "see all".
@@ -11,11 +11,11 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
   if (message?.type === 'PROMPT_CAPTURED') {
     void (async () => {
       try {
-        // Selective capture: classify, but ALWAYS store (soft capture — never
-        // lose a prompt). A "minor" prompt is saved flagged; whether it's then
-        // hidden depends on the user's keepMinor preference.
-        const { minor } = classifyPrompt(message.payload.text)
+        // Selective capture: classify at the user's chosen strength, but ALWAYS
+        // store (soft capture — never lose a prompt). A "minor" prompt is saved
+        // flagged; at strength 'off' nothing is ever minor.
         const prefs = await readPrefs()
+        const { minor } = classifyPrompt(message.payload.text, prefs.filterStrength)
         const id = await savePrompt({
           text: message.payload.text,
           platform: message.payload.platform,
@@ -23,10 +23,10 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           createdAt: Date.now(),
           minor,
         })
-        // "Filtered" = stored but hidden (minor, and the user keeps the filter
-        // on). Tell the content script so it skips the normal "remembered"
-        // toast, and the FIRST time, asks it to show a one-time explanation.
-        const filtered = minor && !prefs.keepMinor
+        // "Filtered" = stored but hidden. Tell the content script so it skips the
+        // normal "remembered" toast, and the FIRST time, asks it to show a
+        // one-time explanation.
+        const filtered = minor
         let notice = false
         if (filtered && !prefs.minorNoticeSeen) {
           notice = true
@@ -51,11 +51,10 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         // on every debounced keystroke. Fine for hundreds of prompts; at
         // thousands, add a worker-scope pool cache (invalidate on capture/
         // delete) or precomputed trigram sets. Deferred until real use shows it.
-        // Resurface never suggests minor (filtered) prompts unless the user has
-        // turned the filter off — short throwaways are exactly the noise the
-        // resurface tooltip should not surface.
+        // Resurface never suggests minor (filtered) prompts unless the filter is
+        // off — short throwaways are exactly the noise it should not surface.
         const prefs = await readPrefs()
-        const pool = await listPrompts({ includeMinor: prefs.keepMinor })
+        const pool = await listPrompts({ includeMinor: prefs.filterStrength === 'off' })
         // Score the whole pool (already sorted, best first) so we know the true
         // count above threshold; surface only the top few inline and report the
         // rest as `total` so the tooltip can offer "see all in library".
@@ -112,3 +111,65 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
 
   return undefined
 })
+
+// ── Pause badge ───────────────────────────────────────────────────────────────
+// A quiet toolbar badge so a paused state is visible at a glance (and can't be
+// forgotten). Capture itself resumes on its own — the content gate checks the
+// pause time live — so this is purely cosmetic; the alarm just clears the badge
+// punctually when a timed pause ends.
+
+const PAUSE_ALARM = 'deja:pause-expiry'
+
+function paintBadge(prefs: Prefs): void {
+  try {
+    const paused = isPaused(prefs)
+    void chrome.action.setBadgeText({ text: paused ? '||' : '' })
+    if (paused) void chrome.action.setBadgeBackgroundColor({ color: '#c98a2b' })
+  } catch {
+    /* action API unavailable — ignore */
+  }
+}
+
+// Keep a single alarm aligned with a timed pause. Indefinite pauses
+// (PAUSE_FOREVER) need no alarm; resume is manual.
+async function syncPauseAlarm(prefs: Prefs): Promise<void> {
+  try {
+    await chrome.alarms.clear(PAUSE_ALARM)
+    if (prefs.pauseUntil > Date.now() && prefs.pauseUntil !== PAUSE_FOREVER) {
+      chrome.alarms.create(PAUSE_ALARM, { when: prefs.pauseUntil })
+    }
+  } catch {
+    /* alarms unavailable — badge will still self-correct on the next prefs change */
+  }
+}
+
+async function refreshPauseState(): Promise<void> {
+  const prefs = await readPrefs()
+  paintBadge(prefs)
+  await syncPauseAlarm(prefs)
+}
+
+// React to pause/resume from the popup (and any other prefs write).
+onPrefsChange((prefs) => {
+  paintBadge(prefs)
+  void syncPauseAlarm(prefs)
+})
+
+// When a timed pause elapses, clear it for real so the badge and stored state
+// agree (the gate had already resumed capture on its own).
+try {
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name !== PAUSE_ALARM) return
+    void (async () => {
+      const prefs = await readPrefs()
+      if (!isPaused(prefs)) {
+        await writePrefs({ pauseUntil: 0 }) // triggers onPrefsChange → repaint
+      }
+    })()
+  })
+} catch {
+  /* alarms unavailable — ignore */
+}
+
+// Paint on every worker wake (MV3 workers are short-lived and start fresh).
+void refreshPauseState()
