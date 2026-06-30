@@ -12,6 +12,9 @@ interface Props {
   onAddTag?: (p: Prompt, tag: string) => void
   onRemoveTag?: (p: Prompt, tag: string) => void
   onTagClick?: (tag: string) => void
+  // Promote a minor (filtered) prompt back to a normal one. Only rendered when
+  // the prompt is minor — the "keep" affordance for selectively-captured rows.
+  onKeepMinor?: (p: Prompt) => void
   activeTags?: string[]
   // Selection mode (bulk). When `selectable`, a checkbox replaces nothing else;
   // when checked, the card is part of the current bulk selection.
@@ -31,6 +34,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
     onAddTag,
     onRemoveTag,
     onTagClick,
+    onKeepMinor,
     activeTags = [],
     selectable,
     checked,
@@ -46,6 +50,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
 
   const tags = prompt.tags ?? []
   const pinned = prompt.pinned ?? false
+  const minor = prompt.minor ?? false
 
   const handleCopy = () => {
     onCopy(prompt)
@@ -65,7 +70,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
       ref={ref}
       className={`dj-card flex flex-col gap-2 p-4 transition-shadow ${
         selected ? 'ring-2 ring-accent' : ''
-      } ${checked ? 'ring-2 ring-accent/60' : ''}`}
+      } ${checked ? 'ring-2 ring-accent/60' : ''} ${minor ? 'opacity-70' : ''}`}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2">
@@ -86,6 +91,14 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             />
             {PLATFORM_LABEL[prompt.platform]}
           </span>
+          {minor && (
+            <span
+              className="dj-chip font-mono text-ink-faint"
+              title="a short throwaway prompt — hidden from your library and resurface by default"
+            >
+              minor
+            </span>
+          )}
         </span>
         <span className="flex items-center gap-2 font-mono text-xs text-ink-faint">
           {pinned && <PinIcon filled className="text-accent" />}
@@ -159,6 +172,16 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
       )}
 
       <div className="flex items-center justify-end gap-1 pt-1">
+        {minor && onKeepMinor && (
+          <button
+            onClick={() => onKeepMinor(prompt)}
+            aria-label="Keep this prompt in your library"
+            title="keep this in your library"
+            className="dj-btn dj-btn-ghost px-2 py-1 text-xs hover:text-accent"
+          >
+            keep
+          </button>
+        )}
         {onTogglePin && (
           <button
             onClick={() => onTogglePin(prompt)}

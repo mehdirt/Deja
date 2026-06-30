@@ -25,6 +25,7 @@ export function Settings() {
   const [cleared, setCleared] = useState(false)
   const [purged, setPurged] = useState<number | null>(null)
   const [resurfaceClick, setResurfaceClick] = useState<ResurfaceClick>('copy')
+  const [keepMinor, setKeepMinor] = useState(false)
 
   useEffect(() => {
     void readBlocklist().then(setBl)
@@ -32,13 +33,24 @@ export function Settings() {
   }, [])
 
   useEffect(() => {
-    void readPrefs().then((p) => setResurfaceClick(p.resurfaceClick))
-    return onPrefsChange((p) => setResurfaceClick(p.resurfaceClick))
+    void readPrefs().then((p) => {
+      setResurfaceClick(p.resurfaceClick)
+      setKeepMinor(p.keepMinor)
+    })
+    return onPrefsChange((p) => {
+      setResurfaceClick(p.resurfaceClick)
+      setKeepMinor(p.keepMinor)
+    })
   }, [])
 
   const setResurface = async (next: ResurfaceClick) => {
     setResurfaceClick(next)
     await writePrefs({ resurfaceClick: next })
+  }
+
+  const setKeep = async (next: boolean) => {
+    setKeepMinor(next)
+    await writePrefs({ keepMinor: next })
   }
 
   const persist = async (next: Blocklist) => {
@@ -125,6 +137,43 @@ export function Settings() {
         </div>
         <p className="font-mono text-xs text-ink-faint">
           {RESURFACE_OPTIONS.find((o) => o.key === resurfaceClick)?.hint}
+        </p>
+      </section>
+
+      {/* Selective capture */}
+      <section className="flex flex-col gap-2">
+        <h2 className="font-mono text-sm text-ink">short &amp; throwaway prompts</h2>
+        <p className="text-sm text-ink-soft">
+          deja still saves everything, but by default it keeps short throwaways (a bare “yes”,
+          “continue”, “thanks”, or a tiny fragment) out of your library and out of the “you&apos;ve
+          been here before” suggestions, so neither gets cluttered. nothing is lost — filtered
+          prompts sit under <span className="font-mono text-xs">filtered (n)</span> in the library,
+          where you can <span className="font-mono text-xs">keep</span> any of them.
+        </p>
+        <button
+          role="switch"
+          aria-checked={keepMinor}
+          aria-label="Keep every prompt, including short throwaways"
+          onClick={() => setKeep(!keepMinor)}
+          className="inline-flex w-fit items-center gap-2 rounded-full border border-line px-2.5 py-1 text-xs font-medium text-ink-soft transition-colors hover:bg-sunk focus:outline-none focus:ring-2 focus:ring-accent"
+        >
+          <span
+            className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+              keepMinor ? 'bg-accent' : 'bg-line'
+            }`}
+          >
+            <span
+              className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
+                keepMinor ? 'translate-x-[14px]' : 'translate-x-0.5'
+              }`}
+            />
+          </span>
+          <span className={keepMinor ? 'text-ink' : undefined}>keep every prompt, even short ones</span>
+        </button>
+        <p className="font-mono text-xs text-ink-faint">
+          {keepMinor
+            ? 'on — every prompt is kept and shown, nothing is filtered.'
+            : 'off — short throwaways are saved but hidden until you ask for them.'}
         </p>
       </section>
 

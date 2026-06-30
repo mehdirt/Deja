@@ -11,7 +11,9 @@ import {
   bulkSoftDelete,
   bulkRestore,
   importPrompts,
+  setMinor,
 } from '@/lib/db'
+import { readPrefs, onPrefsChange } from '@/lib/prefs'
 import { buildIndex, searchPrompts } from '@/lib/search'
 import { buildMarkdown } from '@/lib/markdown'
 import { usefulnessScore } from '@/lib/ranking'
@@ -56,6 +58,11 @@ export function Library() {
   // exact prompt you're after, rather than widening the result set (OR).
   const [activeTags, setActiveTags] = useState<string[]>([])
   const [favoritesOnly, setFavoritesOnly] = useState(false)
+  // Selective capture: minor (filtered) prompts are hidden by default. `showMinor`
+  // reveals them inline so they can be reviewed/kept; `keepMinor` (a pref) means
+  // the user turned the filter off entirely, so they're always shown.
+  const [showMinor, setShowMinor] = useState(false)
+  const [keepMinor, setKeepMinor] = useState(false)
   // Bulk selection mode + the set of selected ids and the last batch undone.
   const [selecting, setSelecting] = useState(false)
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set())
@@ -68,7 +75,9 @@ export function Library() {
 
   const reload = useCallback(
     () =>
-      listPrompts()
+      // Fetch minors too — we filter them in-memory so the "filtered (N)" toggle
+      // and per-prompt "keep" work without a second query.
+      listPrompts({ includeMinor: true })
         .then(setPrompts)
         .finally(() => setLoading(false)),
     [],
@@ -76,6 +85,13 @@ export function Library() {
   useEffect(() => {
     reload()
   }, [reload])
+
+  useEffect(() => {
+    void readPrefs().then((p) => setKeepMinor(p.keepMinor))
+    return onPrefsChange((p) => setKeepMinor(p.keepMinor))
+  }, [])
+
+  const minorCount = useMemo(() => prompts.filter((p) => p.minor).length, [prompts])
 
   // Every tag in use across the (platform-scoped) library, for the filter row.
   const allTags = useMemo(() => {
@@ -86,6 +102,9 @@ export function Library() {
 
   const filtered = useMemo(() => {
     let list = platform === 'all' ? prompts : prompts.filter((p) => p.platform === platform)
+    // Hide minor prompts unless the filter is off (keepMinor) or the user is
+    // peeking at them (showMinor).
+    if (!keepMinor && !showMinor) list = list.filter((p) => !p.minor)
     if (favoritesOnly) list = list.filter((p) => p.pinned ?? false)
     if (activeTags.length) {
       // AND: keep prompts that carry every active tag. Undefined tags → [].
@@ -95,7 +114,7 @@ export function Library() {
       })
     }
     return list
-  }, [prompts, platform, favoritesOnly, activeTags])
+  }, [prompts, platform, favoritesOnly, activeTags, keepMinor, showMinor])
   const index = useMemo(() => buildIndex(filtered), [filtered])
 
   const visible: Prompt[] = useMemo(() => {
@@ -174,6 +193,15 @@ export function Library() {
     async (p: Prompt, tag: string) => {
       if (!p.id) return
       await removeTag(p.id, tag)
+      reload()
+    },
+    [reload],
+  )
+
+  const onKeepMinor = useCallback(
+    async (p: Prompt) => {
+      if (!p.id) return
+      await setMinor(p.id, false)
       reload()
     },
     [reload],
@@ -473,12 +501,29 @@ export function Library() {
             </div>
           </>
         ) : (
-          <button
-            onClick={() => setSelecting(true)}
-            className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs"
-          >
-            select
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelecting(true)}
+              className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs"
+            >
+              select
+            </button>
+            {/* Selective capture: a quiet way to see (and rescue) the short
+                throwaway prompts deja filtered out — never a silent loss. Hidden
+                when there are none, or when the filter is off entirely. */}
+            {!keepMinor && minorCount > 0 && (
+              <button
+                onClick={() => setShowMinor((v) => !v)}
+                aria-pressed={showMinor}
+                title="short throwaway prompts deja kept out of your library"
+                className={`dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs ${
+                  showMinor ? 'text-ink' : 'text-ink-faint'
+                }`}
+              >
+                {showMinor ? 'hide filtered' : `filtered (${minorCount})`}
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -532,6 +577,7 @@ export function Library() {
               onAddTag={onAddTag}
               onRemoveTag={onRemoveTag}
               onTagClick={onTagClick}
+              onKeepMinor={onKeepMinor}
               activeTags={activeTags}
               selectable={selecting}
               checked={p.id != null && checkedIds.has(p.id)}
