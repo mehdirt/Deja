@@ -9,7 +9,9 @@ them quickly and consistently.
 1. `npm run build`, load `dist/` unpacked.
 2. Seed a believable library: send ~15–20 varied prompts across ChatGPT, Claude,
    Gemini, DeepSeek, Grok (mix of short and long, a couple with code blocks, a
-   few obviously related so resurface and "most used" look real). Avoid anything
+   few obviously related so resurface and "most used" look real). Add a couple of
+   tags and pin one. If you want the selective-capture shot, send a throwaway or
+   two ("yes", "continue") so `filtered (n)` has something in it. Avoid anything
    personal — these screenshots are public.
 3. Use a clean browser profile, default zoom 100%, system light theme for the
    primary set (optionally capture a dark-mode alt set — Deja follows the OS).
@@ -25,9 +27,14 @@ Required: at least one at **1280×800** (preferred) or 640×400. Provide 4–5.
    and a couple of tags visible.
 3. **Search + sort** — search box with a query and the sort dropdown open
    (showing newest / most useful / most used / longest unseen).
-4. **Capture health + settings** — the settings page showing the per-platform
-   "capture is working ✓" row and the blocklist controls.
-5. **The popup** — toolbar popup with recent + pinned prompts.
+4. **Capture controls (settings)** — the settings page showing the per-site
+   capture switches with health dots ("capturing ✓"), the filter-strength
+   control (off / balanced / strict), and the blocklist with its test box.
+5. **The popup** — toolbar popup with the "⏸ capturing / pause" control on top
+   and recent + pinned prompts below.
+
+Optional 6th (if you want to show it): **selective capture** — the library with
+the `filtered (n)` view revealing a "minor" prompt and its `keep` action.
 
 Caption each with one short line (the store overlays them).
 
@@ -60,20 +67,19 @@ Short, no voiceover needed (captions instead).
 - Host the single file anywhere static (GitHub Pages, Netlify, Cloudflare Pages).
 - Replace the placeholders before going live:
   - `REPLACE_EXTENSION_ID` → the Web Store listing URL (after first submission).
-  - `REPLACE_OWNER` → the GitHub org/user (or remove the Source links if the
-    repo stays private — see the open-source decision below).
+  - The source links (nav "Source", hero "load from source", footer source rows)
+    are **commented out** while the repo is private — re-enable them when it goes
+    public. The `mehdirt` profile credit stays.
 
-## Open the repo? (ROADMAP Phase 5 decision)
+## Repo visibility (decided — June 2026)
 
-Still undecided in the roadmap. If opening:
+Ship a **private/unlisted** store listing first with the repo **private**, then
+open the repo publicly once it's more established. When opening:
 
-- Add a `LICENSE` (MIT is the low-friction default for a client-side tool; choose
-  deliberately) and flip the README "License" line.
-- Keep the "load from source" path in the README and landing page.
-
-If staying private: remove the "Source" / "load from source" links from
-`site/index.html` and soften the README install section to the packaged build.
-Either way, this is a product call — left for you, not assumed here.
+- Add a `LICENSE` (MIT is the low-friction default for a client-side tool) and
+  flip the README "License" line.
+- Uncomment the source links in `site/index.html` and README's load-from-source
+  path.
 
 ## What only you can do (not automatable from the repo)
 
