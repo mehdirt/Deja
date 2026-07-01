@@ -51,6 +51,10 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
   const tags = prompt.tags ?? []
   const pinned = prompt.pinned ?? false
   const minor = prompt.minor ?? false
+  // A near-white dot (ChatGPT) would vanish on the light card — give it a
+  // hairline ring so it's always visible.
+  const dotColor = PLATFORM_COLOR[prompt.platform]
+  const dotLight = dotColor.toLowerCase() === '#fff' || dotColor.toLowerCase() === '#ffffff'
 
   const handleCopy = () => {
     onCopy(prompt)
@@ -86,7 +90,10 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
           <span className="dj-chip font-mono">
             <span
               className="h-1.5 w-1.5 rounded-full"
-              style={{ background: PLATFORM_COLOR[prompt.platform] }}
+              style={{
+                background: dotColor,
+                ...(dotLight ? { boxShadow: 'inset 0 0 0 1px var(--dj-line)' } : {}),
+              }}
               aria-hidden="true"
             />
             {PLATFORM_LABEL[prompt.platform]}

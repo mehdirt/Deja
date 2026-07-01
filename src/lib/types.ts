@@ -97,8 +97,10 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
 }
 
 // Faint per-platform accent dot so the library is scannable at a glance.
+// ChatGPT is white (its current brand mark) — the UI adds a hairline ring so it
+// stays visible on the light card surface.
 export const PLATFORM_COLOR: Record<Platform, string> = {
-  chatgpt: '#10a37f',
+  chatgpt: '#ffffff',
   claude: '#d97757',
   gemini: '#4285f4',
   deepseek: '#4d6bfe',
