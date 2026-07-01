@@ -117,7 +117,7 @@ Prepared in-repo (the parts that can be authored from code):
 Still requires a live browser / human (can't be done from the repo):
 - Capture screenshots and record the demo video.
 - Write/host the privacy-policy URL; create the Web Store dev account and submit zipped `dist/`.
-- **Open the repo (or don't)** — undecided; if opening, add a `LICENSE` and keep the source links, else remove them (see `store/assets.md`).
+- **Repo visibility** — decided (June 2026): ship to the store as a **private/unlisted** listing first while the repo stays **private**, then open the repo publicly once it's more established. Until then the landing page's source links are commented out (re-enable them and add a `LICENSE` when the repo goes public).
 - Optional: the "prompt graveyard" blog post.
 - Invite the first ~50 users from communities you're already in (no broad launch yet).
 
