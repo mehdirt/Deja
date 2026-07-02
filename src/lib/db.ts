@@ -53,6 +53,16 @@ export async function listPrompts(opts: { includeMinor?: boolean } = {}): Promis
   return all.filter((p) => !p.deletedAt && (opts.includeMinor || !p.minor))
 }
 
+// Bulk-replace the text of specific prompts — used by the settings "scan &
+// redact existing library" action to retro-clean PII captured before redaction
+// was on. One transaction so it's atomic.
+export async function bulkUpdateText(updates: Array<{ id: number; text: string }>): Promise<void> {
+  if (!updates.length) return
+  await db.transaction('rw', db.prompts, async () => {
+    for (const u of updates) await db.prompts.update(u.id, { text: u.text })
+  })
+}
+
 // Promote a minor (filtered) prompt to a normal one, or demote a normal prompt.
 // Used by the library's "keep" affordance so a user can rescue anything the
 // selective-capture heuristic hid.

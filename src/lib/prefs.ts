@@ -12,7 +12,7 @@
 //   - 'copy'   → copy the prior prompt to the clipboard (default; non-destructive)
 //   - 'insert' → insert it at the caret in the composer (opt-in; the content
 //                script writes to the host page only on this explicit click)
-import { PLATFORM_LABEL, type FilterStrength, type Platform } from './types'
+import { PLATFORM_LABEL, PII_KINDS, type FilterStrength, type Platform, type PiiKind } from './types'
 
 export type ResurfaceClick = 'copy' | 'insert'
 
@@ -44,10 +44,18 @@ export interface Prefs {
   // Per-site capture switches. A site set to false captures nothing (and
   // resurface stays quiet there). Missing entry = enabled.
   sites: Record<Platform, boolean>
+  // Redact personal info (email, cards, secrets, …) from a prompt before it's
+  // stored. On by default. `piiKinds` toggles individual categories.
+  redactPii: boolean
+  piiKinds: Record<PiiKind, boolean>
 }
 
 function allSitesEnabled(): Record<Platform, boolean> {
   return Object.fromEntries(ALL_PLATFORMS.map((p) => [p, true])) as Record<Platform, boolean>
+}
+
+function allPiiEnabled(): Record<PiiKind, boolean> {
+  return Object.fromEntries(PII_KINDS.map((k) => [k, true])) as Record<PiiKind, boolean>
 }
 
 export const DEFAULT_PREFS: Prefs = {
@@ -57,6 +65,8 @@ export const DEFAULT_PREFS: Prefs = {
   pauseUntil: 0,
   autoPauseIncognito: true,
   sites: allSitesEnabled(),
+  redactPii: true,
+  piiKinds: allPiiEnabled(),
 }
 
 const KEY = 'prefs'
@@ -76,6 +86,13 @@ function coerceSites(raw: unknown): Record<Platform, boolean> {
   return out
 }
 
+function coercePiiKinds(raw: unknown): Record<PiiKind, boolean> {
+  const obj = (raw ?? {}) as Partial<Record<PiiKind, unknown>>
+  const out = allPiiEnabled()
+  for (const k of PII_KINDS) if (obj[k] === false) out[k] = false
+  return out
+}
+
 function coerce(raw: unknown): Prefs {
   const obj = (raw ?? {}) as Partial<Prefs> & { keepMinor?: unknown }
   return {
@@ -88,6 +105,8 @@ function coerce(raw: unknown): Prefs {
         : 0,
     autoPauseIncognito: obj.autoPauseIncognito !== false,
     sites: coerceSites(obj.sites),
+    redactPii: obj.redactPii !== false,
+    piiKinds: coercePiiKinds(obj.piiKinds),
   }
 }
 

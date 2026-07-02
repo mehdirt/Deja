@@ -63,6 +63,7 @@ export function sendCapture(text: string, platform: Platform): void {
           return
         }
         const savedId = resp.id
+        const note = resp.redacted > 0 ? `${resp.redacted} redacted` : undefined
         showSavedToast(() => {
           if (!chrome.runtime?.id) return
           try {
@@ -70,7 +71,7 @@ export function sendCapture(text: string, platform: Platform): void {
           } catch {
             /* orphaned context — ignore */
           }
-        })
+        }, note)
       })
       .catch((err) => {
         log('sendMessage failed (worker may be asleep):', err)

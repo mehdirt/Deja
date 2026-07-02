@@ -1,5 +1,10 @@
 export type Platform = 'chatgpt' | 'claude' | 'gemini' | 'deepseek' | 'grok'
 
+// Categories of personal info Deja can redact from a prompt before storing it.
+// Kept here so the pure redactor and the storage/prefs layers share one source.
+export type PiiKind = 'secret' | 'email' | 'card' | 'iban' | 'ssn' | 'phone' | 'ip'
+export const PII_KINDS: PiiKind[] = ['secret', 'email', 'card', 'iban', 'ssn', 'phone', 'ip']
+
 // How aggressively selective capture hides "minor" (throwaway) prompts:
 //   - 'off'      → filter nothing; keep and show every prompt
 //   - 'balanced' → hide obvious throwaways only (default; conservative)
@@ -66,7 +71,7 @@ export type RuntimeMessage =
 // content script can show a one-time explanation instead of silently swallowing
 // the prompt (informed, not silent).
 export type CaptureResponse =
-  | { ok: true; id: number; filtered: boolean; notice: boolean }
+  | { ok: true; id: number; filtered: boolean; notice: boolean; redacted: number }
   | { ok: false; error: string }
 
 // A prior prompt close enough to the in-progress text to resurface, carrying

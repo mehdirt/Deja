@@ -1,6 +1,7 @@
 import { savePrompt, hardDelete, listPrompts } from '@/lib/db'
 import { findSimilar } from '@/lib/similarity'
 import { classifyPrompt } from '@/lib/classify'
+import { redactPii } from '@/lib/pii'
 import { readPrefs, writePrefs, onPrefsChange, isPaused, PAUSE_FOREVER, type Prefs } from '@/lib/prefs'
 import type { RuntimeMessage } from '@/lib/types'
 
@@ -15,9 +16,16 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         // store (soft capture — never lose a prompt). A "minor" prompt is saved
         // flagged; at strength 'off' nothing is ever minor.
         const prefs = await readPrefs()
-        const { minor } = classifyPrompt(message.payload.text, prefs.filterStrength)
+        // Redact personal info BEFORE anything else, so raw PII never reaches
+        // IndexedDB, the search index, or the resurface pool. We store (and
+        // classify) the redacted text.
+        const redaction = prefs.redactPii
+          ? redactPii(message.payload.text, prefs.piiKinds)
+          : { text: message.payload.text, total: 0 }
+        const text = redaction.text
+        const { minor } = classifyPrompt(text, prefs.filterStrength)
         const id = await savePrompt({
-          text: message.payload.text,
+          text,
           platform: message.payload.platform,
           url: message.payload.url,
           createdAt: Date.now(),
@@ -25,14 +33,14 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         })
         // "Filtered" = stored but hidden. Tell the content script so it skips the
         // normal "remembered" toast, and the FIRST time, asks it to show a
-        // one-time explanation.
+        // one-time explanation. `redacted` lets it note "N redacted".
         const filtered = minor
         let notice = false
         if (filtered && !prefs.minorNoticeSeen) {
           notice = true
           await writePrefs({ minorNoticeSeen: true })
         }
-        sendResponse({ ok: true, id, filtered, notice })
+        sendResponse({ ok: true, id, filtered, notice, redacted: redaction.total })
       } catch (err) {
         sendResponse({ ok: false, error: String(err) })
       }
@@ -63,9 +71,15 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         // for echoing one you've already typed out in full — and this is the
         // backstop that guarantees the prompt you just submitted is never
         // suggested back to you, even if a stale query slips through.
+        // Redact the query the same way stored prompts were, so PII in the
+        // in-progress text matches the placeholders in the pool (and never even
+        // gets scored raw).
+        const queryText = prefs.redactPii
+          ? redactPii(message.text, prefs.piiKinds).text
+          : message.text
         const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase()
-        const queryNorm = norm(message.text)
-        const hits = findSimilar(message.text, pool, 0.4, pool.length || 1).filter(
+        const queryNorm = norm(queryText)
+        const hits = findSimilar(queryText, pool, 0.4, pool.length || 1).filter(
           (h) => h.item.id != null && norm(h.item.text) !== queryNorm,
         )
         const matches = hits.slice(0, SURFACED_MATCHES).map((h) => ({

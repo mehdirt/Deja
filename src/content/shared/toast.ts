@@ -41,7 +41,7 @@ function ensureHost(): ShadowRoot {
   return shadow
 }
 
-export function showSavedToast(onUndo: () => void): void {
+export function showSavedToast(onUndo: () => void, note?: string): void {
   const shadow = ensureHost()
   const wrap = shadow.querySelector('.dj-wrap') as HTMLElement
   wrap.replaceChildren()
@@ -56,7 +56,8 @@ export function showSavedToast(onUndo: () => void): void {
 
   const msg = document.createElement('span')
   msg.className = 'dj-msg'
-  msg.textContent = 'remembered'
+  // `note` (e.g. "2 redacted") is appended so redaction is never silent.
+  msg.textContent = note ? `remembered · ${note}` : 'remembered'
 
   const undo = document.createElement('button')
   undo.className = 'dj-undo'
