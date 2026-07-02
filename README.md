@@ -214,6 +214,7 @@ Local‑first is the product, not a footnote: **no network calls, no telemetry, 
 | `npm run test` | Vitest run (one‑shot) — 88 unit tests |
 | `npm run test:watch` | Vitest in watch mode |
 | `npm run format` | Prettier over `src` |
+| `npm run release -- <version>` | Bump the version, build, and zip `dist/` for the Web Store |
 
 Run a single test file: `npx vitest run src/lib/similarity.test.ts`
 
@@ -236,7 +237,7 @@ site/              the marketing landing page (single self-contained file)
 store/             Chrome Web Store listing copy + asset/launch plan
 ```
 
-Tests run on **Vitest + happy‑dom**. There is no CI yet.
+Tests run on **Vitest + happy‑dom**. **CI** (`.github/workflows/ci.yml`) runs typecheck + lint + test + build on every push/PR and uploads the built `dist/` as an artifact. Users can send feedback from **settings → Feedback** (a prefilled message they send themselves — no telemetry); configure the destination in `src/lib/feedback.ts`.
 
 ---
 

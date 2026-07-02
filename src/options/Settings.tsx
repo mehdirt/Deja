@@ -10,7 +10,16 @@ import {
 import { readPrefs, writePrefs, onPrefsChange, type ResurfaceClick, type Prefs } from '@/lib/prefs'
 import { readHealth, onHealthChange, type CaptureHealth } from '@/lib/health'
 import { redactPii, PII_LABEL } from '@/lib/pii'
+import { feedbackHref } from '@/lib/feedback'
 import { PLATFORM_LABEL, PII_KINDS, type Platform, type FilterStrength, type PiiKind } from '@/lib/types'
+
+function extVersion(): string {
+  try {
+    return chrome.runtime.getManifest().version
+  } catch {
+    return ''
+  }
+}
 
 const PLATFORMS = Object.keys(PLATFORM_LABEL) as Platform[]
 
@@ -260,6 +269,11 @@ export function Settings() {
   }
 
   const hasRules = bl.domains.length > 0 || bl.patterns.length > 0
+  const version = extVersion()
+  const brokenSites = PLATFORMS.filter((p) => health[p]?.ok === false).map((p) => PLATFORM_LABEL[p])
+  const captureContext = brokenSites.length
+    ? `capture broken on ${brokenSites.join(', ')}`
+    : 'capture not working'
 
   return (
     <div className="flex flex-col gap-8">
@@ -344,6 +358,14 @@ export function Settings() {
         <p className="font-mono text-xs text-ink-faint">
           Tip: use the ⏸ pause in the toolbar popup to stop capture everywhere for a while.
         </p>
+        <a
+          href={feedbackHref('capture', captureContext, version)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-fit font-mono text-xs text-ink-faint underline-offset-2 hover:text-accent hover:underline"
+        >
+          capture not working on a site? report it →
+        </a>
       </section>
 
       {/* Redact personal info */}
@@ -623,6 +645,34 @@ export function Settings() {
           )}
           {cleared && <span className="font-mono text-xs text-ink-faint">All prompts cleared.</span>}
         </div>
+      </section>
+
+      {/* Feedback — user-initiated, no telemetry */}
+      <section className="flex flex-col gap-2">
+        <h2 className="font-mono text-sm text-ink">Feedback</h2>
+        <p className="text-sm text-ink-soft">
+          Found a bug or have an idea? I&apos;d love to hear it. Nothing is sent automatically —
+          these just open a prefilled message you review and send yourself.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <a
+            href={feedbackHref('problem', undefined, version)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="dj-btn px-3 py-1.5 text-sm"
+          >
+            report a problem
+          </a>
+          <a
+            href={feedbackHref('idea', undefined, version)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="dj-btn dj-btn-ghost px-3 py-1.5 text-sm"
+          >
+            share an idea
+          </a>
+        </div>
+        {version && <p className="font-mono text-xs text-ink-faint">Deja v{version}</p>}
       </section>
     </div>
   )

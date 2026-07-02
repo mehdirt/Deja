@@ -6,3 +6,4 @@ dist
 .env.local
 .vite
 coverage
+deja-*.zip
