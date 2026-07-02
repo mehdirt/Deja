@@ -45,6 +45,7 @@ Shared core lives under `src/lib/`:
 - `similarity.ts` — IDF-weighted trigram similarity with a length-aware threshold, powering the "You've Been Here Before" resurface tooltip (wired via the background worker's `SIMILAR_QUERY` handler → `src/content/shared/resurface.ts`).
 - `ranking.ts` — usefulness score (usage × recency) for the library's "most useful" sort.
 - `classify.ts` — selective-capture classifier: flags throwaway "minor" prompts by strength (`off`/`balanced`/`strict`). Pure; runs at capture time in the background worker.
+- `pii.ts` — local PII detection + redaction (regex + Luhn-checked cards, known secret shapes). Replaces detected personal info with labels (`[email]`, `[card]`, …) BEFORE storage. On by default (per-category togglable in prefs). Pure; runs first in the background `PROMPT_CAPTURED` handler and also on the resurface query so both sides match.
 - `prefs.ts` — user preferences in `chrome.storage.local`: resurface click (copy/insert), filter strength, pause state (`pauseUntil`), per-site capture switches, incognito auto-pause. `writePrefs` merges partial updates.
 - `health.ts` — per-platform capture-health storage/signals (the content-side probe lives in `src/content/shared/health.ts`).
 - `sensitive.ts` — capture-eligibility: rejects password/OTP/credential and non-composer fields, and minimizes captured URLs.

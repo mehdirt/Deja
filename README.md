@@ -6,7 +6,7 @@ Deja is a Manifest V3 Chrome extension that **passively captures** every prompt 
 
 The prompts you write are work. Most of them vanish into a scrolled‑away chat the moment you hit Enter. Deja keeps them, makes them findable, and quietly **resurfaces the right one while you're typing the next**.
 
-> **Status: v0.3.0** — trustworthy capture plus the resurface moment, now with selective capture (short throwaways are filtered but recoverable) and capture controls (one‑click pause, per‑site switches, filter strength, blocklist test + dry‑run). Capture is credential‑safe and self‑monitoring, the library is fully featured, and the "you've been here before" in‑context tooltip is live. See [ROADMAP.md](ROADMAP.md) for the phased plan.
+> **Status: v0.3.0** — trustworthy capture plus the resurface moment, now with selective capture (short throwaways are filtered but recoverable) and capture controls (one‑click pause, per‑site switches, filter strength, blocklist test + dry‑run, and on‑device PII redaction). Capture is credential‑safe and self‑monitoring, the library is fully featured, and the "you've been here before" in‑context tooltip is live. See [ROADMAP.md](ROADMAP.md) for the phased plan.
 
 ---
 
@@ -61,6 +61,7 @@ Site DOMs change often, so each platform uses an **ordered list of selector fall
 - Passive capture on **Enter** and on **send‑button** clicks; duplicate submits within ~2 s are de‑duplicated.
 - **Never captures credentials** — password / OTP / payment / non‑composer fields are refused, and stored URLs are minimized to origin + path.
 - **Capture‑health** per platform, surfaced in the library and settings, so a broken selector is visible to *you* and never leaks to the host page.
+- **PII redaction (on by default)** — detected personal info (emails, phone numbers, credit cards, SSNs, IPs, API keys/secrets) is replaced with labels like `[email]` *before* the prompt is stored, so raw values never touch your library or exports. Per‑category toggles, a live test box, and a scan‑and‑redact for already‑captured prompts live in settings. Redaction is local, deterministic, and turns prompts into reusable templates (names/addresses need on‑device NER — deferred).
 - Multi‑line prompts and code blocks keep their formatting.
 
 ### The resurface moment — "you've been here before"
@@ -167,7 +168,7 @@ Deja runs entirely on the client across **four execution contexts**, all TypeScr
   - `captureGate.ts` — a synchronous, fail‑open snapshot of pause / per‑site / incognito state for the hot path.
   - `health.ts` — the capture‑health probe.
   They **fail silently and never block the host page.**
-- **Background service worker** — `src/background/index.ts`. The only writer to IndexedDB from outside the UI. Handles `PROMPT_CAPTURED` (classify → store), `SIMILAR_QUERY` (score the pool → top matches), `OPEN_LIBRARY`, and `UNDO_CAPTURE`, and paints the pause badge. MV3 workers are short‑lived, so it keeps no state in module scope — everything persists through Dexie / `chrome.storage`.
+- **Background service worker** — `src/background/index.ts`. The only writer to IndexedDB from outside the UI. Handles `PROMPT_CAPTURED` (redact PII → classify → store), `SIMILAR_QUERY` (score the pool → top matches), `OPEN_LIBRARY`, and `UNDO_CAPTURE`, and paints the pause badge. MV3 workers are short‑lived, so it keeps no state in module scope — everything persists through Dexie / `chrome.storage`.
 - **Popup** — `src/popup/`. Search + recent prompts (pinned first) + pause control.
 - **Options / Library** — `src/options/`. The full library, settings, and privacy page.
 
@@ -180,11 +181,12 @@ Deja runs entirely on the client across **four execution contexts**, all TypeScr
 | `search.ts` | MiniSearch fuzzy index, rebuilt in‑memory |
 | `similarity.ts` | IDF‑weighted trigram similarity + length‑aware threshold (resurface) |
 | `classify.ts` | Selective‑capture classifier (minor vs keep, by strength) |
+| `pii.ts` | Local PII detection + redaction (regex + Luhn) applied before storage |
 | `ranking.ts` | "Most useful" score (usage × recency) |
 | `sensitive.ts` | Capture‑eligibility: refuse credential / OTP / payment / non‑composer fields; URL minimization |
 | `blocklist.ts` | User blocklist (domains + regex) storage + matching |
 | `health.ts` | Per‑platform capture‑health storage |
-| `prefs.ts` | Preferences: resurface click, filter strength, pause, per‑site, incognito |
+| `prefs.ts` | Preferences: resurface click, filter strength, pause, per‑site, incognito, PII redaction |
 | `markdown.ts` · `format.ts` | Markdown export · text/time formatting |
 
 Path alias `@/` → `src/` (kept in sync in `tsconfig.json` and `vite.config.ts`).
@@ -195,7 +197,7 @@ Path alias `@/` → `src/` (kept in sync in `tsconfig.json` and `vite.config.ts`
 
 ## Privacy & security
 
-Local‑first is the product, not a footnote: **no network calls, no telemetry, no accounts, no cloud.** Only the prompt text you type is stored — never the AI's replies, never credentials. Prompts live in **IndexedDB**; settings/blocklist/health live in `chrome.storage.local`; both stay on your machine. You can export, blocklist, pause, or wipe everything at any time.
+Local‑first is the product, not a footnote: **no network calls, no telemetry, no accounts, no cloud.** Only the prompt text you type is stored — never the AI's replies, never credentials — and detected **PII is redacted before storage** so raw values never land on disk or in exports. Prompts live in **IndexedDB**; settings/blocklist/health live in `chrome.storage.local`; both stay on your machine. You can export, blocklist, pause, redact, or wipe everything at any time.
 
 **Permissions requested:** `storage` (save your library and settings locally), `alarms` (clear the capture‑pause badge when its timer ends), and host access only on the five supported sites. Details in the in‑extension privacy page and [SECURITY.md](SECURITY.md).
 

@@ -93,7 +93,9 @@ Answer the certification form as follows — all must match real behavior:
   user data. The prompt text is stored in **IndexedDB**; settings, blocklist, and
   capture-health live in `chrome.storage` — both on the user's machine.
 - **Data types collected:** "Personal communications" (the prompt text). Stored
-  locally in IndexedDB, never transmitted.
+  locally in IndexedDB, never transmitted. By default, detected personal info
+  (emails, phone numbers, cards, keys) is **redacted locally before storage**, so
+  raw values aren't kept even on-device.
 
 Link the privacy policy (the in-extension privacy page mirrors it; host a copy
 at the landing page `#privacy` or a dedicated page and paste the URL here).

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { clearAllData, purgeDeleted, listPrompts } from '@/lib/db'
+import { clearAllData, purgeDeleted, listPrompts, bulkUpdateText } from '@/lib/db'
 import {
   readBlocklist,
   writeBlocklist,
@@ -7,9 +7,10 @@ import {
   isBlocked,
   type Blocklist,
 } from '@/lib/blocklist'
-import { readPrefs, writePrefs, onPrefsChange, type ResurfaceClick } from '@/lib/prefs'
+import { readPrefs, writePrefs, onPrefsChange, type ResurfaceClick, type Prefs } from '@/lib/prefs'
 import { readHealth, onHealthChange, type CaptureHealth } from '@/lib/health'
-import { PLATFORM_LABEL, type Platform, type FilterStrength } from '@/lib/types'
+import { redactPii, PII_LABEL } from '@/lib/pii'
+import { PLATFORM_LABEL, PII_KINDS, type Platform, type FilterStrength, type PiiKind } from '@/lib/types'
 
 const PLATFORMS = Object.keys(PLATFORM_LABEL) as Platform[]
 
@@ -93,6 +94,12 @@ export function Settings() {
   const [dryRun, setDryRun] = useState<{ matched: number; total: number; samples: string[] } | null>(
     null,
   )
+  const [redactPiiOn, setRedactPiiOn] = useState(true)
+  const [piiKinds, setPiiKinds] = useState<Record<PiiKind, boolean>>(
+    () => Object.fromEntries(PII_KINDS.map((k) => [k, true])) as Record<PiiKind, boolean>,
+  )
+  const [piiTest, setPiiTest] = useState('')
+  const [piiScan, setPiiScan] = useState<{ updates: Array<{ id: number; text: string }>; total: number } | null>(null)
 
   useEffect(() => {
     void readBlocklist().then(setBl)
@@ -105,10 +112,12 @@ export function Settings() {
   }, [])
 
   useEffect(() => {
-    const apply = (p: { resurfaceClick: ResurfaceClick; filterStrength: FilterStrength; sites: Record<Platform, boolean> }) => {
+    const apply = (p: Prefs) => {
       setResurfaceClick(p.resurfaceClick)
       setStrength(p.filterStrength)
       setSites(p.sites)
+      setRedactPiiOn(p.redactPii)
+      setPiiKinds(p.piiKinds)
     }
     void readPrefs().then(apply)
     return onPrefsChange(apply)
@@ -128,6 +137,44 @@ export function Settings() {
     const next = { ...sites, [p]: !sites[p] }
     setSites(next)
     await writePrefs({ sites: next })
+  }
+
+  const setRedact = async (next: boolean) => {
+    setRedactPiiOn(next)
+    await writePrefs({ redactPii: next })
+    setPiiScan(null)
+  }
+
+  const togglePiiKind = async (k: PiiKind) => {
+    const next = { ...piiKinds, [k]: !piiKinds[k] }
+    setPiiKinds(next)
+    await writePrefs({ piiKinds: next })
+    setPiiScan(null)
+  }
+
+  // Live preview of what redaction would do to a sample.
+  const piiTestResult = useMemo(
+    () => (piiTest.trim() ? redactPii(piiTest, piiKinds) : null),
+    [piiTest, piiKinds],
+  )
+
+  // Scan already-saved prompts for PII the current categories would catch, so a
+  // library captured before redaction was on can be cleaned retroactively.
+  const runPiiScan = async () => {
+    const all = await listPrompts({ includeMinor: true })
+    const updates: Array<{ id: number; text: string }> = []
+    for (const p of all) {
+      if (p.id == null) continue
+      const r = redactPii(p.text, piiKinds)
+      if (r.total > 0 && r.text !== p.text) updates.push({ id: p.id, text: r.text })
+    }
+    setPiiScan({ updates, total: all.length })
+  }
+
+  const cleanPii = async () => {
+    if (!piiScan) return
+    await bulkUpdateText(piiScan.updates)
+    setPiiScan({ updates: [], total: piiScan.total })
   }
 
   const persist = async (next: Blocklist) => {
@@ -297,6 +344,81 @@ export function Settings() {
         <p className="font-mono text-xs text-ink-faint">
           Tip: use the ⏸ pause in the toolbar popup to stop capture everywhere for a while.
         </p>
+      </section>
+
+      {/* Redact personal info */}
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-mono text-sm text-ink">Redact personal info</h2>
+          <p className="text-sm text-ink-soft">
+            Before a prompt is saved, Deja can replace personal info — emails, phone numbers, cards,
+            secrets — with labels like <span className="font-mono text-xs">[email]</span>. The raw
+            values never touch your library or exports, and the prompt still works as a reusable
+            template.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={redactPiiOn}
+            onChange={() => setRedact(!redactPiiOn)}
+            label="Redact personal info before saving"
+          />
+          <span className="font-mono text-xs text-ink-soft">{redactPiiOn ? 'on' : 'off'}</span>
+        </div>
+
+        {redactPiiOn && (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {PII_KINDS.map((k) => (
+                <button
+                  key={k}
+                  onClick={() => togglePiiKind(k)}
+                  aria-pressed={piiKinds[k]}
+                  title={piiKinds[k] ? `redacting ${PII_LABEL[k]}` : `not redacting ${PII_LABEL[k]}`}
+                  className={`dj-pill ${piiKinds[k] ? 'dj-pill-active' : ''}`}
+                >
+                  {PII_LABEL[k]}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="font-mono text-xs text-ink-soft" htmlFor="pii-test">
+                see what gets redacted
+              </label>
+              <input
+                id="pii-test"
+                value={piiTest}
+                onChange={(e) => setPiiTest(e.target.value)}
+                placeholder="paste a prompt to check…"
+                className="dj-input font-mono text-sm"
+              />
+              {piiTestResult && (
+                <p className="font-mono text-xs text-ink-faint" aria-live="polite">
+                  {piiTestResult.total > 0 ? piiTestResult.text : 'no personal info detected'}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button onClick={runPiiScan} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
+                scan library for personal info
+              </button>
+              {piiScan && (
+                <span className="font-mono text-xs text-ink-faint">
+                  {piiScan.updates.length === 0
+                    ? `none of your ${piiScan.total} saved prompts contain detectable personal info.`
+                    : `${piiScan.updates.length} of ${piiScan.total} contain personal info.`}
+                </span>
+              )}
+            </div>
+            {piiScan && piiScan.updates.length > 0 && (
+              <button onClick={cleanPii} className="dj-btn w-fit px-3 py-1.5 text-sm hover:text-danger">
+                redact them now
+              </button>
+            )}
+          </>
+        )}
       </section>
 
       {/* Don't capture — blocklist */}

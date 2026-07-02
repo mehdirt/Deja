@@ -30,6 +30,11 @@ export function Privacy() {
             (IndexedDB) in your browser.
           </li>
           <li>Captures only the prompt text you type. It does not record the AI&apos;s replies.</li>
+          <li>
+            Redacts detected personal info (emails, phone numbers, cards, keys) to labels like{' '}
+            <span className="font-mono">[email]</span> before saving — on by default, tunable in
+            settings. Raw values never touch your library or exports.
+          </li>
           <li>Lets you search, copy, tag, pin, export, import, and delete those prompts.</li>
         </ul>
       </section>

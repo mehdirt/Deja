@@ -144,6 +144,11 @@ Two issues found in real use, both addressed before the wider invite.
 
 The content hot path reads all of this through a synchronous, fail-open cache (`src/content/shared/captureGate.ts`, mirroring the blocklist cache); incognito auto-pause is the one deliberate fail-*closed* case. New permission: `alarms` (badge expiry only).
 
+**PII redaction — built.** Detected personal info is stripped from a prompt *before* it's stored, so the local library and any shared JSON export never accumulate raw emails/cards/secrets (`src/lib/pii.ts`).
+- **Redaction, not hashing/encryption** — hashing low-entropy PII is brute-forceable and unusable; encryption breaks search and adds key management for little gain (IndexedDB is origin-isolated). Redaction is deterministic, local, and turns prompts into safe *reusable templates* (`[email]`, `[card]`, `[secret]`).
+- **High-precision regex** — email, Luhn-checked cards, SSN, IPv4/6, IBAN, phone, and known secret/token shapes (OpenAI/AWS/GitHub/Slack/Google/JWT). Tuned to under-detect rather than mangle. Names/addresses need on-device NER — deferred with embeddings.
+- **On by default**, per-category toggles, a live test box, and a "scan library & redact" action to retro-clean prompts captured before it was on. Redaction runs first in the background capture handler and on the resurface query so both sides match. Surfaced honestly ("remembered · N redacted").
+
 These two tracks below — named for the next round of work — build directly on this.
 
 ## Phase 6+ — Decide from data, not from this document
