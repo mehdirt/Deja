@@ -64,8 +64,8 @@ Created: 2026-07-03
 ### Week 1 (Jul 3–9) — Submit & seed · ~5h
 
 1. Dev account: $5, 2FA, **non-trader** declaration (0.5h) — *do first; verification can lag*
-2. *(Optional, cap at one evening)* Buy a domain — DNS check 2026-07-03: `usedeja.com` / `dejaprompts.com` / `deja.tools` likely available; `deja.app`, `getdeja.com`, `trydeja.com` taken. Recommended: `dejaprompts.com` at Cloudflare Registrar or Porkbun (at-cost, free `feedback@` email forwarding). If skipped now, submit with the Netlify URL and swap the listing's privacy URL before the Week 3 public flip. (0.25h)
-3. Host `site/` (index + `privacy.html`, both ready) on Netlify Drop or Cloudflare Pages; note the privacy-policy URL for the listing (0.5h)
+2. ~~Buy a domain~~ **Decided (2026-07-03): launch on the free Netlify subdomain; buy a domain only if traction shows.** Revisit trigger: Week 4 retro shows ≥100 installs → buy `dejaprompts.com` (likely available per DNS check; `deja.app`/`getdeja.com`/`trydeja.com` taken) at Cloudflare/Porkbun and attach it to the same Netlify site — the old `*.netlify.app` URL keeps working, so no links break.
+3. Host `site/` (index + `privacy.html`, both ready) on Netlify Drop; **rename the site to a clean name** (e.g. `dejaprompts.netlify.app`) in Site settings — this URL goes on the listing and social posts. Note the `/privacy.html` URL for the listing. (0.5h)
 4. Seed library + capture 5 screenshots (1.5h)
 5. Zip `dist/` → upload → paste `store/listing.md` copy → **visibility: Unlisted** → submit (1h)
 6. On approval: send unlisted link to the 5 testers with a 3-line brief — *"install it, use AI normally, I'll ask you 4 questions in a week"* (0.5h)
