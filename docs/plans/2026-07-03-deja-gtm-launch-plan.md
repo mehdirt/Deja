@@ -2,7 +2,7 @@
 
 Created: 2026-07-03
 
-**Budget:** $5 (Chrome Web Store dev fee) · **Time:** ~5h/week (~21h total) · **Solo:** mehdirt, with Claude drafting everything draftable · **Starting state:** v0.4.0 store-ready, 5 testers lined up, 1k+ own audience, repo private (public in Week 3).
+**Budget:** $5 (Chrome Web Store dev fee) + ~$11/yr optional domain · **Time:** ~5h/week (~21h total) · **Solo:** mehdirt, with Claude drafting everything draftable · **Starting state:** v0.4.0 store-ready, 5 testers lined up, 1k+ own audience, repo private (public in Week 3).
 
 ---
 
@@ -45,7 +45,7 @@ Created: 2026-07-03
 
 | Asset | Owner | Time | When |
 |---|---|---|---|
-| `privacy.html` (policy page for the listing) | Claude | — | Wk 1 |
+| `privacy.html` (policy page for the listing) | Claude | — | ✅ done (`site/privacy.html`) |
 | Site hosted (Netlify Drop / Cloudflare Pages) | mehdirt | 0.5h | Wk 1 |
 | 5 store screenshots (shot list in `store/assets.md`) | mehdirt | 1.5h | Wk 1 |
 | 30–45s demo video (script in `store/assets.md`, captions, no voiceover) + GIF cut | mehdirt | 1h | Wk 2 |
@@ -64,11 +64,12 @@ Created: 2026-07-03
 ### Week 1 (Jul 3–9) — Submit & seed · ~5h
 
 1. Dev account: $5, 2FA, **non-trader** declaration (0.5h) — *do first; verification can lag*
-2. Host site + `privacy.html` on Netlify Drop; note the URL (0.5h)
-3. Seed library + capture 5 screenshots (1.5h)
-4. Zip `dist/` → upload → paste `store/listing.md` copy → **visibility: Unlisted** → submit (1h)
-5. On approval: send unlisted link to the 5 testers with a 3-line brief — *"install it, use AI normally, I'll ask you 4 questions in a week"* (0.5h)
-6. Buffer / fixes (1h)
+2. *(Optional, cap at one evening)* Buy a domain — DNS check 2026-07-03: `usedeja.com` / `dejaprompts.com` / `deja.tools` likely available; `deja.app`, `getdeja.com`, `trydeja.com` taken. Recommended: `dejaprompts.com` at Cloudflare Registrar or Porkbun (at-cost, free `feedback@` email forwarding). If skipped now, submit with the Netlify URL and swap the listing's privacy URL before the Week 3 public flip. (0.25h)
+3. Host `site/` (index + `privacy.html`, both ready) on Netlify Drop or Cloudflare Pages; note the privacy-policy URL for the listing (0.5h)
+4. Seed library + capture 5 screenshots (1.5h)
+5. Zip `dist/` → upload → paste `store/listing.md` copy → **visibility: Unlisted** → submit (1h)
+6. On approval: send unlisted link to the 5 testers with a 3-line brief — *"install it, use AI normally, I'll ask you 4 questions in a week"* (0.5h)
+7. Buffer / fixes (0.75h)
 
 ### Week 2 (Jul 10–16) — Watch, fix, produce · ~5h
 
