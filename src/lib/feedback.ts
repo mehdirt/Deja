@@ -3,12 +3,11 @@
 // background. A feedback link just opens a prefilled email (or a hosted form, if
 // FEEDBACK_URL is set) that the user reviews and sends themselves.
 //
-// TODO before going public: point FEEDBACK_EMAIL at a dedicated address, or set
-// FEEDBACK_URL to a hosted form (Tally / Google Form / etc.), rather than a
-// personal inbox.
+// Optionally set FEEDBACK_URL to a hosted form (Tally / Google Form / etc.) to
+// use instead of email — the more scalable choice once there are real users.
 
 export const FEEDBACK_URL = '' // if set, used instead of email
-export const FEEDBACK_EMAIL = 'belaporschi@gmail.com'
+export const FEEDBACK_EMAIL = 'mehdirt25@gmail.com'
 
 export type FeedbackKind = 'problem' | 'idea' | 'capture'
 

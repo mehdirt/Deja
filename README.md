@@ -6,7 +6,7 @@ Deja is a Manifest V3 Chrome extension that **passively captures** every prompt 
 
 The prompts you write are work. Most of them vanish into a scrolled‑away chat the moment you hit Enter. Deja keeps them, makes them findable, and quietly **resurfaces the right one while you're typing the next**.
 
-> **Status: v0.3.0** — trustworthy capture plus the resurface moment, now with selective capture (short throwaways are filtered but recoverable) and capture controls (one‑click pause, per‑site switches, filter strength, blocklist test + dry‑run, and on‑device PII redaction). Capture is credential‑safe and self‑monitoring, the library is fully featured, and the "you've been here before" in‑context tooltip is live. See [ROADMAP.md](ROADMAP.md) for the phased plan.
+> **Status: v0.4.0** — trustworthy capture plus the resurface moment, now with selective capture (short throwaways are filtered but recoverable), capture controls (one‑click pause, per‑site switches, filter strength, blocklist test + dry‑run), on‑device PII redaction, and a built‑in feedback path. Capture is credential‑safe and self‑monitoring, the library is fully featured, and the "you've been here before" in‑context tooltip is live. See [ROADMAP.md](ROADMAP.md) for the phased plan.
 
 ---
 
@@ -211,7 +211,7 @@ Local‑first is the product, not a footnote: **no network calls, no telemetry, 
 | `npm run build` | Production build to `dist/` (runs `tsc --noEmit` first) |
 | `npm run typecheck` | `tsc --noEmit` only |
 | `npm run lint` | ESLint over `src` |
-| `npm run test` | Vitest run (one‑shot) — 88 unit tests |
+| `npm run test` | Vitest run (one‑shot) — 96 unit tests |
 | `npm run test:watch` | Vitest in watch mode |
 | `npm run format` | Prettier over `src` |
 | `npm run release -- <version>` | Bump the version, build, and zip `dist/` for the Web Store |

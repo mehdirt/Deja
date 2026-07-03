@@ -33,11 +33,17 @@ shipped feature set; reviewers compare the listing against behavior.
 > ▸ "YOU'VE BEEN HERE BEFORE"
 > As you type, Deja floats a gentle reminder when you've asked something similar
 > before, shows why it matched, and lets you step through past versions. Click to
-> copy it to your clipboard — Deja never types into the box for you.
+> copy it to your clipboard — it never types into the box unless you opt in.
 >
 > ▸ A LIBRARY THAT ORGANIZES ITSELF
 > Fuzzy search, tags, pins, and a favorites view. Sort by newest, most-used, or
-> longest-unseen. Bulk-select and clean up in seconds.
+> longest-unseen. Bulk-select and clean up in seconds. Short throwaway prompts
+> ("yes", "continue") are filtered out of the way — recoverable, never lost.
+>
+> ▸ YOURS TO CONTROL
+> Pause capture with one click, switch off any site, or auto-pause in incognito.
+> Detected personal info (emails, phone numbers, cards, keys) is redacted to
+> labels like [email] before saving — locally, on by default, tunable.
 >
 > ▸ YOURS TO KEEP
 > Export and import your library as JSON, export as Markdown, blocklist sites or
