@@ -23,7 +23,12 @@ describe('normalizeImportedRow', () => {
   })
 
   it('drops the id so imported rows become new rows', () => {
-    const row = normalizeImportedRow({ id: 42, text: 'hello world', platform: 'claude', createdAt: 5 })
+    const row = normalizeImportedRow({
+      id: 42,
+      text: 'hello world',
+      platform: 'claude',
+      createdAt: 5,
+    })
     expect(row).not.toBeNull()
     expect('id' in (row as object)).toBe(false)
   })

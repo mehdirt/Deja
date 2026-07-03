@@ -13,8 +13,7 @@ function ensureHost(): ShadowRoot {
     return host.shadowRoot as ShadowRoot
   }
   host = document.createElement('div')
-  host.style.cssText =
-    'position:fixed;inset:0;z-index:2147483647;pointer-events:none;'
+  host.style.cssText = 'position:fixed;inset:0;z-index:2147483647;pointer-events:none;'
   const shadow = host.attachShadow({ mode: 'open' })
   const style = document.createElement('style')
   const reduce = '@media (prefers-reduced-motion: reduce){.dj-toast{animation:none}}'

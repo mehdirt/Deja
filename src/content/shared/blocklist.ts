@@ -1,9 +1,4 @@
-import {
-  readBlocklist,
-  onBlocklistChange,
-  EMPTY_BLOCKLIST,
-  type Blocklist,
-} from '@/lib/blocklist'
+import { readBlocklist, onBlocklistChange, EMPTY_BLOCKLIST, type Blocklist } from '@/lib/blocklist'
 
 // Content-script side of the blocklist. The capture hot path must check the
 // blocklist *synchronously* (no awaits — we have a <100ms budget and don't

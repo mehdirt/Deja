@@ -17,8 +17,8 @@ export function Privacy() {
       <section className="flex flex-col gap-2">
         <h2 className="font-mono text-sm text-ink">Privacy, plainly</h2>
         <p className="text-ink-soft">
-          Deja keeps your prompts on your machine and nowhere else. It is a local notebook,
-          not a service. There is no account, no server, and nothing to sign up for.
+          Deja keeps your prompts on your machine and nowhere else. It is a local notebook, not a
+          service. There is no account, no server, and nothing to sign up for.
         </p>
       </section>
 
@@ -26,8 +26,8 @@ export function Privacy() {
         <h3 className="font-mono text-xs text-ink-soft">What it does</h3>
         <ul className="flex list-disc flex-col gap-1 pl-5 text-ink-soft">
           <li>
-            Saves the prompts you send on the supported sites below, to a local database
-            (IndexedDB) in your browser.
+            Saves the prompts you send on the supported sites below, to a local database (IndexedDB)
+            in your browser.
           </li>
           <li>Captures only the prompt text you type. It does not record the AI&apos;s replies.</li>
           <li>
@@ -54,8 +54,8 @@ export function Privacy() {
         <ul className="flex list-disc flex-col gap-1 pl-5 text-ink-soft">
           <li>Export everything to JSON or Markdown anytime, and import it back.</li>
           <li>
-            Pause capture anytime, switch off any site, or auto-pause in incognito — record
-            only what you want.
+            Pause capture anytime, switch off any site, or auto-pause in incognito — record only
+            what you want.
           </li>
           <li>
             Block a site or a regex pattern in settings so sensitive prompts are never stored.

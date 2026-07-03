@@ -12,7 +12,13 @@
 //   - 'copy'   → copy the prior prompt to the clipboard (default; non-destructive)
 //   - 'insert' → insert it at the caret in the composer (opt-in; the content
 //                script writes to the host page only on this explicit click)
-import { PLATFORM_LABEL, PII_KINDS, type FilterStrength, type Platform, type PiiKind } from './types'
+import {
+  PLATFORM_LABEL,
+  PII_KINDS,
+  type FilterStrength,
+  type Platform,
+  type PiiKind,
+} from './types'
 
 export type ResurfaceClick = 'copy' | 'insert'
 
@@ -72,7 +78,11 @@ export const DEFAULT_PREFS: Prefs = {
 const KEY = 'prefs'
 
 function coerceStrength(raw: Partial<Prefs> & { keepMinor?: unknown }): FilterStrength {
-  if (raw.filterStrength === 'off' || raw.filterStrength === 'strict' || raw.filterStrength === 'balanced')
+  if (
+    raw.filterStrength === 'off' ||
+    raw.filterStrength === 'strict' ||
+    raw.filterStrength === 'balanced'
+  )
     return raw.filterStrength
   // Migrate the legacy boolean: keepMinor === true meant "filter nothing".
   if (raw.keepMinor === true) return 'off'
@@ -140,10 +150,7 @@ export async function writePrefs(patch: Partial<Prefs>): Promise<void> {
 /** Subscribe to preference changes so an open settings view / content script
  *  stays in sync. Returns an unsubscribe function. */
 export function onPrefsChange(cb: (prefs: Prefs) => void): () => void {
-  const listener = (
-    changes: Record<string, chrome.storage.StorageChange>,
-    area: string,
-  ) => {
+  const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
     if (area === 'local' && changes[KEY]) cb(coerce(changes[KEY].newValue))
   }
   try {

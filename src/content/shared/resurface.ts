@@ -499,9 +499,7 @@ export function attachResurface(
   const onSeeAll = () => {
     if (!chrome.runtime?.id) return
     try {
-      void chrome.runtime
-        .sendMessage({ type: 'OPEN_LIBRARY', query: lastQueried })
-        .catch(() => {})
+      void chrome.runtime.sendMessage({ type: 'OPEN_LIBRARY', query: lastQueried }).catch(() => {})
     } catch {
       /* orphaned content script — never throw into the host page */
     }

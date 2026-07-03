@@ -33,7 +33,10 @@ describe('usefulnessScore', () => {
   })
 
   it('treats undefined usageCount/lastUsedAt as 0 without throwing', () => {
-    const score = usefulnessScore({ usageCount: undefined as unknown as number, lastUsedAt: undefined as unknown as number }, now)
+    const score = usefulnessScore(
+      { usageCount: undefined as unknown as number, lastUsedAt: undefined as unknown as number },
+      now,
+    )
     expect(Number.isFinite(score)).toBe(true)
     expect(score).toBeGreaterThanOrEqual(0)
   })

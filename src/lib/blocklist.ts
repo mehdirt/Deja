@@ -56,10 +56,7 @@ export async function writeBlocklist(bl: Blocklist): Promise<void> {
 /** Subscribe to blocklist changes so an open settings view / content-script
  *  cache stays fresh. Returns an unsubscribe function. */
 export function onBlocklistChange(cb: (bl: Blocklist) => void): () => void {
-  const listener = (
-    changes: Record<string, chrome.storage.StorageChange>,
-    area: string,
-  ) => {
+  const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
     if (area === 'local' && changes[KEY]) cb(coerce(changes[KEY].newValue))
   }
   try {

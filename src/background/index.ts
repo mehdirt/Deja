@@ -2,7 +2,14 @@ import { savePrompt, hardDelete, listPrompts } from '@/lib/db'
 import { findSimilar } from '@/lib/similarity'
 import { classifyPrompt } from '@/lib/classify'
 import { redactPii } from '@/lib/pii'
-import { readPrefs, writePrefs, onPrefsChange, isPaused, PAUSE_FOREVER, type Prefs } from '@/lib/prefs'
+import {
+  readPrefs,
+  writePrefs,
+  onPrefsChange,
+  isPaused,
+  PAUSE_FOREVER,
+  type Prefs,
+} from '@/lib/prefs'
 import type { RuntimeMessage } from '@/lib/types'
 
 // How many matches the resurface tooltip shows inline before offering "see all".

@@ -62,9 +62,7 @@ describe('isSensitiveField', () => {
   })
 
   it('treats any field inside a login form (one with a password input) as sensitive', () => {
-    const form = el(
-      '<form><input type="text" name="username" /><input type="password" /></form>',
-    )
+    const form = el('<form><input type="text" name="username" /><input type="password" /></form>')
     const username = form.querySelector('input[name="username"]')
     expect(isSensitiveField(username)).toBe(true)
   })
@@ -83,9 +81,7 @@ describe('isSensitiveField', () => {
     const email = widget.querySelector('[contenteditable]') as Element
     expect(isSensitiveField(email)).toBe(true)
 
-    const modal = el(
-      '<div aria-modal="true"><textarea></textarea><input type="password" /></div>',
-    )
+    const modal = el('<div aria-modal="true"><textarea></textarea><input type="password" /></div>')
     const ta = modal.querySelector('textarea') as Element
     expect(isSensitiveField(ta)).toBe(true)
   })
@@ -97,7 +93,17 @@ describe('isSensitiveField', () => {
 
 describe('looksLikeAuthPath', () => {
   it('matches common auth paths', () => {
-    for (const p of ['/login', '/sign_in', '/signin', '/sign-up', '/auth/callback', '/account/login', '/oauth/authorize', '/password/reset', '/verify']) {
+    for (const p of [
+      '/login',
+      '/sign_in',
+      '/signin',
+      '/sign-up',
+      '/auth/callback',
+      '/account/login',
+      '/oauth/authorize',
+      '/password/reset',
+      '/verify',
+    ]) {
       expect(looksLikeAuthPath(p)).toBe(true)
     }
   })

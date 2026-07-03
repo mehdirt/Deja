@@ -144,8 +144,9 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
               </span>
             )
           })}
-          {!compact && onAddTag && (
-            adding ? (
+          {!compact &&
+            onAddTag &&
+            (adding ? (
               <input
                 autoFocus
                 value={draft}
@@ -173,8 +174,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
               >
                 + tag
               </button>
-            )
-          )}
+            ))}
         </div>
       )}
 

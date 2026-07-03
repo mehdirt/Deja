@@ -72,7 +72,9 @@ export function isSensitiveField(el: Element | null): boolean {
   // We look beyond <form> to role="form" and modal dialogs, because modern SPA
   // auth UIs frequently render login fields with no real <form> element.
   if (typeof el.closest === 'function') {
-    const container = el.closest('form, [role="form"], dialog, [role="dialog"], [aria-modal="true"]')
+    const container = el.closest(
+      'form, [role="form"], dialog, [role="dialog"], [aria-modal="true"]',
+    )
     if (container && container.querySelector('input[type="password"]')) return true
   }
 
@@ -116,7 +118,8 @@ export function withinComposer(el: Element, composer: Element | null): boolean {
 // Paths that signal a login/auth screen. When we can't find the composer AND
 // the path looks like auth, capture nothing — defense in depth for SPA login
 // widgets that aren't a <form> and carry no obviously-sensitive attributes.
-const AUTH_PATH_RE = /(^|\/)(login|log[-_]?in|sign[-_]?in|sign[-_]?up|register|auth|oauth|sso|account\/?(login|signin)?|password|reset|verify|otp|mfa|2fa)(\/|$|\?)/i
+const AUTH_PATH_RE =
+  /(^|\/)(login|log[-_]?in|sign[-_]?in|sign[-_]?up|register|auth|oauth|sso|account\/?(login|signin)?|password|reset|verify|otp|mfa|2fa)(\/|$|\?)/i
 
 export function looksLikeAuthPath(pathname: string): boolean {
   return AUTH_PATH_RE.test(pathname || '')

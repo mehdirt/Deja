@@ -42,7 +42,13 @@ const PLACEHOLDER: Record<PiiKind, string> = {
 }
 
 const ALL_ON: Record<PiiKind, boolean> = {
-  secret: true, email: true, card: true, iban: true, ssn: true, phone: true, ip: true,
+  secret: true,
+  email: true,
+  card: true,
+  iban: true,
+  ssn: true,
+  phone: true,
+  ip: true,
 }
 
 const EMAIL_RE = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g
@@ -99,7 +105,13 @@ export interface RedactResult {
 export function redactPii(input: string, enabled: Record<PiiKind, boolean> = ALL_ON): RedactResult {
   let text = input
   const counts: Record<PiiKind, number> = {
-    secret: 0, email: 0, card: 0, iban: 0, ssn: 0, phone: 0, ip: 0,
+    secret: 0,
+    email: 0,
+    card: 0,
+    iban: 0,
+    ssn: 0,
+    phone: 0,
+    ip: 0,
   }
 
   if (enabled.secret) {

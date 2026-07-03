@@ -73,9 +73,7 @@ describe('IDF weighting', () => {
     const idf = buildTrigramIdf([distinctive, boilerOnly, ...boilerplate])
 
     const query = 'weekly report about kubernetes'
-    expect(similarity(query, distinctive, idf)).toBeGreaterThan(
-      similarity(query, boilerOnly, idf),
-    )
+    expect(similarity(query, distinctive, idf)).toBeGreaterThan(similarity(query, boilerOnly, idf))
   })
 
   it('keeps a genuinely similar long pair above the live 0.4 bar in a boilerplate-heavy pool', () => {
@@ -120,11 +118,7 @@ describe('sharedTerms', () => {
   })
 
   it('caps the number of terms returned', () => {
-    const terms = sharedTerms(
-      'alpha bravo charlie delta echo',
-      'alpha bravo charlie delta echo',
-      3,
-    )
+    const terms = sharedTerms('alpha bravo charlie delta echo', 'alpha bravo charlie delta echo', 3)
     expect(terms).toHaveLength(3)
   })
 

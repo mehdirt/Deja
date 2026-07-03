@@ -141,7 +141,8 @@ export function Library() {
       const now = Date.now()
       list.sort((a, b) => usefulnessScore(b, now) - usefulnessScore(a, now))
     } else if (sort === 'most-used') list.sort((a, b) => (b.usageCount ?? 0) - (a.usageCount ?? 0))
-    else if (sort === 'longest-unseen') list.sort((a, b) => (a.lastUsedAt ?? 0) - (b.lastUsedAt ?? 0))
+    else if (sort === 'longest-unseen')
+      list.sort((a, b) => (a.lastUsedAt ?? 0) - (b.lastUsedAt ?? 0))
     // 'newest' keeps listPrompts() order (already createdAt desc); search keeps relevance order
     // Pinned prompts always float to the top within the library, regardless of
     // sort. sort() is stable, so the chosen order is preserved within each group.
@@ -541,7 +542,10 @@ export function Library() {
       {undoId != null && (
         <div className="flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
           <span className="text-ink-soft">prompt deleted</span>
-          <button onClick={onUndoDelete} className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs">
+          <button
+            onClick={onUndoDelete}
+            className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs"
+          >
             undo
           </button>
         </div>

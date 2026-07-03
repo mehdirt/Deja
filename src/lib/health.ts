@@ -32,7 +32,11 @@ export async function readHealth(): Promise<CaptureHealth> {
   }
 }
 
-export async function writeHealth(platform: Platform, ok: boolean, now = Date.now()): Promise<void> {
+export async function writeHealth(
+  platform: Platform,
+  ok: boolean,
+  now = Date.now(),
+): Promise<void> {
   try {
     const current = await readHealth()
     const prev = current[platform]
@@ -49,10 +53,7 @@ export async function writeHealth(platform: Platform, ok: boolean, now = Date.no
 
 /** Subscribe to health changes so an open library view updates live. */
 export function onHealthChange(cb: (health: CaptureHealth) => void): () => void {
-  const listener = (
-    changes: Record<string, chrome.storage.StorageChange>,
-    area: string,
-  ) => {
+  const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
     if (area === 'local' && changes[KEY]) cb((changes[KEY].newValue as CaptureHealth) ?? {})
   }
   try {

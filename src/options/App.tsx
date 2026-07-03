@@ -25,7 +25,11 @@ export function App() {
         <nav className="flex items-center gap-1 font-mono text-xs" aria-label="Sections">
           {NAV.map((n, i) => (
             <span key={n.key} className="inline-flex items-center">
-              {i > 0 && <span className="px-1 text-ink-faint" aria-hidden>·</span>}
+              {i > 0 && (
+                <span className="px-1 text-ink-faint" aria-hidden>
+                  ·
+                </span>
+              )}
               <button
                 onClick={() => setView(n.key)}
                 aria-current={view === n.key ? 'page' : undefined}

@@ -43,7 +43,13 @@ describe('redactPii', () => {
 
   it('honors per-category toggles', () => {
     const r = redactPii('a@b.com and 415-555-0132', {
-      secret: true, email: false, card: true, iban: true, ssn: true, phone: true, ip: true,
+      secret: true,
+      email: false,
+      card: true,
+      iban: true,
+      ssn: true,
+      phone: true,
+      ip: true,
     })
     expect(r.text).toBe('a@b.com and [phone]')
     expect(r.counts.email).toBe(0)

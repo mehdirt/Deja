@@ -38,7 +38,9 @@ class DejaDB extends Dexie {
 
 export const db = new DejaDB()
 
-export async function savePrompt(input: Omit<Prompt, 'id' | 'usageCount' | 'lastUsedAt'>): Promise<number> {
+export async function savePrompt(
+  input: Omit<Prompt, 'id' | 'usageCount' | 'lastUsedAt'>,
+): Promise<number> {
   const now = input.createdAt
   return db.prompts.add({ ...input, usageCount: 0, lastUsedAt: now })
 }
@@ -170,7 +172,8 @@ export function normalizeImportedRow(raw: unknown): Omit<Prompt, 'id'> | null {
   if (!text || text.trim().length < 2) return null
   if (typeof r.platform !== 'string' || !PLATFORMS.has(r.platform as Platform)) return null
   const platform = r.platform as Platform
-  const createdAt = typeof r.createdAt === 'number' && Number.isFinite(r.createdAt) ? r.createdAt : Date.now()
+  const createdAt =
+    typeof r.createdAt === 'number' && Number.isFinite(r.createdAt) ? r.createdAt : Date.now()
   const usageCount =
     typeof r.usageCount === 'number' && Number.isFinite(r.usageCount) && r.usageCount >= 0
       ? Math.floor(r.usageCount)
@@ -178,7 +181,9 @@ export function normalizeImportedRow(raw: unknown): Omit<Prompt, 'id'> | null {
   const lastUsedAt =
     typeof r.lastUsedAt === 'number' && Number.isFinite(r.lastUsedAt) ? r.lastUsedAt : createdAt
   const url = typeof r.url === 'string' ? r.url : ''
-  const tags = Array.isArray(r.tags) ? normalizeTags(r.tags.filter((t): t is string => typeof t === 'string')) : []
+  const tags = Array.isArray(r.tags)
+    ? normalizeTags(r.tags.filter((t): t is string => typeof t === 'string'))
+    : []
   const pinned = r.pinned === true
   const minor = r.minor === true
   // Preserve tombstones: a soft-deleted/deleted row must stay deleted on import,

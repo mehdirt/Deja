@@ -29,7 +29,9 @@ describe('classifyPrompt', () => {
 
   it('keeps a trivial WORD when it leads a real, substantial prompt', () => {
     expect(classifyPrompt('explain how the TCP three-way handshake works').minor).toBe(false)
-    expect(classifyPrompt('continue the story where the dragon enters the village').minor).toBe(false)
+    expect(classifyPrompt('continue the story where the dragon enters the village').minor).toBe(
+      false,
+    )
   })
 
   it('keeps longer, specific prompts', () => {

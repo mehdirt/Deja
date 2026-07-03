@@ -51,12 +51,7 @@ function totalWeight(grams: Set<string>, weight: TrigramWeight): number {
 // in a longer stored prompt still scores (plain Jaccard's union term tanked
 // those short-in-long matches). With UNIT_WEIGHT this reduces to a pure
 // trigram-count blend; with IDF weights, shared rare trigrams dominate.
-function blendedScore(
-  ga: Set<string>,
-  wa: number,
-  gb: Set<string>,
-  weight: TrigramWeight,
-): number {
+function blendedScore(ga: Set<string>, wa: number, gb: Set<string>, weight: TrigramWeight): number {
   if (ga.size === 0 || gb.size === 0) return 0
   let interW = 0
   for (const g of ga) if (gb.has(g)) interW += weight(g)
@@ -113,11 +108,57 @@ export function thresholdForLength(queryLength: number, base: number): number {
 // drop them from the "matched on …" hint. Intentionally small — we'd rather
 // show a slightly generic word than hide a meaningful one.
 const STOPWORDS = new Set([
-  'the', 'a', 'an', 'and', 'or', 'but', 'to', 'of', 'in', 'on', 'for', 'with',
-  'is', 'are', 'was', 'were', 'be', 'as', 'at', 'by', 'it', 'this', 'that',
-  'these', 'those', 'my', 'me', 'your', 'you', 'i', 'we', 'they', 'how', 'what',
-  'why', 'when', 'can', 'could', 'would', 'should', 'please', 'about', 'into',
-  'from', 'so', 'if', 'then', 'than', 'do', 'does', 'did',
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'but',
+  'to',
+  'of',
+  'in',
+  'on',
+  'for',
+  'with',
+  'is',
+  'are',
+  'was',
+  'were',
+  'be',
+  'as',
+  'at',
+  'by',
+  'it',
+  'this',
+  'that',
+  'these',
+  'those',
+  'my',
+  'me',
+  'your',
+  'you',
+  'i',
+  'we',
+  'they',
+  'how',
+  'what',
+  'why',
+  'when',
+  'can',
+  'could',
+  'would',
+  'should',
+  'please',
+  'about',
+  'into',
+  'from',
+  'so',
+  'if',
+  'then',
+  'than',
+  'do',
+  'does',
+  'did',
 ])
 
 function contentWords(s: string): string[] {

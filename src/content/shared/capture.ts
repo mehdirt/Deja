@@ -1,7 +1,12 @@
 import type { CaptureResponse, CapturedPromptMessage, Platform } from '@/lib/types'
 import { writeHealth } from '@/lib/health'
 import { isBlocked } from '@/lib/blocklist'
-import { isCapturableField, withinComposer, looksLikeAuthPath, safeCaptureUrl } from '@/lib/sensitive'
+import {
+  isCapturableField,
+  withinComposer,
+  looksLikeAuthPath,
+  safeCaptureUrl,
+} from '@/lib/sensitive'
 import { getBlocklist } from './blocklist'
 import { shouldCapture } from './captureGate'
 import { showSavedToast, showInfoToast } from './toast'

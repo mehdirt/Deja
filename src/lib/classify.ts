@@ -29,15 +29,77 @@ const RICH_WORDS: Record<Exclude<FilterStrength, 'off'>, number> = { balanced: 6
 // as a substring — so a bare "explain" is flagged while "explain the CAP
 // theorem" is untouched. Lowercase; keep this list tight and obvious.
 const TRIVIAL = new Set([
-  'yes', 'no', 'y', 'n', 'ok', 'okay', 'k', 'kk', 'sure', 'yep', 'yup', 'nope', 'yeah', 'nah',
-  'thanks', 'thank you', 'thank you!', 'ty', 'thx', 'cheers', 'great', 'nice', 'perfect', 'cool',
-  'continue', 'go on', 'go ahead', 'keep going', 'proceed', 'next', 'more', 'go',
-  'do it', 'please', 'please do', 'ok do it', 'now', 'and', 'so',
-  'again', 'redo', 'retry', 'rerun', 'fix it', 'fix this', 'undo',
-  'why', 'how', 'what', 'huh', 'really', 'wait',
-  'explain', 'elaborate', 'expand', 'clarify', 'summarize', 'summarise', 'tldr',
-  'rewrite', 'shorten', 'simplify', 'translate', 'hmm', 'idk',
-  'hi', 'hello', 'hey', 'yo', 'test', 'testing',
+  'yes',
+  'no',
+  'y',
+  'n',
+  'ok',
+  'okay',
+  'k',
+  'kk',
+  'sure',
+  'yep',
+  'yup',
+  'nope',
+  'yeah',
+  'nah',
+  'thanks',
+  'thank you',
+  'thank you!',
+  'ty',
+  'thx',
+  'cheers',
+  'great',
+  'nice',
+  'perfect',
+  'cool',
+  'continue',
+  'go on',
+  'go ahead',
+  'keep going',
+  'proceed',
+  'next',
+  'more',
+  'go',
+  'do it',
+  'please',
+  'please do',
+  'ok do it',
+  'now',
+  'and',
+  'so',
+  'again',
+  'redo',
+  'retry',
+  'rerun',
+  'fix it',
+  'fix this',
+  'undo',
+  'why',
+  'how',
+  'what',
+  'huh',
+  'really',
+  'wait',
+  'explain',
+  'elaborate',
+  'expand',
+  'clarify',
+  'summarize',
+  'summarise',
+  'tldr',
+  'rewrite',
+  'shorten',
+  'simplify',
+  'translate',
+  'hmm',
+  'idk',
+  'hi',
+  'hello',
+  'hey',
+  'yo',
+  'test',
+  'testing',
 ])
 
 function normalize(text: string): string {
@@ -52,7 +114,11 @@ function hasSubstance(text: string): boolean {
   if (/```|`[^`]+`/.test(text)) return true // code fence or inline code
   if (/https?:\/\/|www\./i.test(text)) return true // a URL
   // A filename / path with a known code-ish extension.
-  if (/[\w-]+\.(ts|tsx|js|jsx|py|go|rs|java|c|cpp|rb|sh|json|ya?ml|md|css|html|sql|toml)\b/i.test(text))
+  if (
+    /[\w-]+\.(ts|tsx|js|jsx|py|go|rs|java|c|cpp|rb|sh|json|ya?ml|md|css|html|sql|toml)\b/i.test(
+      text,
+    )
+  )
     return true
   if (/\n\s*([-*•]|\d+[.)])/.test(text)) return true // list-like structure
   if ((text.match(/[.!?](\s|$)/g) ?? []).length >= 2) return true // multiple sentences
@@ -70,7 +136,10 @@ export interface Classification {
  *  call in the capture hot path. Conservative by design — only obvious
  *  throwaways are flagged at 'balanced'; 'strict' also drops short non-structured
  *  prompts; 'off' keeps everything. */
-export function classifyPrompt(text: string, strength: FilterStrength = 'balanced'): Classification {
+export function classifyPrompt(
+  text: string,
+  strength: FilterStrength = 'balanced',
+): Classification {
   if (strength === 'off') return { minor: false, reason: null }
   const norm = normalize(text)
   if (!norm) return { minor: true, reason: 'short' }

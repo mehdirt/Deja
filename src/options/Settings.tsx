@@ -11,7 +11,13 @@ import { readPrefs, writePrefs, onPrefsChange, type ResurfaceClick, type Prefs }
 import { readHealth, onHealthChange, type CaptureHealth } from '@/lib/health'
 import { redactPii, PII_LABEL } from '@/lib/pii'
 import { feedbackHref } from '@/lib/feedback'
-import { PLATFORM_LABEL, PII_KINDS, type Platform, type FilterStrength, type PiiKind } from '@/lib/types'
+import {
+  PLATFORM_LABEL,
+  PII_KINDS,
+  type Platform,
+  type FilterStrength,
+  type PiiKind,
+} from '@/lib/types'
 
 function extVersion(): string {
   try {
@@ -25,12 +31,20 @@ const PLATFORMS = Object.keys(PLATFORM_LABEL) as Platform[]
 
 const RESURFACE_OPTIONS: Array<{ key: ResurfaceClick; label: string; hint: string }> = [
   { key: 'copy', label: 'copy to clipboard', hint: 'Click a match to copy it — paste it yourself' },
-  { key: 'insert', label: 'insert at cursor', hint: 'Click a match to drop it into the box at your cursor' },
+  {
+    key: 'insert',
+    label: 'insert at cursor',
+    hint: 'Click a match to drop it into the box at your cursor',
+  },
 ]
 
 const STRENGTHS: Array<{ key: FilterStrength; label: string; hint: string }> = [
   { key: 'off', label: 'keep everything', hint: 'Save and show every prompt — no filtering' },
-  { key: 'balanced', label: 'balanced', hint: 'Hide obvious throwaways like “yes” or “continue” (default)' },
+  {
+    key: 'balanced',
+    label: 'balanced',
+    hint: 'Hide obvious throwaways like “yes” or “continue” (default)',
+  },
   { key: 'strict', label: 'strict', hint: 'Keep only longer, structured, substantial prompts' },
 ]
 
@@ -100,15 +114,20 @@ export function Settings() {
   )
   const [health, setHealth] = useState<CaptureHealth>({})
   const [testInput, setTestInput] = useState('')
-  const [dryRun, setDryRun] = useState<{ matched: number; total: number; samples: string[] } | null>(
-    null,
-  )
+  const [dryRun, setDryRun] = useState<{
+    matched: number
+    total: number
+    samples: string[]
+  } | null>(null)
   const [redactPiiOn, setRedactPiiOn] = useState(true)
   const [piiKinds, setPiiKinds] = useState<Record<PiiKind, boolean>>(
     () => Object.fromEntries(PII_KINDS.map((k) => [k, true])) as Record<PiiKind, boolean>,
   )
   const [piiTest, setPiiTest] = useState('')
-  const [piiScan, setPiiScan] = useState<{ updates: Array<{ id: number; text: string }>; total: number } | null>(null)
+  const [piiScan, setPiiScan] = useState<{
+    updates: Array<{ id: number; text: string }>
+    total: number
+  } | null>(null)
 
   useEffect(() => {
     void readBlocklist().then(setBl)
@@ -306,9 +325,9 @@ export function Settings() {
         <h2 className="font-mono text-sm text-ink">Filter short &amp; throwaway prompts</h2>
         <p className="text-sm text-ink-soft">
           Deja always saves everything, but it can keep short throwaways out of your library and the
-          “you’ve been here before” suggestions so neither gets cluttered. Nothing is lost — filtered
-          prompts sit under <span className="font-mono text-xs">Filtered (n)</span> in the library,
-          where you can <span className="font-mono text-xs">Keep</span> any of them.
+          “you’ve been here before” suggestions so neither gets cluttered. Nothing is lost —
+          filtered prompts sit under <span className="font-mono text-xs">Filtered (n)</span> in the
+          library, where you can <span className="font-mono text-xs">Keep</span> any of them.
         </p>
         <div className="flex flex-wrap gap-2">
           {STRENGTHS.map((o) => (
@@ -396,7 +415,9 @@ export function Settings() {
                   key={k}
                   onClick={() => togglePiiKind(k)}
                   aria-pressed={piiKinds[k]}
-                  title={piiKinds[k] ? `redacting ${PII_LABEL[k]}` : `not redacting ${PII_LABEL[k]}`}
+                  title={
+                    piiKinds[k] ? `redacting ${PII_LABEL[k]}` : `not redacting ${PII_LABEL[k]}`
+                  }
                   className={`dj-pill ${piiKinds[k] ? 'dj-pill-active' : ''}`}
                 >
                   {PII_LABEL[k]}
@@ -435,7 +456,10 @@ export function Settings() {
               )}
             </div>
             {piiScan && piiScan.updates.length > 0 && (
-              <button onClick={cleanPii} className="dj-btn w-fit px-3 py-1.5 text-sm hover:text-danger">
+              <button
+                onClick={cleanPii}
+                className="dj-btn w-fit px-3 py-1.5 text-sm hover:text-danger"
+              >
                 redact them now
               </button>
             )}
@@ -609,7 +633,9 @@ export function Settings() {
           </button>
           {purged != null && (
             <span className="font-mono text-xs text-ink-faint">
-              {purged === 0 ? 'Nothing to purge.' : `Purged ${purged} deleted prompt${purged === 1 ? '' : 's'}.`}
+              {purged === 0
+                ? 'Nothing to purge.'
+                : `Purged ${purged} deleted prompt${purged === 1 ? '' : 's'}.`}
             </span>
           )}
         </div>
@@ -643,7 +669,9 @@ export function Settings() {
               cancel
             </button>
           )}
-          {cleared && <span className="font-mono text-xs text-ink-faint">All prompts cleared.</span>}
+          {cleared && (
+            <span className="font-mono text-xs text-ink-faint">All prompts cleared.</span>
+          )}
         </div>
       </section>
 

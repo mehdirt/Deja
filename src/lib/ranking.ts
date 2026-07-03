@@ -13,7 +13,10 @@ import type { Prompt } from './types'
 //     recency the natural tie-breaker between two equally-used prompts.
 const HALF_LIFE_MS = 14 * 24 * 60 * 60 * 1000
 
-export function usefulnessScore(prompt: Pick<Prompt, 'usageCount' | 'lastUsedAt'>, now: number): number {
+export function usefulnessScore(
+  prompt: Pick<Prompt, 'usageCount' | 'lastUsedAt'>,
+  now: number,
+): number {
   const usage = (prompt.usageCount ?? 0) + 1
   const age = Math.max(0, now - (prompt.lastUsedAt ?? 0))
   const recency = Math.pow(0.5, age / HALF_LIFE_MS)
