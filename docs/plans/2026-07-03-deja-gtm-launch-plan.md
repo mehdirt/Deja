@@ -46,7 +46,7 @@ Created: 2026-07-03
 | Asset | Owner | Time | When |
 |---|---|---|---|
 | `privacy.html` (policy page for the listing) | Claude | — | ✅ done (`site/privacy.html`) |
-| Site hosted (Netlify Drop / Cloudflare Pages) | mehdirt | 0.5h | Wk 1 |
+| Site hosted (Cloudflare Pages — direct upload) | mehdirt | 0.5h | Wk 1 |
 | 5 store screenshots (shot list in `store/assets.md`) | mehdirt | 1.5h | Wk 1 |
 | 30–45s demo video (script in `store/assets.md`, captions, no voiceover) + GIF cut | mehdirt | 1h | Wk 2 |
 | Blog post: "The prompt graveyard" (Dev.to) | Claude drafts / mehdirt edits | 1h | Wk 2→3 |
@@ -64,8 +64,8 @@ Created: 2026-07-03
 ### Week 1 (Jul 3–9) — Submit & seed · ~5h
 
 1. Dev account: $5, 2FA, **non-trader** declaration (0.5h) — *do first; verification can lag*
-2. ~~Buy a domain~~ **Decided (2026-07-03): launch on the free Netlify subdomain; buy a domain only if traction shows.** Revisit trigger: Week 4 retro shows ≥100 installs → buy `dejaprompts.com` (likely available per DNS check; `deja.app`/`getdeja.com`/`trydeja.com` taken) at Cloudflare/Porkbun and attach it to the same Netlify site — the old `*.netlify.app` URL keeps working, so no links break.
-3. Host `site/` (index + `privacy.html`, both ready) on Netlify Drop; **rename the site to a clean name** (e.g. `dejaprompts.netlify.app`) in Site settings — this URL goes on the listing and social posts. Note the `/privacy.html` URL for the listing. (0.5h)
+2. ~~Buy a domain~~ **Decided: launch on the free Cloudflare Pages subdomain; buy a domain only if traction shows.** Revisit trigger: Week 4 retro shows ≥100 installs → buy `dejaprompts.com` (likely available per 2026-07-03 DNS check; `deja.app`/`getdeja.com`/`trydeja.com` taken) at Cloudflare Registrar (at-cost) and attach it to the **same** Pages project — the old `*.pages.dev` URL keeps working, so no links break.
+3. **Host on Cloudflare Pages** (free account). Chosen over Netlify to consolidate: hosting + future registrar + free email routing all in one dashboard. Create a project → **direct upload** (drag the `site/` folder in the dashboard; no git/CLI needed) → name it something clean (e.g. `dejaprompts` → `dejaprompts.pages.dev`) — this URL goes on the listing and social posts. Note the `https://…/privacy.html` URL for the listing. *(Bonus for later: Cloudflare Email Routing is free — set up `feedback@` forwarding once the domain is bought, and swap it into `src/lib/feedback.ts` before the repo goes public.)* (0.5h)
 4. Seed library + capture 5 screenshots (1.5h)
 5. Zip `dist/` → upload → paste `store/listing.md` copy → **visibility: Unlisted** → submit (1h)
 6. On approval: send unlisted link to the 5 testers with a 3-line brief — *"install it, use AI normally, I'll ask you 4 questions in a week"* (0.5h)
