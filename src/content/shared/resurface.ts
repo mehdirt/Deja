@@ -6,7 +6,8 @@
 // way it's an explicit click — we never silently auto-fill, and never overwrite
 // what's already typed. When more than one prompt matches, the user can step
 // through them, and when more match than we surface, a "see all" jumps to the
-// library. Dismissible per page session, never nags.
+// library. Dismissible per query (× / Esc) — a later, different prompt can
+// resurface again.
 //
 // This file never captures (saves) anything. The only time it writes to the
 // host page is the opt-in insert, on an explicit click.
@@ -386,7 +387,9 @@ export function attachResurface(
   const tooltip = createTooltip(() => dismiss())
 
   let debounceTimer: number | undefined
-  let dismissed = false // dismissed for this page session — never nag again
+  // Normalized query the user dismissed (× / Esc). Suppresses only that text,
+  // not the whole page session — so a later, different prompt can resurface.
+  let dismissedFor: string | null = null
   let currentMatches: SimilarMatch[] = []
   let currentIndex = 0
   let grandTotal = 0 // total matches above threshold, incl. those not surfaced
@@ -408,6 +411,13 @@ export function attachResurface(
   const unsubPrefs = onPrefsChange((p) => {
     insertMode = p.resurfaceClick === 'insert'
   })
+
+  const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase()
+
+  const isDismissed = (text: string) => {
+    const n = norm(text)
+    return n.length > 0 && dismissedFor === n
+  }
 
   const viewFor = (i: number): CandidateView => ({
     preview: currentMatches[i].text.replace(/\s+/g, ' ').trim(),
@@ -455,7 +465,10 @@ export function attachResurface(
   }
 
   const dismiss = () => {
-    dismissed = true
+    const el = activeEl ?? getInput()
+    const q = lastQueried || (el ? readText(el) : '')
+    const n = norm(q)
+    if (n) dismissedFor = n
     hide()
   }
 
@@ -507,7 +520,7 @@ export function attachResurface(
   }
 
   const runQuery = (text: string) => {
-    if (dismissed || confirming) return
+    if (confirming) return
     // Stay quiet when capture is paused or this site is switched off — resurface
     // reads the in-progress text, so a paused/private session shouldn't trigger
     // it either.
@@ -517,6 +530,10 @@ export function attachResurface(
     }
     const trimmed = text.trim()
     if (trimmed.length < MIN_CHARS) {
+      hide()
+      return
+    }
+    if (isDismissed(trimmed)) {
       hide()
       return
     }
@@ -532,7 +549,7 @@ export function attachResurface(
       chrome.runtime
         .sendMessage({ type: 'SIMILAR_QUERY', text: trimmed })
         .then((resp: SimilarResponse | undefined) => {
-          if (token !== queryToken || dismissed) return // stale or dismissed
+          if (token !== queryToken || isDismissed(trimmed)) return // stale or dismissed
           if (!resp?.ok) {
             hide()
             return
@@ -564,7 +581,6 @@ export function attachResurface(
   }
 
   const onInput = (e: Event) => {
-    if (dismissed) return
     // Resolve the editable from the event first (robust to composers that
     // differ from the page selector or have drifted), falling back to the
     // platform selector. This is the same resolution capture uses, so resurface
@@ -597,7 +613,7 @@ export function attachResurface(
 
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && tooltip.isVisible()) {
-      // Esc dismisses for the session, but don't swallow it from the host page.
+      // Esc dismisses this match for the current query text.
       dismiss()
       return
     }
