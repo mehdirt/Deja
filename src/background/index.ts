@@ -1,4 +1,4 @@
-import { savePrompt, hardDelete, listPrompts } from '@/lib/db'
+import { savePrompt, hardDelete, listPrompts, findExistingPrompt, touchUsage } from '@/lib/db'
 import { findSimilar } from '@/lib/similarity'
 import { classifyPrompt } from '@/lib/classify'
 import { redactPii } from '@/lib/pii'
@@ -31,6 +31,52 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           : { text: message.payload.text, total: 0 }
         const text = redaction.text
         const { minor } = classifyPrompt(text, prefs.filterStrength)
+
+        // Re-submitting an already-stored prompt (e.g. paste a resurfaced match
+        // and hit Enter) should not create a duplicate row — bump usage instead.
+        const existing = await findExistingPrompt(message.payload.platform, text)
+        if (existing?.id != null) {
+          await touchUsage(existing.id)
+          const filtered = !!existing.minor
+          sendResponse({
+            ok: true,
+            id: existing.id,
+            filtered,
+            notice: false,
+            redacted: redaction.total,
+            duplicate: true,
+          })
+          return
+        }
+
+        // If there's an already-saved prompt on this platform whose body is
+        // very similar to what the user just submitted, treat it as the same
+        // prompt and bump its usage instead of creating a near-duplicate row.
+        const pool = await listPrompts({ includeMinor: true })
+        const samePlatform = pool.filter(
+          (p) => p.platform === message.payload.platform && p.id != null,
+        )
+        const fuzzyHits = findSimilar(
+          text,
+          samePlatform,
+          0.75, // 75%+ similarity counts as "already stored"
+          1,
+        )
+        const fuzzy = fuzzyHits[0]
+        if (fuzzy?.item.id != null) {
+          await touchUsage(fuzzy.item.id)
+          const filtered = !!fuzzy.item.minor
+          sendResponse({
+            ok: true,
+            id: fuzzy.item.id,
+            filtered,
+            notice: false,
+            redacted: redaction.total,
+            duplicate: true,
+          })
+          return
+        }
+
         const id = await savePrompt({
           text,
           platform: message.payload.platform,

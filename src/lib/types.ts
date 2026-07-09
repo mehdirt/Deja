@@ -71,7 +71,7 @@ export type RuntimeMessage =
 // content script can show a one-time explanation instead of silently swallowing
 // the prompt (informed, not silent).
 export type CaptureResponse =
-  | { ok: true; id: number; filtered: boolean; notice: boolean; redacted: number }
+  | { ok: true; id: number; filtered: boolean; notice: boolean; redacted: number; duplicate?: boolean }
   | { ok: false; error: string }
 
 // A prior prompt close enough to the in-progress text to resurface, carrying

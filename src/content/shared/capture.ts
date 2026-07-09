@@ -58,6 +58,8 @@ export function sendCapture(text: string, platform: Platform): void {
         // stronger than finding the input. Mark this platform healthy. (The
         // prompt is always stored, even when filtered, so this holds.)
         void writeHealth(platform, true)
+        // Already in the library — no toast, no undo (nothing new was written).
+        if (resp.duplicate) return
         // Selective capture: a "filtered" prompt was a short throwaway, saved
         // but kept out of the library/resurface. Don't show the "remembered"
         // toast for it (that would be noise on every "yes"/"continue"); the

@@ -45,6 +45,27 @@ export async function savePrompt(
   return db.prompts.add({ ...input, usageCount: 0, lastUsedAt: now })
 }
 
+/** Normalize prompt text for duplicate detection (whitespace + case). */
+export function normalizePromptText(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().toLowerCase()
+}
+
+/** True when two prompt bodies are the same after normalization. */
+export function promptTextMatches(a: string, b: string): boolean {
+  return normalizePromptText(a) === normalizePromptText(b)
+}
+
+/** Find a non-deleted prompt with the same platform + normalized text, if any. */
+export async function findExistingPrompt(
+  platform: Platform,
+  text: string,
+): Promise<Prompt | undefined> {
+  const target = normalizePromptText(text)
+  if (!target) return undefined
+  const rows = await db.prompts.where('platform').equals(platform).toArray()
+  return rows.find((p) => !p.deletedAt && normalizePromptText(p.text) === target)
+}
+
 // Default view excludes soft-deleted rows AND "minor" (selectively-filtered)
 // prompts, so the popup, resurface pool, and the library's default list stay
 // tidy. Pass { includeMinor: true } to also return minor prompts — the library
