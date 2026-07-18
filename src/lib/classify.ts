@@ -1,15 +1,15 @@
-// Selective capture — decide whether a captured prompt is worth keeping in the
-// library, or is a throwaway "minor" prompt (a one-word follow-up, a bare
-// "yes"/"continue", a tiny fragment) that would only clutter the library and
-// add noise to the resurface tooltip.
+// Selective capture — decide whether a captured prompt is worth storing, or is
+// a throwaway "minor" prompt (a one-word follow-up, a bare "yes"/"continue", a
+// tiny fragment) that would only clutter the library and add noise to resurface.
 //
 // PHILOSOPHY
-//   - Never blocks capture, never deletes. A minor prompt is still STORED (soft
-//     capture, fully recoverable) — just flagged so the library and resurface
-//     hide it by default. The user can show/keep it any time, or turn the whole
-//     filter off in settings. Nothing is ever silently lost.
+//   - Skip storing, don't hide. A minor prompt is never written to IndexedDB.
+//     Filter strength is a deliberate gate on what enters the library — not a
+//     soft flag on rows that still take up space. Set strength to 'off' to save
+//     everything. (Legacy soft-captured rows may still exist with `minor: true`;
+//     the library can reveal those under "filtered".)
 //   - The bar is deliberately CONSERVATIVE. We'd rather keep a borderline prompt
-//     than hide one the user wanted. Only obvious throwaways are flagged.
+//     than skip one the user wanted. Only obvious throwaways are skipped.
 //   - "Hard to remember & reusable" is the real target, but reusability is not
 //     detectable locally without a model (v1 ships zero LLM calls). So we proxy
 //     it with what we CAN measure: triviality, length, and structural substance.
@@ -108,7 +108,7 @@ function normalize(text: string): string {
 
 // Signals that even a short prompt carries reusable substance and should be
 // kept: code, links, file paths, or structure (lists, multiple sentences).
-// Any one of these rescues a short prompt from being flagged minor. Reads the
+// Any one of these rescues a short prompt from being skipped. Reads the
 // RAW text so newline-based structure survives.
 function hasSubstance(text: string): boolean {
   if (/```|`[^`]+`/.test(text)) return true // code fence or inline code
@@ -127,14 +127,14 @@ function hasSubstance(text: string): boolean {
 
 export interface Classification {
   minor: boolean
-  // Why it was flagged — useful for tuning/telemetry-free debugging and for a
-  // future "skipped because…" hint. null when the prompt is kept.
+  // Why it was skipped — useful for tuning/telemetry-free debugging and for a
+  // future "skipped because…" hint. null when the prompt should be stored.
   reason: 'trivial' | 'short' | null
 }
 
 /** Classify a prompt for selective capture at the given strength. Pure; safe to
  *  call in the capture hot path. Conservative by design — only obvious
- *  throwaways are flagged at 'balanced'; 'strict' also drops short non-structured
+ *  throwaways are skipped at 'balanced'; 'strict' also skips short non-structured
  *  prompts; 'off' keeps everything. */
 export function classifyPrompt(
   text: string,

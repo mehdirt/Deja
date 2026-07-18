@@ -66,11 +66,11 @@ export async function findExistingPrompt(
   return rows.find((p) => !p.deletedAt && normalizePromptText(p.text) === target)
 }
 
-// Default view excludes soft-deleted rows AND "minor" (selectively-filtered)
+// Default view excludes soft-deleted rows AND legacy "minor" (soft-capture)
 // prompts, so the popup, resurface pool, and the library's default list stay
 // tidy. Pass { includeMinor: true } to also return minor prompts — the library
-// uses this to offer a "show filtered" view and a per-prompt "keep" action, and
-// the background includes them in resurface when the user opts to keep minors.
+// uses this to offer a "show filtered" view for rows from before skip-store,
+// and the background includes them in resurface when the user opts to keep minors.
 export async function listPrompts(opts: { includeMinor?: boolean } = {}): Promise<Prompt[]> {
   const all = await db.prompts.orderBy('createdAt').reverse().toArray()
   return all.filter((p) => !p.deletedAt && (opts.includeMinor || !p.minor))
@@ -86,9 +86,9 @@ export async function bulkUpdateText(updates: Array<{ id: number; text: string }
   })
 }
 
-// Promote a minor (filtered) prompt to a normal one, or demote a normal prompt.
-// Used by the library's "keep" affordance so a user can rescue anything the
-// selective-capture heuristic hid.
+// Promote a legacy minor (soft-capture) prompt to a normal one, or demote a
+// normal prompt. Used by the library's "keep" affordance for rows saved under
+// the old store-but-hide behavior.
 export async function setMinor(id: number, minor: boolean): Promise<void> {
   await db.prompts.update(id, { minor })
 }

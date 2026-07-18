@@ -5,10 +5,10 @@ export type Platform = 'chatgpt' | 'claude' | 'gemini' | 'deepseek' | 'grok'
 export type PiiKind = 'secret' | 'email' | 'card' | 'iban' | 'ssn' | 'phone' | 'ip'
 export const PII_KINDS: PiiKind[] = ['secret', 'email', 'card', 'iban', 'ssn', 'phone', 'ip']
 
-// How aggressively selective capture hides "minor" (throwaway) prompts:
-//   - 'off'      → filter nothing; keep and show every prompt
-//   - 'balanced' → hide obvious throwaways only (default; conservative)
-//   - 'strict'   → keep only longer / structured / substantial prompts
+// How aggressively selective capture skips storing "minor" (throwaway) prompts:
+//   - 'off'      → filter nothing; save every prompt
+//   - 'balanced' → skip obvious throwaways only (default; conservative)
+//   - 'strict'   → save only longer / structured / substantial prompts
 // Lives here (not prefs.ts) so the pure classifier can import it without
 // depending on the storage layer.
 export type FilterStrength = 'off' | 'balanced' | 'strict'
@@ -26,12 +26,10 @@ export interface Prompt {
   // exports stay valid; treat undefined as [] / false everywhere.
   tags?: string[]
   pinned?: boolean
-  // Selective capture. A "minor" prompt is a throwaway one (a one-word
-  // follow-up, a bare "yes"/"continue", a tiny fragment) — still stored (soft
-  // capture, recoverable) but hidden from the library and resurface by default
-  // so they don't add clutter or noise. Optional: undefined means a normal
-  // ("major") prompt, so all pre-existing rows and old exports stay visible.
-  // See src/lib/classify.ts for how this is decided.
+  // Legacy flag from the old soft-capture era (store-but-hide). New captures
+  // never set this — throwaways are skipped entirely. Optional: undefined means
+  // a normal prompt. Kept so previously soft-captured rows stay recoverable in
+  // the library's "filtered" view. See src/lib/classify.ts.
   minor?: boolean
 }
 
@@ -64,14 +62,19 @@ export type RuntimeMessage =
   | SimilarQueryMessage
   | OpenLibraryMessage
 
-// `filtered` is true when the captured prompt was classified "minor" and the
-// user hasn't opted to keep minors — i.e. it was saved but kept out of the
-// library/resurface by default, so the content script shows no "remembered"
-// toast for it. `notice` is true only the first time that happens, so the
-// content script can show a one-time explanation instead of silently swallowing
-// the prompt (informed, not silent).
+// `filtered` is true when the prompt was classified "minor" and not stored.
+// `notice` is true only the first time that happens, so the content script can
+// show a one-time explanation instead of silently skipping (informed, not silent).
+// `id` is omitted when filtered — nothing was written.
 export type CaptureResponse =
-  | { ok: true; id: number; filtered: boolean; notice: boolean; redacted: number; duplicate?: boolean }
+  | {
+      ok: true
+      id?: number
+      filtered: boolean
+      notice: boolean
+      redacted: number
+      duplicate?: boolean
+    }
   | { ok: false; error: string }
 
 // A prior prompt close enough to the in-progress text to resurface, carrying

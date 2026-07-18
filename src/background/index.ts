@@ -19,9 +19,6 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
   if (message?.type === 'PROMPT_CAPTURED') {
     void (async () => {
       try {
-        // Selective capture: classify at the user's chosen strength, but ALWAYS
-        // store (soft capture — never lose a prompt). A "minor" prompt is saved
-        // flagged; at strength 'off' nothing is ever minor.
         const prefs = await readPrefs()
         // Redact personal info BEFORE anything else, so raw PII never reaches
         // IndexedDB, the search index, or the resurface pool. We store (and
@@ -30,18 +27,18 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           ? redactPii(message.payload.text, prefs.piiKinds)
           : { text: message.payload.text, total: 0 }
         const text = redaction.text
-        const { minor } = classifyPrompt(text, prefs.filterStrength)
 
         // Re-submitting an already-stored prompt (e.g. paste a resurfaced match
         // and hit Enter) should not create a duplicate row — bump usage instead.
+        // Checked before the throwaway filter so a prompt the user already kept
+        // still accrues usage even if today's filter would skip it as new.
         const existing = await findExistingPrompt(message.payload.platform, text)
         if (existing?.id != null) {
           await touchUsage(existing.id)
-          const filtered = !!existing.minor
           sendResponse({
             ok: true,
             id: existing.id,
-            filtered,
+            filtered: false,
             notice: false,
             redacted: redaction.total,
             duplicate: true,
@@ -65,14 +62,32 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         const fuzzy = fuzzyHits[0]
         if (fuzzy?.item.id != null) {
           await touchUsage(fuzzy.item.id)
-          const filtered = !!fuzzy.item.minor
           sendResponse({
             ok: true,
             id: fuzzy.item.id,
-            filtered,
+            filtered: false,
             notice: false,
             redacted: redaction.total,
             duplicate: true,
+          })
+          return
+        }
+
+        // Selective capture: skip storing throwaways at the user's strength.
+        // At 'off' nothing is ever skipped. (Legacy rows may still carry
+        // `minor` from the old soft-capture era — library can reveal those.)
+        const { minor } = classifyPrompt(text, prefs.filterStrength)
+        if (minor) {
+          let notice = false
+          if (!prefs.minorNoticeSeen) {
+            notice = true
+            await writePrefs({ minorNoticeSeen: true })
+          }
+          sendResponse({
+            ok: true,
+            filtered: true,
+            notice,
+            redacted: redaction.total,
           })
           return
         }
@@ -82,18 +97,14 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           platform: message.payload.platform,
           url: message.payload.url,
           createdAt: Date.now(),
-          minor,
         })
-        // "Filtered" = stored but hidden. Tell the content script so it skips the
-        // normal "remembered" toast, and the FIRST time, asks it to show a
-        // one-time explanation. `redacted` lets it note "N redacted".
-        const filtered = minor
-        let notice = false
-        if (filtered && !prefs.minorNoticeSeen) {
-          notice = true
-          await writePrefs({ minorNoticeSeen: true })
-        }
-        sendResponse({ ok: true, id, filtered, notice, redacted: redaction.total })
+        sendResponse({
+          ok: true,
+          id,
+          filtered: false,
+          notice: false,
+          redacted: redaction.total,
+        })
       } catch (err) {
         sendResponse({ ok: false, error: String(err) })
       }

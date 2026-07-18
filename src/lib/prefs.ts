@@ -30,12 +30,12 @@ export const PAUSE_FOREVER = Number.MAX_SAFE_INTEGER
 
 export interface Prefs {
   resurfaceClick: ResurfaceClick
-  // Selective capture strength. 'balanced' (default) hides obvious throwaways;
-  // 'off' keeps everything; 'strict' keeps only substantial prompts. See
+  // Selective capture strength. 'balanced' (default) skips obvious throwaways;
+  // 'off' saves everything; 'strict' saves only substantial prompts. See
   // classify.ts. (Replaces the earlier boolean `keepMinor`, migrated below.)
   filterStrength: FilterStrength
   // Whether the user has already seen the one-time "we skipped a short prompt"
-  // explanation. Set the first time a minor prompt is filtered so we inform
+  // explanation. Set the first time a minor prompt is skipped so we inform
   // once and then stay quiet (never nag).
   minorNoticeSeen: boolean
   // Pause capture. 0 = capturing; otherwise an epoch-ms instant capture is

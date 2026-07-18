@@ -54,22 +54,19 @@ export function sendCapture(text: string, platform: Platform): void {
           log('background did not store prompt:', resp)
           return
         }
-        // A stored prompt is the strongest possible proof capture works —
-        // stronger than finding the input. Mark this platform healthy. (The
-        // prompt is always stored, even when filtered, so this holds.)
+        // Successfully processed a capture (stored, duplicate, or deliberately
+        // skipped as throwaway) — stronger than merely finding the input.
         void writeHealth(platform, true)
         // Already in the library — no toast, no undo (nothing new was written).
         if (resp.duplicate) return
-        // Selective capture: a "filtered" prompt was a short throwaway, saved
-        // but kept out of the library/resurface. Don't show the "remembered"
-        // toast for it (that would be noise on every "yes"/"continue"); the
-        // first time it happens, show a one-time explanation so it's never
-        // silent. A kept prompt gets the usual toast with undo.
+        // Selective capture: throwaway was not stored. No "remembered" toast;
+        // the first time, a one-time explanation so the skip is never silent.
         if (resp.filtered) {
           if (resp.notice) showInfoToast('Skipped a short prompt · change in Deja settings')
           return
         }
         const savedId = resp.id
+        if (savedId == null) return
         const note = resp.redacted > 0 ? `${resp.redacted} redacted` : undefined
         showSavedToast(() => {
           if (!chrome.runtime?.id) return

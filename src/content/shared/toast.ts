@@ -77,9 +77,8 @@ export function showSavedToast(onUndo: () => void, note?: string): void {
 }
 
 // A quiet, button-less toast — used once to explain that a short throwaway
-// prompt was filtered out (selective capture), so the behavior is never silent.
-// Auto-dismisses; no undo, because nothing was lost (the prompt is stored as
-// minor and recoverable in the library).
+// prompt was not stored (selective capture), so the skip is never silent.
+// Auto-dismisses; no undo, because nothing was written.
 export function showInfoToast(message: string): void {
   const shadow = ensureHost()
   const wrap = shadow.querySelector('.dj-wrap') as HTMLElement

@@ -39,13 +39,13 @@ const RESURFACE_OPTIONS: Array<{ key: ResurfaceClick; label: string; hint: strin
 ]
 
 const STRENGTHS: Array<{ key: FilterStrength; label: string; hint: string }> = [
-  { key: 'off', label: 'keep everything', hint: 'Save and show every prompt — no filtering' },
+  { key: 'off', label: 'keep everything', hint: 'Save every prompt — no filtering' },
   {
     key: 'balanced',
     label: 'balanced',
-    hint: 'Hide obvious throwaways like “yes” or “continue” (default)',
+    hint: 'Skip obvious throwaways like “yes” or “continue” (default)',
   },
-  { key: 'strict', label: 'strict', hint: 'Keep only longer, structured, substantial prompts' },
+  { key: 'strict', label: 'strict', hint: 'Save only longer, structured, substantial prompts' },
 ]
 
 function siteDot(health: CaptureHealth, p: Platform): string {
@@ -320,14 +320,13 @@ export function Settings() {
         </p>
       </section>
 
-      {/* Keep but hide — selective-capture strength */}
+      {/* Skip throwaways — selective-capture strength */}
       <section className="flex flex-col gap-2">
         <h2 className="font-mono text-sm text-ink">Filter short &amp; throwaway prompts</h2>
         <p className="text-sm text-ink-soft">
-          Deja always saves everything, but it can keep short throwaways out of your library and the
-          “you’ve been here before” suggestions so neither gets cluttered. Nothing is lost —
-          filtered prompts sit under <span className="font-mono text-xs">Filtered (n)</span> in the
-          library, where you can <span className="font-mono text-xs">Keep</span> any of them.
+          Deja can skip storing short throwaways so they never enter your library or the “you’ve
+          been here before” suggestions. Choose how aggressive the skip is — or turn it off to save
+          every prompt.
         </p>
         <div className="flex flex-wrap gap-2">
           {STRENGTHS.map((o) => (

@@ -12,8 +12,8 @@ interface Props {
   onAddTag?: (p: Prompt, tag: string) => void
   onRemoveTag?: (p: Prompt, tag: string) => void
   onTagClick?: (tag: string) => void
-  // Promote a minor (filtered) prompt back to a normal one. Only rendered when
-  // the prompt is minor — the "keep" affordance for selectively-captured rows.
+  // Promote a legacy minor prompt back to a normal one. Only rendered when the
+  // prompt is minor — the "keep" affordance for old soft-capture rows.
   onKeepMinor?: (p: Prompt) => void
   activeTags?: string[]
   // Selection mode (bulk). When `selectable`, a checkbox replaces nothing else;

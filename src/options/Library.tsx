@@ -58,9 +58,9 @@ export function Library() {
   // exact prompt you're after, rather than widening the result set (OR).
   const [activeTags, setActiveTags] = useState<string[]>([])
   const [favoritesOnly, setFavoritesOnly] = useState(false)
-  // Selective capture: minor (filtered) prompts are hidden by default. `showMinor`
-  // reveals them inline so they can be reviewed/kept; `keepMinor` (a pref) means
-  // the user turned the filter off entirely, so they're always shown.
+  // Legacy soft-capture rows (`minor`) are hidden by default. `showMinor`
+  // reveals them so they can be kept/deleted; `keepMinor` means filter strength
+  // is 'off', so they're always shown.
   const [showMinor, setShowMinor] = useState(false)
   const [keepMinor, setKeepMinor] = useState(false)
   // Bulk selection mode + the set of selected ids and the last batch undone.
@@ -520,14 +520,13 @@ export function Library() {
             >
               select
             </button>
-            {/* Selective capture: a quiet way to see (and rescue) the short
-                throwaway prompts deja filtered out — never a silent loss. Hidden
-                when there are none, or when the filter is off entirely. */}
+            {/* Legacy soft-capture rows only — new throwaways are never stored.
+                Hidden when there are none, or when the filter is off entirely. */}
             {!keepMinor && minorCount > 0 && (
               <button
                 onClick={() => setShowMinor((v) => !v)}
                 aria-pressed={showMinor}
-                title="Short throwaway prompts Deja kept out of your library"
+                title="Throwaways saved under the old hide-instead-of-skip behavior — keep or delete"
                 className={`dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs ${
                   showMinor ? 'text-ink' : 'text-ink-faint'
                 }`}
