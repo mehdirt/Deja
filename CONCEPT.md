@@ -4,7 +4,7 @@
 
 A browser extension that quietly saves every prompt you send to ChatGPT, Claude, Gemini, DeepSeek, and Grok into a local, searchable library. No copy-paste. No accounts. No cloud.
 
-This document supersedes `PromptShelf_Concept.pdf` (June 2026). The PDF's ambition stands; this is the version we are actually building, in the order we are building it.
+This is the product thesis for Deja — what we're building, in what order, and why.
 
 ---
 
