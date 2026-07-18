@@ -47,7 +47,7 @@ Shared core lives under `src/lib/`:
 - `classify.ts` — selective-capture classifier: flags throwaway "minor" prompts by strength (`off`/`balanced`/`strict`). Pure; runs at capture time in the background worker.
 - `pii.ts` — local PII detection + redaction (regex + Luhn-checked cards, known secret shapes). Replaces detected personal info with labels (`[email]`, `[card]`, …) BEFORE storage. On by default (per-category togglable in prefs). Pure; runs first in the background `PROMPT_CAPTURED` handler and also on the resurface query so both sides match.
 - `prefs.ts` — user preferences in `chrome.storage.local`: resurface click (copy/insert), filter strength, pause state (`pauseUntil`), per-site capture switches, incognito auto-pause, PII on/off + per-category `piiKinds`. `writePrefs` merges partial updates.
-- `feedback.ts` — user-initiated feedback links (prefilled mailto or optional hosted form). Not telemetry; nothing is sent automatically.
+- `feedback.ts` — user-initiated feedback links (prefilled GitHub Issues, or optional hosted form via `FEEDBACK_URL`). Not telemetry; nothing is sent automatically.
 - `health.ts` — per-platform capture-health storage/signals (the content-side probe lives in `src/content/shared/health.ts`).
 - `sensitive.ts` — capture-eligibility: rejects password/OTP/credential and non-composer fields, and minimizes captured URLs.
 - `blocklist.ts` — user blocklist (domains + regex) storage/matching (the content-side sync cache lives in `src/content/shared/blocklist.ts`).

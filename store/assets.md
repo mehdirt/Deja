@@ -71,24 +71,26 @@ Short, no voiceover needed (captions instead).
 - Replace the placeholders before going live:
   - `REPLACE_EXTENSION_ID` → the Web Store listing URL (after first submission).
   - The source links (nav "Source", hero "load from source", footer source rows)
-    are **commented out** while the repo is private — re-enable them when it goes
-    public. The `mehdirt` profile credit stays.
+    point at the public GitHub repo. The `mehdirt` profile credit stays.
+  - Keep `REPLACE_EXTENSION_ID` until the Web Store listing URL exists.
 
-## Repo visibility (decided)
+## Repo visibility (decided — open source)
 
-Ship a **private/unlisted** store listing with the repo **private**. Open the
-repo publicly only once more established. When opening:
+Ship a **public** GitHub repo (MIT) alongside an **Unlisted** store listing until
+the Week 2 go/no-go. When opening (prep already in-repo):
 
-- Add a `LICENSE` (MIT is the low-friction default for a client-side tool) and
-  flip the README "License" line.
-- Uncomment the source links in `site/index.html` and README's load-from-source
-  path.
+- [x] Add a `LICENSE` (MIT)
+- [x] Uncomment / enable the source links in `site/index.html`
+- [x] Flip the README License line
+- [ ] Human: set GitHub visibility → **Public** and push
 
 ## What only you can do (not automatable from the repo)
 
+- Flip the GitHub repo to **Public** and push any pending commits.
 - Record the demo video (screenshots are done — see above).
 - Host the privacy policy URL (Netlify Drop of `site/`) and paste it into the listing.
 - Create the Chrome Web Store developer account, pay the one-time fee, upload the
   zipped `dist/`, and submit for review (**Unlisted** first).
 - Invite the first ~50 users from communities you're already in (no broad launch
   yet — per the roadmap exit criteria).
+- Repo renamed to `mehdirt/Deja` (links and `REPO_URL` already match).

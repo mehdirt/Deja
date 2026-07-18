@@ -110,15 +110,16 @@ Make it impossible to feel locked in.
 
 Prepared in-repo (the parts that can be authored from code):
 - Chrome Web Store listing **copy** ✅ — `store/listing.md` (summary, description, permission justifications, single-purpose + data-safety answers, pre-submission checklist).
-- Landing page ✅ — `site/index.html` (one self-contained file, no signup, no third-party requests; install CTA). Has `REPLACE_*` placeholders for the store URL; source links stay commented while the repo is private.
+- Landing page ✅ — `site/index.html` (one self-contained file, no signup, no third-party requests; install CTA + load-from-source). Has `REPLACE_*` placeholders for the store URL; GitHub source links are live (MIT-licensed public repo).
 - Asset & launch plan ✅ — `store/assets.md` (screenshot shot list, promo-tile specs, demo-video script).
 - Store screenshots ✅ — five `1280×800` PNGs in `store/screenshot-*-1280x800.png` (resurface, search+sort, library, popup, settings).
 - Ship-readiness fix ✅ — dropped the unused `activeTab` permission; the extension requests `storage`, `alarms` (pause-badge expiry), and the five content-script hosts.
+- Open source ✅ — `LICENSE` (MIT); feedback goes to GitHub Issues (no personal email in tree).
 
 Still requires a live browser / human (can't be done from the repo):
 - Record the demo video (script in `store/assets.md`).
 - Host the privacy-policy URL (Netlify Drop of `site/` — see GTM plan); create the Web Store dev account and submit zipped `dist/` as **Unlisted**.
-- **Repo visibility** — decided: ship Unlisted with the repo **private**; open the repo publicly only once more established (add `LICENSE`, uncomment site source links). Domain deferred until traction (≥100 installs).
+- **Repo visibility** — flip GitHub to **Public** (prep is in-repo; the human flips the switch). Domain deferred until traction (≥100 installs).
 - Optional: the "prompt graveyard" blog post.
 - Invite the first ~50 users from communities you're already in (no broad launch yet).
 

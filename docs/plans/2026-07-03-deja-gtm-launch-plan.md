@@ -2,7 +2,7 @@
 
 Created: 2026-07-03
 
-**Budget:** $5 (Chrome Web Store dev fee) + ~$11/yr optional domain · **Time:** ~5h/week (~21h total) · **Solo:** mehdirt, with Claude drafting everything draftable · **Starting state:** v0.4.1 store-ready (screenshots in `store/`), 5 testers lined up, 1k+ own audience, **repo stays private** (no public flip until established).
+**Budget:** $5 (Chrome Web Store dev fee) + ~$11/yr optional domain · **Time:** ~5h/week (~21h total) · **Solo:** mehdirt, with Claude drafting everything draftable · **Starting state:** v0.4.1 store-ready (screenshots in `store/`), 5 testers lined up, 1k+ own audience, **repo going public (MIT)** — store listing stays Unlisted until the Week 2 go/no-go.
 
 ---
 
@@ -28,14 +28,14 @@ Created: 2026-07-03
 |---|---|---|
 | AI power users (devs, writers, PMs) | Re-crafting prompts they already perfected | The resurface moment — "you've been here before" |
 | Multi-model hoppers | History trapped per vendor | One library across every AI — portable craft |
-| Privacy-conscious users | Tools that phone home | Can't leak what it never sends — data stays on-device; audit the package |
+| Privacy-conscious users | Tools that phone home | Can't leak what it never sends — auditable on GitHub |
 
-**Proof points (all true, all verifiable):** zero network calls (permissions + packaged source; repo stays private for now) · PII redacted before storage · credential fields never read · pause/per-site controls · JSON/Markdown export, no lock-in · $0, no account.
+**Proof points (all true, all verifiable):** zero network calls (open source — auditable) · PII redacted before storage · credential fields never read · pause/per-site controls · JSON/Markdown export, no lock-in · $0, no account.
 
 **Objection prep (doubles as the reply playbook):**
 
 - *"ChatGPT already has history."* — Per-vendor, unsearchable-in-practice, and it never comes to you mid-typing. Deja is cross-AI and appears at the moment of re-asking, like a password manager at the login box.
-- *"How do I know it's not harvesting prompts?"* — No network permissions beyond the 5 sites, no remote calls in the packaged source, data-safety declaration matches. (Public repo audit is deferred until the project opens.)
+- *"How do I know it's not harvesting prompts?"* — No network permissions beyond the 5 sites, no remote calls in the source (public repo), data-safety declaration matches. Audit it.
 - *"Another extension reading my pages?"* — It reads only the prompt composer on 5 named sites; password/OTP/payment fields are structurally unreadable; PII is redacted before it ever hits disk.
 - *"Why not embeddings/AI search?"* — Deliberate v1: instant, local, $0. Semantic matching is on the roadmap once lexical proves insufficient. (HN will respect the restraint.)
 
@@ -55,7 +55,7 @@ Created: 2026-07-03
 | PH kit: tagline, description, gallery (reuse screenshots), maker's first comment | Claude drafts | 0.5h | Wk 3 |
 | Show HN: title + explanatory first comment | Claude drafts | — | Wk 3 |
 | Warm-DM template (~20 closest contacts, PH day) | Claude drafts | — | Wk 3 |
-| MIT LICENSE + uncomment site source links + repo-public prep | Claude | — | Deferred — repo stays private |
+| MIT LICENSE + uncomment site source links + feedback → GitHub Issues | Claude | — | ✅ done (human flips GitHub → Public) |
 
 ---
 
@@ -66,7 +66,7 @@ Created: 2026-07-03
 1. Dev account: $5, 2FA, **non-trader** declaration (0.5h) — *do first; verification can lag*
 2. ~~Buy a domain~~ **Decided: launch on the free Netlify subdomain; buy a domain only if traction shows.** Revisit trigger: Week 4 retro shows ≥100 installs → buy `dejaprompts.com` (likely available per 2026-07-03 DNS check; `deja.app`/`getdeja.com`/`trydeja.com` taken) at Porkbun or Namecheap (at-cost) and add it to the **same** Netlify site — the old `*.netlify.app` URL keeps working, so no links break.
 3. **Host on Netlify Drop** (free account). Chosen over Vercel for pure friction: drag-and-drop in the browser, no git/CLI. Go to `app.netlify.com/drop` → drag the `site/` folder onto the page → **rename the site** in Site settings to something clean (e.g. `dejaprompts` → `dejaprompts.netlify.app`) since this URL goes on the listing and social posts. Note the `https://…/privacy.html` URL for the listing. *(Fallback: if Netlify signup is blocked in your region, Vercel serves the same files identically — no plan changes.)* (0.5h)
-   - **Cleanup before the repo goes public (Week 3):** get your personal Gmail out of `src/lib/feedback.ts` — simplest is to set `FEEDBACK_URL` to a hosted form (Tally / Google Form, both free); or, if you buy the domain, set up a `feedback@` forwarding alias at the registrar. (Netlify has no free email routing — that convenience was the only thing Cloudflare offered here.)
+   - **Feedback (done in-repo):** settings open prefilled GitHub Issues — no personal Gmail in the tree. Optional later: set `FEEDBACK_URL` to a hosted form, or a `feedback@` alias if you buy a domain.
 4. ~~Seed library + capture 5 screenshots~~ ✅ (`store/screenshot-*-1280x800.png`)
 5. Zip `dist/` → upload → paste `store/listing.md` copy → **visibility: Unlisted** → submit (1h)
 6. On approval: send unlisted link to the 5 testers with a 3-line brief — *"install it, use AI normally, I'll ask you 4 questions in a week"* (0.5h)
@@ -80,9 +80,9 @@ Created: 2026-07-03
 4. Edit Claude's drafts: blog, LinkedIn, X, PH kit (1h)
 5. **🚦 GO/NO-GO (end of week):** resurface surfaced during normal use and helped ≥ half the time; ≥1 tester keeps it unprompted. **No-go →** Weeks 3–4 shift right one week; iterate. A late launch beats a dead-on-arrival one.
 
-### Week 3 (Jul 17–23) — Soft public channels & own-feed · ~5h
+### Week 3 (Jul 17–23) — Go public & own-feed · ~5h
 
-1. Listing → **Public** when the Week 2 go/no-go passes; swap `REPLACE_EXTENSION_ID`; redeploy site. **Repo stays private** (LICENSE / source links stay deferred). (1h)
+1. Confirm GitHub is **Public**; listing → **Public** when the Week 2 go/no-go passes; swap `REPLACE_EXTENSION_ID`; redeploy site (1h)
 2. Publish blog on Dev.to (0.5h)
 3. **Tue 8–10 AM (audience TZ):** LinkedIn carousel post; video variant Thu. CTA: "search *Deja* on the Chrome Web Store" (external links are penalized; store search works once the listing is Public) (1h)
 4. **Wed:** X thread, native video, link in first reply, #buildinpublic (0.5h)
@@ -103,7 +103,7 @@ Created: 2026-07-03
 
 **Product Hunt (Tue):** self-hunt (now the norm — most #1 products are self-hunted) · schedule in advance · gallery = 5 screenshots + GIF first · maker comment = the story in 5 lines + one honest limitation + a question to the community · reply <10 min during the evening window · the warm network engages because they know *the date*, not because they were asked for votes · targets: front-page top-10 stretch; 20+ genuine comments realistic.
 
-**Show HN (Thu):** no signup barrier ✓ (try Unlisted/store link or load unpacked) — lead with the local-first claim ("zero network calls — check the permissions and the package"). Soften or skip the "read the source on GitHub" angle while the repo is private. Expected pushback and answers:
+**Show HN (Thu):** no signup barrier ✓ public repo ✓ — lead with the auditable claim ("zero network calls — check the source"). Expected pushback and answers:
 - selector fragility → capture-health self-detection + one-file-per-site fixes
 - "regex PII is incomplete" → agreed; documented as structural-PII-only, NER deferred
 - "why not Firefox" → MV3 Chrome first, port planned

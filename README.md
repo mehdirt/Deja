@@ -96,7 +96,7 @@ Site DOMs change often, so each platform uses an **ordered list of selector fall
 
 ## Install (load unpacked)
 
-Until the Chrome Web Store listing is live, run it locally:
+Clone from [github.com/mehdirt/Deja](https://github.com/mehdirt/Deja), then:
 
 ```bash
 npm install
@@ -112,6 +112,8 @@ Then in Chrome:
 Send a prompt on any [supported site](#supported-sites), then click the Deja toolbar icon (or press **⌘⇧K** / **Ctrl+Shift+K**) to see it land.
 
 > For live development use `npm run dev` instead of `npm run build` — Vite rebuilds `dist/` on save (reload the extension at `chrome://extensions` to pick up changes).
+>
+> Chrome Web Store install will replace this path once the listing is Public; until then the listing stays **Unlisted** for testers.
 
 ---
 
@@ -211,7 +213,7 @@ Local‑first is the product, not a footnote: **no network calls, no telemetry, 
 | `npm run build` | Production build to `dist/` (runs `tsc --noEmit` first) |
 | `npm run typecheck` | `tsc --noEmit` only |
 | `npm run lint` | ESLint over `src` |
-| `npm run test` | Vitest run (one‑shot) — 99 unit tests |
+| `npm run test` | Vitest run (one‑shot) — 101 unit tests |
 | `npm run test:watch` | Vitest in watch mode |
 | `npm run format` | Prettier over `src` |
 | `npm run release -- <version>` | Bump the version, build, and zip `dist/` for the Web Store |
@@ -237,7 +239,7 @@ site/              the marketing landing page (single self-contained file)
 store/             Chrome Web Store listing copy + asset/launch plan
 ```
 
-Tests run on **Vitest + happy‑dom**. **CI** (`.github/workflows/ci.yml`) runs typecheck + lint + test + build on every push/PR and uploads the built `dist/` as an artifact. Users can send feedback from **settings → Feedback** (a prefilled message they send themselves — no telemetry); configure the destination in `src/lib/feedback.ts`.
+Tests run on **Vitest + happy‑dom**. **CI** (`.github/workflows/ci.yml`) runs typecheck + lint + test + build on every push/PR and uploads the built `dist/` as an artifact. Users can send feedback from **settings → Feedback** (opens a prefilled GitHub issue they review and submit — no telemetry); override with a hosted form via `FEEDBACK_URL` in `src/lib/feedback.ts`.
 
 ---
 
@@ -282,10 +284,10 @@ Deja is local‑first, so there's **nothing server‑side to deploy** — "launc
    ```
 4. **Create a developer account** at the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole) (one‑time US$5 fee).
 5. **Create the listing** and upload the zip. Fill in the description, **permission justifications**, **single‑purpose** statement, and **data‑safety** answers — all drafted in [`store/listing.md`](store/listing.md). Add the `1280×800` screenshots already in [`store/`](store/) (shot list + remaining promo/video notes in [`store/assets.md`](store/assets.md)), and link a hosted **privacy‑policy URL** (`site/privacy.html` via Netlify Drop — see the GTM plan).
-6. **Submit for review** as **Unlisted** first. Expect a review wait; ship updates by repeating steps 1–3 and uploading a new zip. Keep the repo private until you're ready; source links on the landing page stay commented until then.
+6. **Submit for review** as **Unlisted** first. Expect a review wait; ship updates by repeating steps 1–3 and uploading a new zip. The repo is open source (MIT); leave the listing Unlisted until the Week 2 go/no-go.
 
 ### 2. Host the landing page (optional)
-`site/index.html` (+ `site/privacy.html`) is self‑contained with no build step and no third‑party requests. Host on any static host — **Netlify Drop** is the GTM plan default (drag the `site/` folder); GitHub Pages / Vercel / Cloudflare Pages also work. Before going live, replace `REPLACE_EXTENSION_ID` (store URL). Leave the GitHub source links commented while the repo is private.
+`site/index.html` (+ `site/privacy.html`) is self‑contained with no build step and no third‑party requests. Host on any static host — **Netlify Drop** is the GTM plan default (drag the `site/` folder); GitHub Pages / Vercel / Cloudflare Pages also work. Before going live, replace `REPLACE_EXTENSION_ID` (store URL). Source links already point at the public GitHub repo.
 
 ### 3. Soft launch
 Per the roadmap: invite ~50 users from communities you're already in, watch how the resurface moment lands, and tune the thresholds before any broad launch. No analytics by design — listen, don't measure.
@@ -315,4 +317,4 @@ Vite · React 18 · TypeScript · Tailwind CSS · Dexie (IndexedDB) · MiniSearc
 
 ## License
 
-Not yet licensed — private project for now. A license will be added when the repository is made public.
+[MIT](LICENSE) — © 2026 mehdirt.

@@ -680,7 +680,7 @@ export function Settings() {
         <h2 className="font-mono text-sm text-ink">Feedback</h2>
         <p className="text-sm text-ink-soft">
           Found a bug or have an idea? I&apos;d love to hear it. Nothing is sent automatically —
-          these just open a prefilled message you review and send yourself.
+          these open a prefilled GitHub issue you review and submit yourself.
         </p>
         <div className="flex flex-wrap gap-2">
           <a
