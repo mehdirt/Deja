@@ -68,7 +68,7 @@ Site DOMs change often, so each platform uses an **ordered list of selector fall
 - As you type (debounced ~400 ms), a gentle tooltip floats **above the input** when you've asked something similar before.
 - Powered by **IDF‑weighted trigram similarity** with a length‑aware threshold — distinctive words count more than boilerplate, and short queries are held to a higher bar.
 - Shows *why* it matched ("matched on …") and lets you **step through multiple candidates**; offers "see all" in the library when there are more.
-- Click to **copy** by default — or opt into **insert‑at‑cursor** in settings. It never silently auto‑fills, and never overwrites what you've typed. Dismissible per session; it never nags.
+- Click to **copy** by default — or opt into **insert‑at‑cursor** in settings. It never silently auto‑fills, and never overwrites what you've typed. Dismissible per query (× / Esc suppresses that prompt only); it never nags.
 
 ### Selective capture — keep the keepers
 - A local, zero‑LLM classifier flags **"minor"** prompts (bare follow‑ups like "yes" / "continue", tiny fragments with no code, URL, structure, or length).
@@ -211,7 +211,7 @@ Local‑first is the product, not a footnote: **no network calls, no telemetry, 
 | `npm run build` | Production build to `dist/` (runs `tsc --noEmit` first) |
 | `npm run typecheck` | `tsc --noEmit` only |
 | `npm run lint` | ESLint over `src` |
-| `npm run test` | Vitest run (one‑shot) — 96 unit tests |
+| `npm run test` | Vitest run (one‑shot) — 99 unit tests |
 | `npm run test:watch` | Vitest in watch mode |
 | `npm run format` | Prettier over `src` |
 | `npm run release -- <version>` | Bump the version, build, and zip `dist/` for the Web Store |
@@ -262,7 +262,7 @@ Deja ships in usable phases (see [ROADMAP.md](ROADMAP.md)). The big upgrades on 
 
 - **Semantic resurface** via on‑device embeddings — catch paraphrases trigram similarity can't ("write a poem about cats" ↔ "compose verse about felines"), as a hybrid that keeps today's instant lexical path and falls back to embeddings only when it finds nothing. Still fully local.
 - **Optional, bring‑your‑own‑key LLM helpers** — an on‑demand "improve this prompt" and one‑tap tag suggestions, gated behind a settings toggle, never in the capture path.
-- **Smarter ranking & storage** — reuse/recency‑aware resurface ranking, near‑duplicate collapsing, and a worker‑side trigram/inverted‑index cache for very large libraries.
+- **Smarter ranking & storage** — reuse/recency‑aware resurface ranking, and a worker‑side trigram/inverted‑index cache for very large libraries. (Exact + near‑duplicate capture collapsing already ships in v0.4.1.)
 - **Activity heatmap**, **prompt chaining**, **encrypted (E2EE) cloud sync**, and **team/shared vaults** — in rough order of value.
 
 **Deliberately excluded, on principle:** 0–100 prompt "scores", streaks/gamification, AI‑generated "prompt of the day", and anything that requires reading your prompts on a server. See [CONCEPT.md](CONCEPT.md) for the reasoning.
@@ -281,11 +281,11 @@ Deja is local‑first, so there's **nothing server‑side to deploy** — "launc
    cd dist && zip -r ../deja-<version>.zip . && cd ..
    ```
 4. **Create a developer account** at the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole) (one‑time US$5 fee).
-5. **Create the listing** and upload the zip. Fill in the description, **permission justifications**, **single‑purpose** statement, and **data‑safety** answers — all drafted in [`store/listing.md`](store/listing.md). Add screenshots / a promo tile per the shot list in [`store/assets.md`](store/assets.md), and link a hosted **privacy‑policy URL**.
-6. **Submit for review.** Expect a review wait; ship updates by repeating steps 1–3 and uploading a new zip.
+5. **Create the listing** and upload the zip. Fill in the description, **permission justifications**, **single‑purpose** statement, and **data‑safety** answers — all drafted in [`store/listing.md`](store/listing.md). Add the `1280×800` screenshots already in [`store/`](store/) (shot list + remaining promo/video notes in [`store/assets.md`](store/assets.md)), and link a hosted **privacy‑policy URL** (`site/privacy.html` via Netlify Drop — see the GTM plan).
+6. **Submit for review** as **Unlisted** first. Expect a review wait; ship updates by repeating steps 1–3 and uploading a new zip. Keep the repo private until you're ready; source links on the landing page stay commented until then.
 
 ### 2. Host the landing page (optional)
-`site/index.html` is a single self‑contained file with no build step and no third‑party requests. Host it on any static host — **GitHub Pages, Netlify, Vercel, or Cloudflare Pages** — by serving that one file. Before going live, replace the `REPLACE_EXTENSION_ID` (store URL) and confirm the `github.com/mehdirt/deja` links. The same file can host the privacy policy section the store listing points at.
+`site/index.html` (+ `site/privacy.html`) is self‑contained with no build step and no third‑party requests. Host on any static host — **Netlify Drop** is the GTM plan default (drag the `site/` folder); GitHub Pages / Vercel / Cloudflare Pages also work. Before going live, replace `REPLACE_EXTENSION_ID` (store URL). Leave the GitHub source links commented while the repo is private.
 
 ### 3. Soft launch
 Per the roadmap: invite ~50 users from communities you're already in, watch how the resurface moment lands, and tune the thresholds before any broad launch. No analytics by design — listen, don't measure.

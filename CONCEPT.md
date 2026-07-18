@@ -35,15 +35,17 @@ These are the trade-offs we keep coming back to. When in doubt, follow the princ
 | In v1 | Deferred |
 | --- | --- |
 | Passive capture on ChatGPT, Claude, Gemini, DeepSeek, Grok | LLM-based prompt scoring |
-| Local IndexedDB storage | LLM-based auto-categorization |
+| Local IndexedDB storage + near-dup collapse | LLM-based auto-categorization |
 | Fuzzy search (popup + library page) | "Prompt of the Day" / streaks |
-| Platform filter | Activity heatmap |
-| Copy-to-clipboard + usage tracking | Cloud sync / accounts |
-| Soft-delete with undo | Team / shared vaults |
-| JSON export | Prompt chaining |
-| Manual tags (light) | Mobile companion |
+| Platform filter, tags, pins, favorites | Activity heatmap |
+| "You've been here before" resurface (IDF trigrams) | Semantic resurface via on-device embeddings |
+| Copy / opt-in insert + usage tracking | Cloud sync / accounts |
+| Soft-delete with undo; selective capture (minor filter) | Team / shared vaults |
+| PII redaction before storage (default on) | Prompt chaining |
+| JSON / Markdown export + import | Mobile companion |
+| Pause / per-site / blocklist / capture health | |
 
-The deferred list is not the discard list. Several of these (heatmap, "been here before") are great features — they just don't ship until v1 is solid and we have real users telling us which to build first.
+The deferred list is not the discard list. Several of these (heatmap, embeddings) are great features — they just don't ship until v1 is solid and we have real users telling us which to build first.
 
 ## The killer feature
 
@@ -65,8 +67,11 @@ The one-liner for the world: **your prompts, every AI, one library.**
 1. User submits a prompt on ChatGPT/Claude/Gemini/DeepSeek/Grok, as normal.
 2. A platform-specific content script catches the Enter keypress or send-button click.
 3. The prompt text is sent to the background service worker.
-4. The worker writes it to IndexedDB (via Dexie) with timestamp, platform, and URL.
-5. The user opens the popup (⌘⇧K) or library page to find, copy, or export.
+4. The worker redacts PII, classifies throwaways, collapses near-duplicates, then
+   writes to IndexedDB (Dexie) with timestamp, platform, and URL.
+5. As the user types a new prompt, the content script asks the worker for similar
+   past prompts and shows the "you've been here before" tooltip when one matches.
+6. The user opens the popup (⌘⇧K) or library page to find, copy, tag, or export.
 ```
 
 That's the whole flow for v1. No network. No external service. No latency added to the user's prompt submission.
@@ -75,16 +80,18 @@ That's the whole flow for v1. No network. No external service. No latency added 
 
 **Notebook meets terminal.** Clean, slightly warm, monospaced where it matters, sans-serif where it doesn't. Two colors: ink and indigo accent. Dark mode follows OS. The library should feel like a personal cookbook — yours, browsable, alive.
 
-- **Popup** (toolbar icon): search box + 5 most recent prompts + link to full library
-- **Library** (options page): full-page view, fuzzy search, platform filter, copy, delete, export
-- **Inline tooltip** (v1.5): host-page injection on each supported AI site, shows "been here before" matches
+- **Popup** (toolbar icon): pause control, search box + recent/pinned prompts + link to full library
+- **Library** (options page): full-page view, fuzzy search, platform filter, tags, pins, favorites, copy, delete, export/import, settings, privacy
+- **Inline tooltip** (v1): host-page injection on each supported AI site — "you've been here before" matches, query-scoped dismiss
 
 ## Where intelligence comes from
 
 We deliberately ship v1 with **zero LLM calls**:
 
 - Fuzzy search → MiniSearch (local, ~50KB, instant)
-- "Been here before" similarity → trigram Jaccard (local, zero dependencies)
+- "Been here before" similarity → IDF-weighted trigram similarity with a length-aware threshold (local, zero dependencies)
+- Selective capture → local classifier (`off` / `balanced` / `strict`), soft-hide minors
+- PII → regex + Luhn redaction before storage (names/addresses deferred)
 - Auto-categorization → not in v1; v2 may use an on-device classifier or user tags
 - Scoring → cut entirely; users don't want their notes graded
 
@@ -93,9 +100,10 @@ If LLM features ever land, they will be **bring-your-own-key, optional, gated be
 ## Privacy stance
 
 - All prompts are stored in IndexedDB on the user's machine.
+- Detected personal info is redacted to labels before storage (on by default).
 - We do not call out to any server.
 - We do not collect telemetry.
-- Export to JSON is available from day one so users never feel locked in.
+- Export to JSON/Markdown is available from day one so users never feel locked in.
 - The list of sites the extension reads from is in the manifest; users can audit it.
 
 This stance is a feature, not a side effect. It is the reason a privacy-conscious user installs Deja instead of one of the dozen worse alternatives.

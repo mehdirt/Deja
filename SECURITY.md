@@ -34,15 +34,17 @@ What we actively defend against:
 | Capturing credentials on a login page on a matched domain (e.g. `chat.deepseek.com/sign_in`) | Capture-eligibility gate (§3): inputs are never capturable; credential/OTP/payment fields are refused |
 | Capturing unrelated text fields (site search, comment boxes) | Composer scoping (§3.3) + input exclusion |
 | A captured secret lingering after "delete" | Soft-delete is a tombstone; **purge** (Settings → *purge deleted prompts*) hard-erases (§5) |
+| Personal info (emails, cards, keys) sitting in the library or a shared export | Default-on PII redaction before storage (§3.7 / `src/lib/pii.ts`) |
 | A broken selector silently capturing the wrong thing | Capture-health self-check (`src/lib/health.ts`) surfaces breakage |
 | Prompt text leaking off-device | No network code anywhere; reviewed every release (§6 checklist) |
 | Host-page console noise / info leak | Debug logging ships **off** (`DEBUG = false`) |
 
 Out of scope (documented non-goals): defending against a malicious *host site*
-that actively tries to feed us a secret through the composer itself; full
-content-based secret redaction of prompt *text* (too lossy — it would mangle real
-prompts; we gate on the *field*, not the *characters*, and offer a user regex
-blocklist for the rare case).
+that actively tries to feed us a secret through the composer itself; and
+content-based detection of **names / free-form addresses** (needs on-device NER —
+deferred). We *do* redact high-precision PII shapes in prompt text before
+storage (§3.7), gate on the *field* for credentials (§3.1–3.2), and offer a
+user regex blocklist for the rare remaining case.
 
 ---
 
@@ -100,13 +102,25 @@ secret-shaped prompt text. This is *extra* protection layered on the default-on
 guarantees above, never a replacement for them.
 → `src/lib/blocklist.ts`, configured in Settings.
 
+### 3.7 PII redaction (default on, before storage)
+Independently of the field gate, detected personal info *in* the prompt text —
+emails, phones, Luhn-checked cards, SSN, IBAN, IPs, and known API-key/token
+shapes — is replaced with labels (`[email]`, `[card]`, `[secret]`, …) **before**
+the row is written. On by default; per-category toggles in settings. Names and
+street addresses are not covered (NER deferred). The same redaction runs on the
+resurface query so matches stay consistent.
+→ `src/lib/pii.ts`, applied first in the background `PROMPT_CAPTURED` handler.
+
 ---
 
 ## 4. Data lifecycle
 
-- **Capture** → background service worker is the only writer → IndexedDB (Dexie).
-- **Storage** → local only. We store prompt text, platform, URL, timestamps,
-  usage count, optional tags/pin. No responses, no credentials.
+- **Capture** → PII redaction (if enabled) → selective-capture classify →
+  near-dup collapse → background service worker is the only writer → IndexedDB
+  (Dexie).
+- **Storage** → local only. We store prompt text (already redacted), platform,
+  URL, timestamps, usage count, optional tags/pin. No responses, no credentials,
+  no raw emails/cards/keys when redaction is on (the default).
 - **Delete** → soft-delete (tombstone) by default so undo works.
 - **Purge** → Settings → *purge deleted prompts* hard-erases all tombstoned rows;
   *clear all data* wipes everything. Both are explicit and user-initiated.

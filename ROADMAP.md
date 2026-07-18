@@ -38,8 +38,8 @@ The point of this phase is to prove the thing works *and* that the magic moment 
 **The resurface moment — rough version, in real hands this phase**
 - Content-script behavior: as the user types, debounced ~400 ms, query `findSimilar` against the local library
 - Floating tooltip anchored above the input: `"You've asked something like this before →"` with one match preview
-- Click → copy old prompt to clipboard (do **not** auto-fill the textarea; respect the user)
-- Dismissible per-session; never nags
+- Click → copy old prompt to clipboard (do **not** auto-fill the textarea; respect the user). Opt-in insert-at-cursor later landed in settings.
+- Dismissible per query (× / Esc suppresses that normalized query only); never nags
 - Threshold starts at 0.4 and gets tuned **from watching real reactions**, not from a guessed number
 - Ship it deliberately rough to ~5 users early in the phase; the goal is to learn whether the moment lands at all before we sink days into pixels
 
@@ -53,7 +53,7 @@ The point of this phase is to prove the thing works *and* that the magic moment 
 **Visual identity**
 - Real icon set (16/48/128 PNG)
 - A logo lockup for the popup header
-- Consistent type scale, settle on Inter + JetBrains Mono
+- Consistent type scale — Inter + JetBrains Mono ✅
 - Dark mode matches each host site when overlaid
 
 **Trust, pulled forward**
@@ -70,7 +70,7 @@ The moment exists and we've watched people use it. Now sharpen it from what we l
 - Short-prompt behavior handled explicitly ✅ — `similarity()` blends symmetric Jaccard with the overlap coefficient so a brief query that's nearly a substring of a longer stored prompt still scores (plain trigram Jaccard tanked these). Trigrams are also IDF-weighted (distinctive terms outweigh boilerplate, damped so the score scale stays stable as the library grows), and the threshold scales up for short queries. The tuning *constants* are centralized and provisional — they still wait on real Phase 1 reactions.
 - Smarter match preview ✅ — resurface returns the top candidates; the tooltip shows *why* each matched ("matched on …" shared terms) and lets the user step through them (`1/3` + `›`).
 - Polish the tooltip's look, timing, and placement so it feels like part of the host page, not an intrusion — *needs real reactions*
-- Decide the auto-fill question from evidence: still copy-only, or offer an opt-in one-tap insert? — *needs real reactions*
+- Opt-in one-tap insert ✅ — settings toggle (`prefs.resurfaceClick`: copy by default, insert-at-cursor opt-in). Still tune from real reactions whether copy-only should stay the default.
 
 **Exit criteria:** During a normal week of AI use, the tooltip surfaces 3–10 times and is genuinely helpful in a clear majority of them — enough that users would notice and miss it if it were gone.
 
@@ -110,14 +110,15 @@ Make it impossible to feel locked in.
 
 Prepared in-repo (the parts that can be authored from code):
 - Chrome Web Store listing **copy** ✅ — `store/listing.md` (summary, description, permission justifications, single-purpose + data-safety answers, pre-submission checklist).
-- Landing page ✅ — `site/index.html` (one self-contained file, no signup, no third-party requests; install CTA + "load from source"). Has `REPLACE_*` placeholders to swap once the listing/repo are live.
+- Landing page ✅ — `site/index.html` (one self-contained file, no signup, no third-party requests; install CTA). Has `REPLACE_*` placeholders for the store URL; source links stay commented while the repo is private.
 - Asset & launch plan ✅ — `store/assets.md` (screenshot shot list, promo-tile specs, demo-video script).
-- Ship-readiness fix ✅ — dropped the unused `activeTab` permission; the extension now requests only `storage` + the five content-script hosts.
+- Store screenshots ✅ — five `1280×800` PNGs in `store/screenshot-*-1280x800.png` (resurface, search+sort, library, popup, settings).
+- Ship-readiness fix ✅ — dropped the unused `activeTab` permission; the extension requests `storage`, `alarms` (pause-badge expiry), and the five content-script hosts.
 
 Still requires a live browser / human (can't be done from the repo):
-- Capture screenshots and record the demo video.
-- Write/host the privacy-policy URL; create the Web Store dev account and submit zipped `dist/`.
-- **Repo visibility** — decided (June 2026): ship to the store as a **private/unlisted** listing first while the repo stays **private**, then open the repo publicly once it's more established. Until then the landing page's source links are commented out (re-enable them and add a `LICENSE` when the repo goes public).
+- Record the demo video (script in `store/assets.md`).
+- Host the privacy-policy URL (Netlify Drop of `site/` — see GTM plan); create the Web Store dev account and submit zipped `dist/` as **Unlisted**.
+- **Repo visibility** — decided: ship Unlisted with the repo **private**; open the repo publicly only once more established (add `LICENSE`, uncomment site source links). Domain deferred until traction (≥100 installs).
 - Optional: the "prompt graveyard" blog post.
 - Invite the first ~50 users from communities you're already in (no broad launch yet).
 
@@ -134,7 +135,7 @@ Two issues found in real use, both addressed before the wider invite.
 **Selective capture (soft filter) — built.** We no longer treat every keystroke-sized prompt as library-worthy. A local, zero-LLM classifier (`src/lib/classify.ts`) flags "minor" prompts — bare follow-ups ("yes", "continue", "thanks") and tiny fragments with no code/URL/structure. Design decisions:
 - **Soft capture, never a silent drop.** Minor prompts are still *stored* (flagged `minor`), just hidden from the library and resurface by default. This mirrors soft-delete, keeps the "remembers everything" promise intact, and — crucially — lets us *tune the threshold from real data* instead of guessing (same philosophy as the resurface threshold).
 - **Conservative bar.** Only obvious throwaways are flagged; a short prompt with code, a URL, a file path, list structure, or ≥6 words is kept. Constants are centralized and provisional.
-- **Informed, never naggy.** No "remembered" toast for a filtered prompt; a *one-time* explanation toast the first time it happens. The library shows `filtered (N)` to reveal/keep them, each with a `keep` action. Settings has a master "keep every prompt, even short ones" toggle (default off) that turns the filter off entirely.
+- **Informed, never naggy.** No "remembered" toast for a filtered prompt; a *one-time* explanation toast the first time it happens. The library shows `filtered (N)` to reveal/keep them, each with a `keep` action. Filter strength is a three-stop control (`off` / `balanced` / `strict`) in settings — `off` keeps every prompt.
 
 **Capture controls — built.** A small, principle-aligned set of "what gets captured" controls, organized in settings by intent (*don't capture* vs *keep but hide*):
 - **Pause capture** (`src/ui/PauseControl.tsx`) — a one-click off switch in the popup: pause for 1 hour or until you resume, with a live countdown and a toolbar badge (`||`, alarm-cleared on expiry). Capture resumes on its own — the content gate checks the pause time live, so the alarm is cosmetic only. The biggest trust affordance we have.
@@ -149,6 +150,10 @@ The content hot path reads all of this through a synchronous, fail-open cache (`
 - **High-precision regex** — email, Luhn-checked cards, SSN, IPv4/6, IBAN, phone, and known secret/token shapes (OpenAI/AWS/GitHub/Slack/Google/JWT). Tuned to under-detect rather than mangle. Names/addresses need on-device NER — deferred with embeddings.
 - **On by default**, per-category toggles, a live test box, and a "scan library & redact" action to retro-clean prompts captured before it was on. Redaction runs first in the background capture handler and on the resurface query so both sides match. Surfaced honestly ("remembered · N redacted").
 
+**Capture deduplication — built (v0.4.1).** Exact matches and near-duplicates (≥75% similar) collapse into one row with usage bumped, so edit-resubmits and retries no longer flood the library past the 2 s debounce window.
+
+**Query-scoped resurface dismissal — built (v0.4.1).** Dismissing the tooltip (× / Esc) suppresses that normalized query only — not the whole session — so a different prompt can still resurface.
+
 These two tracks below — named for the next round of work — build directly on this.
 
 ## Phase 6+ — Decide from data, not from this document
@@ -157,9 +162,9 @@ After ~50 users have used the v1 for a few weeks, look at what they actually do 
 
 **Two improvement tracks to revisit with data (named June 2026):**
 
-*The suggestion / "You've Been Here" system.* Now that it never echoes the just-sent prompt and the pool excludes throwaways, the next gains are in *recall and ranking*: rank matches by reuse/recency (a prompt you've copied before should beat a lexically-closer one you never touched), tune the similarity threshold from watched reactions, and — the big one — semantic recall via on-device embeddings to catch paraphrases trigrams miss (see #2 below).
+*The suggestion / "You've Been Here" system.* Now that it never echoes the just-sent prompt, the pool excludes throwaways, dismiss is query-scoped, and near-dup captures collapse, the next gains are in *recall and ranking*: rank matches by reuse/recency (a prompt you've copied before should beat a lexically-closer one you never touched), tune the similarity threshold from watched reactions, and — the big one — semantic recall via on-device embeddings to catch paraphrases trigrams miss (see #2 below).
 
-*The storing system.* Selective capture is the first step. Next: **dedupe near-identical captures** (edit-resubmit, retries currently each create a row beyond the 2 s debounce window — collapse them into one prompt with a usage count / variants); precompute and cache trigram sets + an inverted index in the worker for scale (already flagged in operating notes); store an embedding per prompt at capture to power semantic search; and consider auto-archival of stale minor prompts.
+*The storing system.* Selective capture and near-dup collapsing shipped. Next: precompute and cache trigram sets + an inverted index in the worker for scale (already flagged in operating notes); store an embedding per prompt at capture to power semantic search; and consider auto-archival of stale minor prompts.
 
 Likely feature candidates, in rough order of value:
 

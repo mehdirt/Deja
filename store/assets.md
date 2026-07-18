@@ -20,18 +20,20 @@ them quickly and consistently.
 
 Required: at least one at **1280×800** (preferred) or 640×400. Provide 4–5.
 
-1. **The resurface moment** — on a real chat site, mid-prompt, with the "You've
-   been here before →" tooltip showing the `1/3` counter and "matched on …".
-   This is the hero shot; lead with it.
-2. **The library** — options page with a healthy list, the platform filter row,
-   and a couple of tags visible.
-3. **Search + sort** — search box with a query and the sort dropdown open
-   (showing newest / most useful / most used / longest unseen).
-4. **Capture controls (settings)** — the settings page showing the per-site
-   capture switches with health dots ("capturing ✓"), the filter-strength
-   control (off / balanced / strict), and the blocklist with its test box.
-5. **The popup** — toolbar popup with the "⏸ capturing / pause" control on top
-   and recent + pinned prompts below.
+**Status (Jul 2026):** five store-ready PNGs are in this folder —
+`screenshot-{1..5}-1280x800.png`. Re-capture only if the UI drifts.
+
+1. **The resurface moment** ✅ `screenshot-1-resurface-1280x800.png` — on a real
+   chat site, mid-prompt, with the "You've been here before →" tooltip. Hero shot.
+2. **Search + sort** ✅ `screenshot-2-search-sort-1280x800.png` — query in the
+   search box with the sort dropdown open (newest / most useful / most used /
+   longest unseen).
+3. **The library** ✅ `screenshot-3-library-1280x800.png` — healthy list, platform
+   filter row, tags visible.
+4. **The popup** ✅ `screenshot-4-popup-1280x800.png` — toolbar popup with
+   capturing/pause and recent prompts.
+5. **Capture controls (settings)** ✅ `screenshot-5-settings-1280x800.png` —
+   per-site switches + health dots, filter strength, PII redaction.
 
 Optional 6th (if you want to show it): **selective capture** — the library with
 the `filtered (n)` view revealing a "minor" prompt and its `keep` action.
@@ -64,17 +66,18 @@ Short, no voiceover needed (captions instead).
 
 `site/index.html` is self-contained (no build, no external requests). To publish:
 
-- Host the single file anywhere static (GitHub Pages, Netlify, Cloudflare Pages).
+- Host the single file anywhere static (**Netlify Drop** is the GTM default —
+  drag the `site/` folder; GitHub Pages / Vercel / Cloudflare Pages also work).
 - Replace the placeholders before going live:
   - `REPLACE_EXTENSION_ID` → the Web Store listing URL (after first submission).
   - The source links (nav "Source", hero "load from source", footer source rows)
     are **commented out** while the repo is private — re-enable them when it goes
     public. The `mehdirt` profile credit stays.
 
-## Repo visibility (decided — June 2026)
+## Repo visibility (decided)
 
-Ship a **private/unlisted** store listing first with the repo **private**, then
-open the repo publicly once it's more established. When opening:
+Ship a **private/unlisted** store listing with the repo **private**. Open the
+repo publicly only once more established. When opening:
 
 - Add a `LICENSE` (MIT is the low-friction default for a client-side tool) and
   flip the README "License" line.
@@ -83,9 +86,9 @@ open the repo publicly once it's more established. When opening:
 
 ## What only you can do (not automatable from the repo)
 
-- Capture the screenshots and record the demo video (need a live browser).
-- Write/host the privacy policy URL and paste it into the listing.
+- Record the demo video (screenshots are done — see above).
+- Host the privacy policy URL (Netlify Drop of `site/`) and paste it into the listing.
 - Create the Chrome Web Store developer account, pay the one-time fee, upload the
-  zipped `dist/`, and submit for review.
+  zipped `dist/`, and submit for review (**Unlisted** first).
 - Invite the first ~50 users from communities you're already in (no broad launch
   yet — per the roadmap exit criteria).
