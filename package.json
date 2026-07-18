@@ -1,6 +1,6 @@
 {
   "name": "deja",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Your personal prompt library — passive capture from ChatGPT, Claude, Gemini, DeepSeek, and Grok. Local-first.",
   "private": true,
   "type": "module",
