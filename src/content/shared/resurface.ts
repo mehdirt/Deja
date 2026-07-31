@@ -41,12 +41,10 @@ function log(...args: unknown[]) {
 const LEAD_PHRASES = [
   "You've asked something like this before →",
   "You've been here before →",
-  "You've written something like this →",
   'This looks familiar →',
-  'Seen this one before →',
-  'Déjà vu — you saved a prompt like this →',
-  'An earlier prompt of yours fits →',
-  "Wait — you've done this before →",
+  'Déjà vu — you saved one like this →',
+  'Your earlier version →',
+  "Looks like you've written this before →",
 ]
 
 function randomLead(): string {
@@ -495,7 +493,7 @@ export function attachResurface(
     }
     log('copied prior prompt to clipboard')
     confirming = true
-    tooltip.confirm('Copied — paste it anywhere ✓')
+    tooltip.confirm('Copied — paste it wherever you like ✓')
     window.clearTimeout(confirmTimer)
     confirmTimer = window.setTimeout(hide, COPIED_CONFIRM_MS)
   }

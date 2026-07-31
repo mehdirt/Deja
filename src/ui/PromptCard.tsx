@@ -110,7 +110,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
           {minor && (
             <span
               className="dj-chip text-ink-faint"
-              title="A short one-off Deja used to hide instead of skipping"
+              title="A short one-off Deja used to hide"
             >
               Short
             </span>
@@ -250,7 +250,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
         {fillable && !filling && (
           <button
             onClick={() => setFilling(true)}
-            title="This prompt has blanks in it — fill them in before copying"
+            title="This prompt has blanks — fill them before copying"
             className="dj-btn dj-btn-primary px-2 py-1 text-xs"
           >
             Fill in &amp; copy

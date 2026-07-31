@@ -48,8 +48,8 @@ export function TemplateFill({ text, onFilled, onCancel }: Props) {
       <div className="flex items-center justify-end gap-2">
         <span className="dj-meta mr-auto">
           {remaining === 0
-            ? 'All filled in.'
-            : `${remaining} blank${remaining === 1 ? '' : 's'} left — that's fine, they'll stay as they are.`}
+            ? 'All filled in'
+            : `${remaining} blank${remaining === 1 ? '' : 's'} left — empty ones stay as they are`}
         </span>
         <button type="button" onClick={onCancel} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
           Cancel

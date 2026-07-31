@@ -309,7 +309,7 @@ export function Library() {
     <div className="flex flex-col gap-5">
       <header className="flex items-center justify-between gap-2">
         <p className="dj-meta">
-          {shownCount} {shownCount === 1 ? 'prompt' : 'prompts'} · saved on this device
+          {shownCount} {shownCount === 1 ? 'prompt' : 'prompts'} · on this device
         </p>
       </header>
 
@@ -322,7 +322,7 @@ export function Library() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search your prompts"
-          placeholder="Search your prompts"
+          placeholder="Find a prompt…"
           className="dj-input pr-12"
         />
         <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">
@@ -484,16 +484,16 @@ export function Library() {
             {prompts.length === 0 ? (
               <div className="flex flex-col gap-8">
                 <div>
-                  <p className="text-ink">Nothing saved yet — that&apos;s normal.</p>
+                  <p className="text-ink">Nothing here yet.</p>
                   <p className="mt-1 text-ink-faint">
-                    There&apos;s nothing to set up. Ask ChatGPT, Claude, Gemini, DeepSeek, or Grok
-                    something, and it&apos;ll show up here on its own.
+                    Ask something on ChatGPT, Claude, Gemini, DeepSeek, or Grok and it&apos;ll show
+                    up here — or try a starter below.
                   </p>
                 </div>
                 <StarterPrompts />
               </div>
             ) : (
-              <p className="text-ink-faint">Nothing matched. Try a different word or filter.</p>
+              <p className="text-ink-faint">Nothing matched — try another word or clear a filter.</p>
             )}
           </div>
         ) : (
