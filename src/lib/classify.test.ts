@@ -59,6 +59,31 @@ describe('classifyPrompt', () => {
     expect(classifyPrompt('write a poem about a small cat').minor).toBe(false)
   })
 
+  it('rescues short everyday prompts that specify a tone, audience or format', () => {
+    for (const t of [
+      'reply to this, but polite',
+      'explain gravity to a 6 year old',
+      'rewrite as a table',
+      'say it in French',
+    ]) {
+      expect(classifyPrompt(t, 'strict').minor, t).toBe(false)
+    }
+  })
+
+  it('rescues short prompts carrying a real limit or quantity', () => {
+    expect(classifyPrompt('cut to 100 words', 'strict').minor).toBe(false)
+    expect(classifyPrompt('give me 5 ideas', 'strict').minor).toBe(false)
+  })
+
+  it('rescues a short but genuine question', () => {
+    expect(classifyPrompt('is oat milk bad for you?', 'strict').minor).toBe(false)
+  })
+
+  it('still skips throwaways that merely happen to be questions', () => {
+    expect(classifyPrompt('why?').minor).toBe(true)
+    expect(classifyPrompt('really?').minor).toBe(true)
+  })
+
   it("strength 'off' keeps everything, even bare glue", () => {
     expect(classifyPrompt('yes', 'off').minor).toBe(false)
     expect(classifyPrompt('', 'off').minor).toBe(false)
