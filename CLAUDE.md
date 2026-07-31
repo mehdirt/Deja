@@ -12,7 +12,7 @@ Deja is built for **everyday AI users who don't write code** — someone draftin
 
 Practical consequences, which the code is expected to honor:
 
-- **Warm and concise, not technical.** Everyday users should feel comfortable. Prefer short plain sentences over soft padding ("gently", "quietly", "no rush"). A welcome greeting (with 🤗) on first install is intentional; don't decorate every screen with emoji. Follow the voice section in `DESIGN.md`.
+- **Plain language beats precise jargon.** "Never save from…" not "blocklist". "Download a backup" not "export JSON". The full mapping is the voice table in `DESIGN.md` — follow it.
 - **Sentence case, sans-serif.** Monospace is reserved for the wordmark, key hints, `[email]` placeholders, hostnames, and pattern rules. Prompt bodies use `.dj-prompt`; metadata uses `.dj-meta`.
 - **Technical controls stay, but move down.** Regex rules, per-category redaction, file import, and permanent erase all still exist — inside the collapsed *More options* drawer in settings. Don't delete power; don't lead with it.
 - **Fonts are bundled** in `src/assets/fonts/` and declared in `globals.css`. Never reference a family the repo doesn't ship (that bug shipped once already).

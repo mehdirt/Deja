@@ -63,7 +63,7 @@ export function sendCapture(text: string, platform: Platform): void {
         // first time, a one-time explanation so the skip is never silent.
         if (resp.filtered) {
           if (resp.notice)
-            showInfoToast('Skipped a short one — change this in Deja settings')
+            showInfoToast("That one was too short to keep — you can change that in Deja's settings")
           return
         }
         const savedId = resp.id

@@ -20,10 +20,10 @@ function dotClass(state: State): string {
 
 function titleFor(state: State, p: Platform): string {
   const label = PLATFORM_LABEL[p]
-  if (state === 'ok') return `Saving on ${label}`
+  if (state === 'ok') return `Deja is saving your prompts on ${label}`
   if (state === 'broken')
-    return `Can't find the message box on ${label} — prompts there may not be saved`
-  return `Haven't seen ${label} yet — open it once to start saving`
+    return `Deja can't find the message box on ${label} — the site may have changed, so prompts there might not be saved.`
+  return `Deja hasn't seen ${label} yet — open it once and it'll start saving`
 }
 
 // A quiet at-a-glance proof that Deja is actually listening. Stays
@@ -55,7 +55,7 @@ export function CaptureStatus() {
       })}
       {broken.length > 0 && (
         <span className="text-danger">
-          · May not be saving on {broken.map((p) => PLATFORM_LABEL[p]).join(', ')}
+          · Deja may not be saving on {broken.map((p) => PLATFORM_LABEL[p]).join(', ')} right now
         </span>
       )}
     </div>

@@ -63,7 +63,7 @@ export function showSavedToast(onUndo: () => void, note?: string): void {
   undo.textContent = 'Undo'
   undo.addEventListener('click', () => {
     onUndo()
-    msg.textContent = 'Okay, removed'
+    msg.textContent = 'Removed'
     undo.remove()
     window.clearTimeout(hideTimer)
     hideTimer = window.setTimeout(dismiss, 1200)

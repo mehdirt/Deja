@@ -59,7 +59,7 @@ export function Popup() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search your prompts"
-          placeholder="Find a prompt…"
+          placeholder="Search your prompts"
           className="dj-input"
         />
       </div>
@@ -71,14 +71,14 @@ export function Popup() {
           <div className="px-2 py-8 text-center text-sm text-ink-soft">
             {prompts.length === 0 ? (
               <>
-                <p className="text-ink">Nothing saved yet.</p>
+                <p className="text-ink">Nothing saved yet — that&apos;s normal.</p>
                 <p className="mt-1 text-ink-faint">
-                  Ask something on ChatGPT, Claude, Gemini, DeepSeek, or Grok — it&apos;ll show up
-                  here.
+                  There&apos;s nothing to set up. Ask ChatGPT, Claude, Gemini, DeepSeek, or Grok
+                  something, and it&apos;ll show up here.
                 </p>
               </>
             ) : (
-              <p className="text-ink-faint">No matches — try another word?</p>
+              <p className="text-ink-faint">Nothing matched that search.</p>
             )}
           </div>
         ) : (

@@ -41,39 +41,26 @@ const RESURFACE_OPTIONS: Array<{ key: ResurfaceClick; label: string; hint: strin
   {
     key: 'copy',
     label: 'Copy it',
-    hint: 'Clicking a suggestion copies it so you can paste.',
+    hint: 'Clicking a suggestion copies it, so you can paste it yourself.',
   },
   {
     key: 'insert',
     label: 'Type it in for me',
-    hint: 'Clicking a suggestion drops it into the box at your cursor.',
+    hint: 'Clicking a suggestion drops it straight into the box at your cursor.',
   },
 ]
 
-const STRENGTHS: Array<{
-  key: FilterStrength
-  label: string
-  hint: string
-  example: string
-}> = [
-  {
-    key: 'off',
-    label: 'Save everything',
-    hint: 'Keeps every message, including “yes” and “continue”.',
-    example: 'Kept: “yes” · “make it blue” · “write a polite email to my landlord”',
-  },
+const STRENGTHS: Array<{ key: FilterStrength; label: string; hint: string }> = [
+  { key: 'off', label: 'Everything', hint: 'Save every message you send, no exceptions.' },
   {
     key: 'balanced',
-    label: 'Skip throwaways',
-    hint: 'Skips only short follow-ups like “yes”, “thanks”, or “continue”. Recommended.',
-    example: 'Skips: “yes”, “got it”, “continue” · Keeps: “make it blue”, “ideas for date night”',
+    label: 'Skip the throwaways',
+    hint: 'Skip one-word replies like “yes” or “continue”. Recommended.',
   },
   {
     key: 'strict',
-    label: 'Only detailed ones',
-    hint: 'Keeps longer, clearer questions. Short fragments are skipped.',
-    example:
-      'Skips: “make it blue”, “try again” · Keeps: “explain gravity to a 6-year-old”, “plan 3 days of dinners”',
+    label: 'Only the good stuff',
+    hint: 'Save only longer, detailed questions — short ones are skipped.',
   },
 ]
 
@@ -92,10 +79,10 @@ function siteStatus(health: CaptureHealth, p: Platform): string {
 function siteTitle(health: CaptureHealth, p: Platform): string {
   const h = health[p]
   const label = PLATFORM_LABEL[p]
-  if (!h) return `Deja hasn't seen ${label} yet — open it once to start saving`
+  if (!h) return `Deja hasn't seen ${label} yet — open it once and it'll start saving`
   return h.ok
-    ? `Saving on ${label}`
-    : `Can't find the message box on ${label} — the site may have changed`
+    ? `Deja is saving your prompts on ${label}`
+    : `Deja can't find the message box on ${label} — the site may have changed`
 }
 
 // A small reusable on/off switch matching the library's favorites toggle.
@@ -406,7 +393,7 @@ export function Settings() {
       {/* Suggestions — the everyday preference, opens the page */}
       <Section
         title="Suggestions while you type"
-        description="When you retype something familiar, Deja offers your earlier version. Choose what a click does."
+        description="When you start typing something you've asked before, Deja quietly offers your earlier version. Choose what happens when you click it."
       >
         <div className="flex flex-wrap gap-2">
           {RESURFACE_OPTIONS.map((o) => (
@@ -427,7 +414,7 @@ export function Settings() {
       {/* What gets saved — selective-capture strength */}
       <Section
         title="What Deja saves"
-        description="Skip short throwaways so your library stays easy to browse."
+        description="Not every message is worth keeping. Deja can skip short throwaways so your library stays worth browsing."
       >
         <div className="flex flex-wrap gap-2">
           {STRENGTHS.map((o) => (
@@ -443,15 +430,12 @@ export function Settings() {
           ))}
         </div>
         <p className="dj-meta">{STRENGTHS.find((o) => o.key === strength)?.hint}</p>
-        <p className="dj-meta text-ink-faint">
-          {STRENGTHS.find((o) => o.key === strength)?.example}
-        </p>
       </Section>
 
       {/* Where it works — per-site switches folded into the health view */}
       <Section
         title="Where Deja works"
-        description="Turn Deja off for any site. The dot shows whether it can find that site’s message box."
+        description="Turn Deja off for any site you'd rather it left alone. The dot shows whether it can currently find that site's message box."
       >
         <div className="flex flex-col divide-y divide-line rounded-btn border border-line">
           {PLATFORMS.map((p) => (
@@ -473,7 +457,9 @@ export function Settings() {
             </div>
           ))}
         </div>
-        <p className="dj-meta">To pause everywhere, use the toolbar popup.</p>
+        <p className="dj-meta">
+          To stop everywhere for a while, use the pause button in the toolbar popup.
+        </p>
         <a
           href={feedbackHref('capture', captureContext, version)}
           target="_blank"
@@ -489,8 +475,10 @@ export function Settings() {
         title="Hide personal info"
         description={
           <>
-            Before saving, Deja can replace emails, phones, and card numbers with placeholders like{' '}
-            <span className="font-mono text-xs">[email]</span>. Real values are never written down.
+            Before anything is saved, Deja can swap out personal details — emails, phone numbers,
+            card numbers — for placeholders like <span className="font-mono text-xs">[email]</span>.
+            The real values are never written down, and the prompt still works as a reusable
+            template.
           </>
         }
       >
@@ -507,7 +495,7 @@ export function Settings() {
       {/* Your prompts — the trust story stays in plain sight */}
       <Section
         title="Your prompts"
-        description="Everything stays on this computer. Download a copy whenever you like."
+        description="Everything lives on this computer and nowhere else. Take a copy whenever you like."
       >
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -526,7 +514,8 @@ export function Settings() {
           </button>
         </div>
         <p className="dj-meta">
-          The document is easy to read; the backup is for restoring later.
+          The document is easy to read; the backup is the one to keep if you ever want to bring your
+          prompts back.
         </p>
 
         <div className="mt-2 flex items-center gap-3">
@@ -564,7 +553,7 @@ export function Settings() {
             More options
           </span>
           <span className="ml-6 block text-xs font-normal text-ink-faint">
-            Privacy rules, restore a backup, permanent erase — only if you need them.
+            Fine-grained privacy rules, restoring a backup, and permanent erase.
           </span>
         </summary>
 
@@ -639,7 +628,7 @@ export function Settings() {
           {/* Blocklist */}
           <Section
             title="Never save from…"
-            description="Block a whole site, or a text rule so matching prompts are never saved. Stays on this computer."
+            description="Block a whole site, or add a rule so anything matching it is never saved — handy if you paste secrets into a chat. None of this leaves your machine."
           >
             <div className="flex flex-col gap-2">
               <label className="text-xs text-ink-soft" htmlFor="bl-domain">
@@ -786,7 +775,7 @@ export function Settings() {
           {/* Restore a backup */}
           <Section
             title="Restore from a backup"
-            description="Bring back a .json backup. Prompts you already have are skipped."
+            description="Bring back a .json backup you downloaded earlier, on this computer or another one. Prompts you already have are skipped."
           >
             <input
               ref={fileRef}
@@ -810,7 +799,7 @@ export function Settings() {
           {/* Purge deleted */}
           <Section
             title="Erase deleted prompts for good"
-            description="Delete hides a prompt so you can undo. Erase here to remove deleted ones permanently."
+            description="Deleting a prompt hides it but keeps the text around so you can undo. If something sensitive was saved, delete it in your library, then erase it here."
           >
             <div className="flex flex-wrap items-center gap-3">
               <button
@@ -834,7 +823,7 @@ export function Settings() {
       {/* Feedback — user-initiated, no telemetry */}
       <Section
         title="Tell me what you think"
-        description="Something confusing, or a wish? These open a message you send yourself — nothing goes automatically."
+        description="Found something broken, or wish Deja did something it doesn't? Nothing is ever sent automatically — these open a prefilled message you read and send yourself."
       >
         <div className="flex flex-wrap gap-2">
           <a

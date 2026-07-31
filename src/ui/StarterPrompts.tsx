@@ -22,10 +22,10 @@ export function StarterPrompts() {
   return (
     <section className="flex flex-col gap-3 text-left">
       <div className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-ink">Try a starter</h2>
+        <h2 className="text-base font-semibold text-ink">Not sure what to ask?</h2>
         <p className="text-sm leading-relaxed text-ink-soft">
-          Fill in the blanks, paste into ChatGPT (or anywhere), and it&apos;ll land here after you
-          send it.
+          Here are a few to borrow. Fill in the blanks, paste one into ChatGPT, and it&apos;ll be
+          waiting here afterwards.
         </p>
       </div>
 
@@ -41,7 +41,7 @@ export function StarterPrompts() {
                 onClick={() => setOpen((o) => (o === i ? null : i))}
                 className="dj-btn dj-btn-primary flex-none px-2 py-1 text-xs"
               >
-                {copied === i ? 'Copied ✓' : open === i ? 'Close' : 'Try this'}
+                {copied === i ? 'Copied ✓' : open === i ? 'Close' : 'Use this'}
               </button>
             </div>
             {open === i && (
