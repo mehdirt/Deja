@@ -8,9 +8,24 @@ This is the product thesis for Deja — what we're building, in what order, and 
 
 ---
 
+## Who it's for
+
+**People who use AI chat every day and don't write code.** Someone drafting a difficult email, planning a trip, learning a subject, writing a letter they're nervous about sending. They've built up real skill at asking, and they lose it constantly.
+
+This was narrowed deliberately in July 2026, after the first handful of testers used it. The clearest piece of feedback came from a professional programmer who works mostly through coding agents: his verdict was that he'd probably never use it, because his tools already carry memory, rules, and skill files of their own — and that Deja looked like it was really for ordinary question-and-answer users. He was right on both counts, and the second half was the more useful half.
+
+So the audience is now explicit, because it decides everything downstream:
+
+- **Language.** "Save", not "capture". "Never save from…", not "blocklist". A regular expression is still available, but it isn't the first thing anyone meets.
+- **Visual identity.** The old "notebook meets terminal" direction leaned on monospace and lowercase — a developer costume. The notebook stayed; the terminal is now a detail (see `DESIGN.md`).
+- **What counts as a good prompt.** The throwaway filter used to recognise substance mainly as code, URLs, and file paths. A specified tone, audience, length, or a genuine question now counts just as much.
+- **Which features come next.** Fill-in-the-blank templates and forgiving search beat power-user tooling, because the everyday reuse pattern is "same shape of request, different details".
+
+The trade this makes: Deja will be less appealing to engineers, who are the easiest people for a project like this to reach and the least likely to need it. That's an acceptable price for being genuinely useful to a much larger group.
+
 ## The problem
 
-Every frequent AI user has experienced the **prompt graveyard**: you craft a perfect prompt, get a great result, and then it's gone — buried in a chat history you'll never scroll through again. The best prompts, the ones that took trial and error to perfect, simply disappear. There is no native way to save, organize, or retrieve them across sessions.
+Every frequent AI user has experienced the **prompt graveyard**: you write a question that finally gets you the answer you wanted, and then it's gone — buried in a chat history you'll never scroll through again. The requests that took a few tries to get right simply disappear. There is no native way to save, organize, or retrieve them across sessions.
 
 ## The product, in one sentence
 
@@ -29,6 +44,7 @@ These are the trade-offs we keep coming back to. When in doubt, follow the princ
 5. **Fail loud to us, silent to them.** The host page must never notice a problem — but *we* must. A selector that breaks and silently captures nothing is the worst outcome we can ship: a beautiful, trusted, empty library. Capture health must be self-detecting.
 6. **No judgment.** Don't grade users' prompts. Help them find old ones; that's the job.
 7. **No friction at setup.** No login, no API key, no payment to use the core product.
+8. **Say it the way a person would.** If a label needs a technical background to understand, it's the wrong label. Precision is available under *More options*; the first screen is plain English.
 
 ## What v1 is (and isn't)
 
@@ -44,6 +60,9 @@ These are the trade-offs we keep coming back to. When in doubt, follow the princ
 | PII redaction before storage (default on) | Prompt chaining |
 | JSON / Markdown export + import | Mobile companion |
 | Pause / per-site / blocklist / capture health | |
+| Post-install welcome; fill-in-the-blank templates | |
+| Everyday-example prompts on an empty library | |
+| Forgiving search (plurals, spellings, synonyms) | |
 
 The deferred list is not the discard list. Several of these (heatmap, embeddings) are great features — they just don't ship until v1 is solid and we have real users telling us which to build first.
 
@@ -54,6 +73,12 @@ The deferred list is not the discard list. Several of these (heatmap, embeddings
 The mental model is a password manager, not a notebook. Nobody opens 1Password to admire their passwords — it earns its place by appearing at the exact moment of friction (the login box) and making recall instant and in-context. Deja's popup and library are the *least* important surfaces; the in-the-textarea resurface is where a user first feels the value, at the speed they feel a forgotten password. So we ship a rough version of that moment early and tune it on real reactions, rather than treating it as a v1.5 garnish on top of finished plumbing.
 
 The plumbing and the first real version of the moment both ship in v1. We do not consider v1 "good" until the moment lands.
+
+## Why templates matter more than they look
+
+The everyday reuse pattern is almost never "send that exact prompt again". It's "send *that shape* of request, with different details" — the same well-phrased email, a different recipient; the same explain-it-simply framing, a different subject. So a prompt with a blank in it (`write a short note to {who} about {situation}`) is worth more on the second use than a fixed one.
+
+This falls out of something Deja already does. PII redaction rewrites `sam@work.com` to `[email]` before storing, which quietly turns saved prompts into templates; `template.ts` is what makes those blanks fillable again. It's the rare feature where the privacy mechanism and the usability feature are the same mechanism.
 
 ## Why this is defensible
 
@@ -88,7 +113,7 @@ That's the whole flow for v1. No network. No external service. No latency added 
 
 We deliberately ship v1 with **zero LLM calls**:
 
-- Fuzzy search → MiniSearch (local, ~50KB, instant)
+- Fuzzy search → MiniSearch (local, ~50KB, instant), plus local spelling/plural folding and an everyday synonym pass so half-remembered wording still finds things
 - "Been here before" similarity → IDF-weighted trigram similarity with a length-aware threshold (local, zero dependencies)
 - Selective capture → local classifier (`off` / `balanced` / `strict`), soft-hide minors
 - PII → regex + Luhn redaction before storage (names/addresses deferred)

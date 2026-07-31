@@ -155,9 +155,41 @@ The content hot path reads all of this through a synchronous, fail-open cache (`
 
 **Query-scoped resurface dismissal — built (v0.4.1).** Dismissing the tooltip (× / Esc) suppresses that normalized query only — not the whole session — so a different prompt can still resurface.
 
-These two tracks below — named for the next round of work — build directly on this.
+---
 
-## Phase 6+ — Decide from data, not from this document
+## Phase 6 — Pick an audience and build for it ✅ *(built; July 2026)*
+
+**What happened.** The extension shipped to the Chrome Web Store and went out to five testers. The most useful reaction came from a programmer who works mostly through coding agents: broadly positive, but he said he'd probably never use it — his tools already carry their own memory, rules, and skill files — and that Deja looked like it was really for ordinary question-and-answer users. That reframed the product. See `CONCEPT.md` → *Who it's for*.
+
+**The finding that made it concrete.** `globals.css` named Inter and JetBrains Mono without shipping either file, so the fonts only resolved on machines that happened to have them installed — which in practice meant developers'. Everyone else saw an OS fallback. The product literally looked its best for the audience it was least useful to.
+
+**Identity — done.**
+
+- Fonts are **bundled** (`src/assets/fonts/*.woff2`, ~70 KB, still zero network calls). Figtree for everything readable; JetBrains Mono confined to the wordmark, key hints, `[email]` placeholders, hostnames, and pattern rules.
+- Prompt bodies moved from monospace to sans (`.dj-prompt`); metadata to `.dj-meta` with tabular numerals.
+- **Sentence case everywhere.** The all-lowercase control convention was part of the terminal costume and is gone.
+- **Plain-English vocabulary** across every surface — "save" not "capture", "never save from…" not "blocklist", "download a backup" not "export JSON". Full mapping in `DESIGN.md`.
+- The in-page toast and resurface tooltip now use the **system UI font** on purpose, so they read as part of the host page.
+
+**Onboarding — done.** A welcome view (`src/options/Welcome.tsx`, opened once on install) explains what will happen, in the order it happens, plus how to pin the extension. For a passive tool the failure mode was never a confusing setup screen — it was nothing visible happening and the extension being forgotten.
+
+**Settings — done.** Everyday choices first (suggestions, what gets saved, where it works, hide personal info, your prompts); regex rules, per-category redaction, file restore, and permanent erase behind one collapsed *More options* drawer. Nothing was removed.
+
+**Features for this audience — done.**
+
+- **Fill-in-the-blank templates** (`src/lib/template.ts`). Finds `{topic}` blanks *and* the `[email]` placeholders PII redaction already leaves behind, then fills them in one pass. The reuse pattern for everyday users is "same shape, different details", so this is the highest-leverage feature we could add — and it costs nothing, because redaction was already creating the templates.
+- **Everyday examples on an empty library** (`src/lib/starter.ts`). Ten hand-written prompts, each with blanks, shown only while there's nothing real to show. Fixed, never generated, never written to the DB — a worked example on a blank page, which is a different thing from the "prompt of the day" this roadmap rules out.
+- **Forgiving search** (`src/lib/search.ts`). Plurals and British/American spellings fold together at index and query time; everyday synonyms run as a second pass appended after literal hits, so recall improves and precision doesn't move.
+- **"Open chat"** on a saved prompt, using the URL already stored — but only when it points at a real conversation (`conversationUrl()`).
+- **Throwaway filter retuned.** `hasSubstance()` used to recognise value as code, URLs, and file paths. A specified tone, audience, format, length, or a genuine question now counts too.
+
+**Still open from this phase:** README, Chrome Web Store listing, and landing-page copy still describe the old positioning. Screenshots need retaking against the new UI.
+
+**Exit criteria:** a non-technical person installs Deja, understands within a minute what it will do for them, and reuses a saved prompt in their first week without being shown how.
+
+---
+
+## Phase 7+ — Decide from data, not from this document
 
 After ~50 users have used the v1 for a few weeks, look at what they actually do and pick the next feature.
 
@@ -172,7 +204,9 @@ Likely feature candidates, in rough order of value:
 1. **Optional LLM features** (bring-your-own-key)
    - "Improve this prompt" button on a card (on-demand, not automatic)
    - Auto-tag suggestion (one-tap accept, never silent)
-2. **Semantic resurface via local embeddings** — the real fix for the one thing trigram similarity can't do: catch paraphrases ("write a poem about cats" ↔ "compose verse about felines"). Run a small quantized embedding model fully on-device (e.g. transformers.js / ONNX-WASM), embed each prompt once at capture, cosine-match at query time. This is a genuine architectural decision, not a tweak: ~20–30 MB model bundle, a first-load init cost, and the "is the extension allowed to get that heavy" tradeoff. The clean design is a **hybrid** — keep the instant lexical path as-is and fall back to embeddings only when lexical finds nothing — so we keep today's speed and gain paraphrase recall, all still local ($0, no network). Deferred until Phase 1/2 reactions show lexical-only is actually leaving good matches on the table.
+2. **Semantic resurface via local embeddings** — the real fix for the one thing trigram similarity can't do: catch paraphrases ("write a poem about cats" ↔ "compose verse about felines"). Run a small quantized embedding model fully on-device (e.g. transformers.js / ONNX-WASM), embed each prompt once at capture, cosine-match at query time. This is a genuine architectural decision, not a tweak: ~20–30 MB model bundle, a first-load init cost, and the "is the extension allowed to get that heavy" tradeoff. The clean design is a **hybrid** — keep the instant lexical path as-is and fall back to embeddings only when lexical finds nothing — so we keep today's speed and gain paraphrase recall, all still local ($0, no network).
+
+   Phase 6 shipped the cheap half of this instead: spelling/plural folding and everyday synonym expansion in `search.ts`, which costs bytes rather than megabytes and handles the vocabulary drift that shows up in ordinary use. That buys time to find out whether real libraries are actually losing good matches to paraphrase — the only thing that justifies a 20–30 MB model. **Decide with usage, not appetite.** Note the audience change cuts both ways here: everyday users phrase the same request more loosely than engineers do, so the case for embeddings may turn out stronger than it looked in June.
 3. **Activity heatmap** — pure visualization on existing data, low risk
 4. **Prompt chaining** — link prompts into named sequences for repeatable workflows
 5. **Encrypted cloud sync** — E2EE only; never plaintext on a server
