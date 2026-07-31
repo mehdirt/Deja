@@ -1,0 +1,5 @@
+# https://dejaprompts.netlify.app/robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://dejaprompts.netlify.app/sitemap.xml
