@@ -56,14 +56,14 @@ export function showSavedToast(onUndo: () => void, note?: string): void {
   const msg = document.createElement('span')
   msg.className = 'dj-msg'
   // `note` (e.g. "2 details hidden") is appended so redaction is never silent.
-  msg.textContent = note ? `Saved · ${note}` : 'Saved'
+  msg.textContent = note ? `Saved for you · ${note}` : 'Saved for you'
 
   const undo = document.createElement('button')
   undo.className = 'dj-undo'
   undo.textContent = 'Undo'
   undo.addEventListener('click', () => {
     onUndo()
-    msg.textContent = 'Removed'
+    msg.textContent = 'Okay, removed'
     undo.remove()
     window.clearTimeout(hideTimer)
     hideTimer = window.setTimeout(dismiss, 1200)

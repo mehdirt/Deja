@@ -51,16 +51,20 @@ const RESURFACE_OPTIONS: Array<{ key: ResurfaceClick; label: string; hint: strin
 ]
 
 const STRENGTHS: Array<{ key: FilterStrength; label: string; hint: string }> = [
-  { key: 'off', label: 'Everything', hint: 'Save every message you send, no exceptions.' },
+  {
+    key: 'off',
+    label: 'Save everything',
+    hint: 'Keeps every message you send, no exceptions.',
+  },
   {
     key: 'balanced',
     label: 'Skip the throwaways',
-    hint: 'Skip one-word replies like “yes” or “continue”. Recommended.',
+    hint: 'Skip one-word replies like “yes” or “continue”. Recommended for most people.',
   },
   {
     key: 'strict',
     label: 'Only the good stuff',
-    hint: 'Save only longer, detailed questions — short ones are skipped.',
+    hint: 'Save only longer, detailed questions — short ones are gently skipped.',
   },
 ]
 
@@ -79,9 +83,9 @@ function siteStatus(health: CaptureHealth, p: Platform): string {
 function siteTitle(health: CaptureHealth, p: Platform): string {
   const h = health[p]
   const label = PLATFORM_LABEL[p]
-  if (!h) return `Deja hasn't seen ${label} yet — open it once and it'll start saving`
+  if (!h) return `Deja hasn't seen ${label} yet — open it once and it'll gently start saving`
   return h.ok
-    ? `Deja is saving your prompts on ${label}`
+    ? `Deja is quietly saving your prompts on ${label}`
     : `Deja can't find the message box on ${label} — the site may have changed`
 }
 
@@ -414,7 +418,7 @@ export function Settings() {
       {/* What gets saved — selective-capture strength */}
       <Section
         title="What Deja saves"
-        description="Not every message is worth keeping. Deja can skip short throwaways so your library stays worth browsing."
+        description="Not every message is worth keeping. Deja can gently skip short throwaways so your library stays worth browsing — change this anytime."
       >
         <div className="flex flex-wrap gap-2">
           {STRENGTHS.map((o) => (
@@ -435,7 +439,7 @@ export function Settings() {
       {/* Where it works — per-site switches folded into the health view */}
       <Section
         title="Where Deja works"
-        description="Turn Deja off for any site you'd rather it left alone. The dot shows whether it can currently find that site's message box."
+        description="Turn Deja off for any site you'd rather it left alone, no hard feelings. The dot shows whether it can currently find that site's message box."
       >
         <div className="flex flex-col divide-y divide-line rounded-btn border border-line">
           {PLATFORMS.map((p) => (
@@ -458,7 +462,7 @@ export function Settings() {
           ))}
         </div>
         <p className="dj-meta">
-          To stop everywhere for a while, use the pause button in the toolbar popup.
+          To take a break everywhere at once, use the pause button in the toolbar popup.
         </p>
         <a
           href={feedbackHref('capture', captureContext, version)}
@@ -495,7 +499,7 @@ export function Settings() {
       {/* Your prompts — the trust story stays in plain sight */}
       <Section
         title="Your prompts"
-        description="Everything lives on this computer and nowhere else. Take a copy whenever you like."
+        description="Everything lives on this computer and nowhere else. Take a copy whenever you like — you're never locked in."
       >
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -823,7 +827,7 @@ export function Settings() {
       {/* Feedback — user-initiated, no telemetry */}
       <Section
         title="Tell me what you think"
-        description="Found something broken, or wish Deja did something it doesn't? Nothing is ever sent automatically — these open a prefilled message you read and send yourself."
+        description="Found something confusing, or wish Deja did something it doesn't? I'd love to hear it. Nothing is ever sent automatically — these open a message you read and send yourself."
       >
         <div className="flex flex-wrap gap-2">
           <a

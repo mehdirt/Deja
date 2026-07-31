@@ -10,15 +10,16 @@ const SITES: Array<{ platform: Platform; host: string }> = [
 
 // Privacy page — a plain, calm statement of what is and isn't collected.
 // This is the highest-leverage trust asset we have, so it stays specific and
-// jargon-free. No marketing.
+// jargon-free. Warm where it costs nothing, but never vague — no marketing.
 export function Privacy() {
   return (
     <div className="flex max-w-2xl flex-col gap-7 text-sm leading-relaxed">
       <section className="flex flex-col gap-2">
         <h2 className="text-base font-semibold text-ink">Privacy, plainly</h2>
         <p className="text-ink-soft">
-          Your prompts stay on your computer and nowhere else. Deja is a notebook that lives in your
-          browser, not a service. There&apos;s no account, no server, and nothing to sign up for.
+          Your prompts stay on your computer and nowhere else — so you can use Deja without
+          worrying. It&apos;s a quiet notebook in your browser, not a service. There&apos;s no
+          account, no server, and nothing to sign up for.
         </p>
       </section>
 

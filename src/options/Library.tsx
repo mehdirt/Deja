@@ -309,7 +309,7 @@ export function Library() {
     <div className="flex flex-col gap-5">
       <header className="flex items-center justify-between gap-2">
         <p className="dj-meta">
-          {shownCount} {shownCount === 1 ? 'prompt' : 'prompts'} · saved on this device
+          {shownCount} {shownCount === 1 ? 'prompt' : 'prompts'} · safe on this device
         </p>
       </header>
 
@@ -322,7 +322,7 @@ export function Library() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search your prompts"
-          placeholder="Search your prompts"
+          placeholder="Find a prompt…"
           className="dj-input pr-12"
         />
         <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">
@@ -458,7 +458,7 @@ export function Library() {
 
       {undoId != null && (
         <div className="flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
-          <span className="text-ink-soft">Prompt deleted.</span>
+          <span className="text-ink-soft">Prompt deleted — you can undo if that was a slip.</span>
           <button onClick={onUndoDelete} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
             Undo
           </button>
@@ -484,16 +484,19 @@ export function Library() {
             {prompts.length === 0 ? (
               <div className="flex flex-col gap-8">
                 <div>
-                  <p className="text-ink">Nothing saved yet — that&apos;s normal.</p>
+                  <p className="text-ink">Nothing here yet — take your time.</p>
                   <p className="mt-1 text-ink-faint">
-                    There&apos;s nothing to set up. Ask ChatGPT, Claude, Gemini, DeepSeek, or Grok
-                    something, and it&apos;ll show up here on its own.
+                    Ask ChatGPT, Claude, Gemini, DeepSeek, or Grok something the way you always do,
+                    and it&apos;ll show up here on its own. Or borrow one of the starters below if
+                    you&apos;d like a gentle first try.
                   </p>
                 </div>
                 <StarterPrompts />
               </div>
             ) : (
-              <p className="text-ink-faint">Nothing matched. Try a different word or filter.</p>
+              <p className="text-ink-faint">
+                Nothing matched that. Try another word, or clear a filter — you&apos;re fine.
+              </p>
             )}
           </div>
         ) : (

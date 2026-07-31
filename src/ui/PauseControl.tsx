@@ -93,7 +93,7 @@ export function PauseControl() {
       <div className="flex items-center justify-between gap-2 rounded-btn border border-line px-3 py-1.5">
         <span className="inline-flex items-center gap-2 text-xs text-ink-soft">
           <span className="h-1.5 w-1.5 rounded-full bg-ok" aria-hidden />
-          Saving your prompts
+          Quietly saving for you
         </span>
         <button
           onClick={() => setOpen((o) => !o)}
