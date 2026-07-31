@@ -72,9 +72,13 @@ The in-page overlays (the save toast and the resurface tooltip) live in a Shadow
 
 ## Voice
 
-Calm, warm, no hype. Write the way you'd explain it to a friend who asked what this extension does.
+Warm, cozy, and plain — like a kind friend showing you around, not a product pitch. Everyday users should feel comfortable the whole time: never rushed, never graded, never spoken to like engineers.
+
+**Guiding over configuring.** Lead with what will happen next, in ordinary words, one step at a time. Prefer reassurance over precision on the first screen ("You're all set — make yourself at home") and put the technical detail under *More options*. Empty states should feel welcoming, not blank — tell someone what to do next, gently.
 
 **Sentence case everywhere** — headings, buttons, labels, pills, empty states, status messages. ("Copy", "Download a backup", "Nothing saved yet — that's normal.") The old all-lowercase convention for controls is gone: it was part of the terminal costume, and it made the interface feel like a config file.
+
+**Emojis, sparingly.** A warm greeting emoji (🤗) is welcome on the post-install screen — that's the one moment where a hug of a hello earns its place. Don't sprinkle emoji through settings, cards, or everyday chrome; comfort comes mostly from tone and clarity, not decoration.
 
 **Say the plain thing.** The vocabulary is the largest single signal of who a product is for, so prefer the everyday word:
 
