@@ -11,7 +11,7 @@ import { readPrefs, writePrefs, onPrefsChange, PAUSE_FOREVER } from '@/lib/prefs
 const HOUR = 3_600_000
 
 function remainingLabel(pauseUntil: number, now: number): string {
-  if (pauseUntil === PAUSE_FOREVER) return 'until you resume'
+  if (pauseUntil === PAUSE_FOREVER) return 'until you turn it back on'
   const ms = pauseUntil - now
   if (ms <= 0) return ''
   const mins = Math.ceil(ms / 60_000)
@@ -20,8 +20,8 @@ function remainingLabel(pauseUntil: number, now: number): string {
     const m = mins % 60
     return m ? `${h}h ${m}m left` : `${h}h left`
   }
-  if (mins > 1) return `${mins}m left`
-  return 'under a minute left'
+  if (mins > 1) return `${mins} min left`
+  return 'less than a minute left'
 }
 
 export function PauseControl() {
@@ -77,12 +77,12 @@ export function PauseControl() {
     const label = remainingLabel(pauseUntil, now)
     return (
       <div className="flex items-center justify-between gap-2 rounded-btn border border-[#c98a2b]/40 bg-[#c98a2b]/10 px-3 py-1.5">
-        <span className="inline-flex items-center gap-2 font-mono text-xs text-[#c98a2b]">
+        <span className="inline-flex items-center gap-2 text-xs font-medium text-[#c98a2b]">
           <span className="h-1.5 w-1.5 rounded-full bg-[#c98a2b]" aria-hidden />
-          capture paused{label ? ` · ${label}` : ''}
+          Paused{label ? ` · ${label}` : ''}
         </span>
-        <button onClick={resume} className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-xs">
-          resume
+        <button onClick={resume} className="dj-btn dj-btn-ghost px-2 py-0.5 text-xs">
+          Resume
         </button>
       </div>
     )
@@ -91,17 +91,17 @@ export function PauseControl() {
   return (
     <div ref={ref} className="relative">
       <div className="flex items-center justify-between gap-2 rounded-btn border border-line px-3 py-1.5">
-        <span className="inline-flex items-center gap-2 font-mono text-xs text-ink-soft">
+        <span className="inline-flex items-center gap-2 text-xs text-ink-soft">
           <span className="h-1.5 w-1.5 rounded-full bg-ok" aria-hidden />
-          capturing
+          Saving your prompts
         </span>
         <button
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="menu"
           aria-expanded={open}
-          className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-xs"
+          className="dj-btn dj-btn-ghost px-2 py-0.5 text-xs"
         >
-          ⏸ pause
+          ⏸ Pause
         </button>
       </div>
       {open && (
@@ -112,16 +112,16 @@ export function PauseControl() {
           <button
             role="menuitem"
             onClick={() => pause(Date.now() + HOUR)}
-            className="block w-full px-3 py-2 text-left font-mono text-xs text-ink transition-colors hover:bg-sunk"
+            className="block w-full px-3 py-2 text-left text-xs text-ink transition-colors hover:bg-sunk"
           >
-            pause for 1 hour
+            Pause for an hour
           </button>
           <button
             role="menuitem"
             onClick={() => pause(PAUSE_FOREVER)}
-            className="block w-full px-3 py-2 text-left font-mono text-xs text-ink transition-colors hover:bg-sunk"
+            className="block w-full px-3 py-2 text-left text-xs text-ink transition-colors hover:bg-sunk"
           >
-            pause until I resume
+            Pause until I turn it back on
           </button>
         </div>
       )}

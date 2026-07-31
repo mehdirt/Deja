@@ -59,15 +59,19 @@ export function sendCapture(text: string, platform: Platform): void {
         void writeHealth(platform, true)
         // Already in the library — no toast, no undo (nothing new was written).
         if (resp.duplicate) return
-        // Selective capture: throwaway was not stored. No "remembered" toast;
-        // the first time, a one-time explanation so the skip is never silent.
+        // Selective capture: throwaway was not stored. No "saved" toast; the
+        // first time, a one-time explanation so the skip is never silent.
         if (resp.filtered) {
-          if (resp.notice) showInfoToast('Skipped a short prompt · change in Deja settings')
+          if (resp.notice)
+            showInfoToast("That one was too short to keep — you can change that in Deja's settings")
           return
         }
         const savedId = resp.id
         if (savedId == null) return
-        const note = resp.redacted > 0 ? `${resp.redacted} redacted` : undefined
+        const note =
+          resp.redacted > 0
+            ? `${resp.redacted} personal ${resp.redacted === 1 ? 'detail' : 'details'} hidden`
+            : undefined
         showSavedToast(() => {
           if (!chrome.runtime?.id) return
           try {

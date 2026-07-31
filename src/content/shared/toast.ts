@@ -1,4 +1,4 @@
-// A minimal, self-contained "remembered · undo" toast injected into
+// A minimal, self-contained "Saved · Undo" toast injected into
 // the host page. Rendered inside a Shadow DOM so host CSS can't touch it and
 // our CSS can't leak out. The container is pointer-events:none so it never
 // intercepts clicks on the host page — only the undo button is interactive.
@@ -20,13 +20,13 @@ function ensureHost(): ShadowRoot {
   style.textContent = `
     .dj-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
     .dj-toast{pointer-events:auto;display:flex;align-items:center;gap:12px;
-      background:#201f27;color:#f3f1ea;font:13px/1.4 'Inter',system-ui,sans-serif;
+      background:#201f27;color:#f3f1ea;font:13px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;
       padding:10px 12px;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);
       border:1px solid #2e2c36;animation:dj-in .14s ease-out}
     .dj-dot{width:7px;height:7px;border-radius:50%;background:#8983f5;flex:none}
     .dj-msg{white-space:nowrap}
     .dj-undo{pointer-events:auto;background:none;border:none;color:#9c97f7;
-      font:600 13px 'JetBrains Mono',ui-monospace,monospace;cursor:pointer;padding:2px 4px;border-radius:6px}
+      font:600 13px system-ui,-apple-system,'Segoe UI',sans-serif;cursor:pointer;padding:2px 4px;border-radius:6px}
     .dj-undo:hover{background:#272534}
     .dj-undo:focus-visible{outline:2px solid #8983f5;outline-offset:1px}
     @keyframes dj-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -55,15 +55,15 @@ export function showSavedToast(onUndo: () => void, note?: string): void {
 
   const msg = document.createElement('span')
   msg.className = 'dj-msg'
-  // `note` (e.g. "2 redacted") is appended so redaction is never silent.
-  msg.textContent = note ? `remembered · ${note}` : 'remembered'
+  // `note` (e.g. "2 details hidden") is appended so redaction is never silent.
+  msg.textContent = note ? `Saved · ${note}` : 'Saved'
 
   const undo = document.createElement('button')
   undo.className = 'dj-undo'
-  undo.textContent = 'undo'
+  undo.textContent = 'Undo'
   undo.addEventListener('click', () => {
     onUndo()
-    msg.textContent = 'removed'
+    msg.textContent = 'Removed'
     undo.remove()
     window.clearTimeout(hideTimer)
     hideTimer = window.setTimeout(dismiss, 1200)

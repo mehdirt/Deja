@@ -10,69 +10,70 @@ const SITES: Array<{ platform: Platform; host: string }> = [
 
 // Privacy page — a plain, calm statement of what is and isn't collected.
 // This is the highest-leverage trust asset we have, so it stays specific and
-// on-voice. No marketing.
+// jargon-free. No marketing.
 export function Privacy() {
   return (
-    <div className="flex max-w-2xl flex-col gap-6 text-sm leading-relaxed">
+    <div className="flex max-w-2xl flex-col gap-7 text-sm leading-relaxed">
       <section className="flex flex-col gap-2">
-        <h2 className="font-mono text-sm text-ink">Privacy, plainly</h2>
+        <h2 className="text-base font-semibold text-ink">Privacy, plainly</h2>
         <p className="text-ink-soft">
-          Deja keeps your prompts on your machine and nowhere else. It is a local notebook, not a
-          service. There is no account, no server, and nothing to sign up for.
+          Your prompts stay on your computer and nowhere else. Deja is a notebook that lives in your
+          browser, not a service. There&apos;s no account, no server, and nothing to sign up for.
         </p>
       </section>
 
       <section className="flex flex-col gap-2">
-        <h3 className="font-mono text-xs text-ink-soft">What it does</h3>
-        <ul className="flex list-disc flex-col gap-1 pl-5 text-ink-soft">
+        <h3 className="text-sm font-semibold text-ink">What it does</h3>
+        <ul className="flex list-disc flex-col gap-1.5 pl-5 text-ink-soft">
           <li>
-            Saves the prompts you send on the supported sites below, to a local database (IndexedDB)
-            in your browser.
+            Saves the prompts you send on the sites listed below, into your browser&apos;s own
+            storage on this computer.
           </li>
-          <li>Captures only the prompt text you type. It does not record the AI&apos;s replies.</li>
           <li>
-            Redacts detected personal info (emails, phone numbers, cards, keys) to labels like{' '}
-            <span className="font-mono">[email]</span> before saving — on by default, tunable in
-            settings. Raw values never touch your library or exports.
+            Saves only what <em>you</em> type. The AI&apos;s answers are never recorded.
           </li>
-          <li>Lets you search, copy, tag, pin, export, import, and delete those prompts.</li>
+          <li>
+            Swaps personal details it recognises — emails, phone numbers, card numbers, passwords
+            and keys — for placeholders like <span className="font-mono text-xs">[email]</span>{' '}
+            before anything is saved. On by default. The real values are never written down, not
+            even in a backup.
+          </li>
+          <li>Lets you search, copy, tag, pin, back up, and delete any of it.</li>
         </ul>
       </section>
 
       <section className="flex flex-col gap-2">
-        <h3 className="font-mono text-xs text-ink-soft">What it never does</h3>
-        <ul className="flex list-disc flex-col gap-1 pl-5 text-ink-soft">
-          <li>No network calls. Nothing you type ever leaves your machine.</li>
-          <li>No telemetry, analytics, or tracking — not even anonymous usage stats.</li>
-          <li>No accounts, no cloud, no third-party services.</li>
-          <li>No reading or storing of the model&apos;s responses.</li>
+        <h3 className="text-sm font-semibold text-ink">What it never does</h3>
+        <ul className="flex list-disc flex-col gap-1.5 pl-5 text-ink-soft">
+          <li>Never sends anything over the internet. Nothing you type leaves this computer.</li>
+          <li>No tracking, no analytics, no usage statistics — not even anonymous ones.</li>
+          <li>No accounts, no cloud, no other companies involved.</li>
+          <li>Never reads password, verification-code, or payment boxes.</li>
         </ul>
       </section>
 
       <section className="flex flex-col gap-2">
-        <h3 className="font-mono text-xs text-ink-soft">It&apos;s your data</h3>
-        <ul className="flex list-disc flex-col gap-1 pl-5 text-ink-soft">
-          <li>Export everything to JSON or Markdown anytime, and import it back.</li>
+        <h3 className="text-sm font-semibold text-ink">It&apos;s yours</h3>
+        <ul className="flex list-disc flex-col gap-1.5 pl-5 text-ink-soft">
+          <li>Download everything as a document or a backup file whenever you like.</li>
           <li>
-            Pause capture anytime, switch off any site, or auto-pause in incognito — record only
-            what you want.
+            Pause Deja for a while, switch it off for a site, or let it pause itself in a private
+            window.
           </li>
-          <li>
-            Block a site or a regex pattern in settings so sensitive prompts are never stored.
-          </li>
-          <li>Clear all data in settings to erase the whole library permanently.</li>
+          <li>Tell it to never save from a particular site, in settings.</li>
+          <li>Delete everything, permanently, in one click.</li>
         </ul>
       </section>
 
       <section className="flex flex-col gap-2">
-        <h3 className="font-mono text-xs text-ink-soft">Sites it reads from</h3>
+        <h3 className="text-sm font-semibold text-ink">Where it runs</h3>
         <p className="text-ink-soft">
-          The extension only runs on these sites — you can audit the full list in the manifest:
+          Deja is only active on these five sites, and does nothing anywhere else:
         </p>
-        <ul className="flex flex-col gap-1 font-mono text-xs text-ink-soft">
+        <ul className="flex flex-col gap-1 text-xs text-ink-soft">
           {SITES.map((s) => (
             <li key={s.platform}>
-              {PLATFORM_LABEL[s.platform]} — {s.host}
+              {PLATFORM_LABEL[s.platform]} — <span className="font-mono">{s.host}</span>
             </li>
           ))}
         </ul>

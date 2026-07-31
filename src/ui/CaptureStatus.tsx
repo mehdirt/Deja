@@ -20,13 +20,13 @@ function dotClass(state: State): string {
 
 function titleFor(state: State, p: Platform): string {
   const label = PLATFORM_LABEL[p]
-  if (state === 'ok') return `Capture is working on ${label}`
+  if (state === 'ok') return `Deja is saving your prompts on ${label}`
   if (state === 'broken')
-    return `Couldn't find the prompt box on ${label} — the site may have changed. Capture there may be paused.`
-  return `Not checked yet — open ${label} and Deja starts listening`
+    return `Deja can't find the message box on ${label} — the site may have changed, so prompts there might not be saved.`
+  return `Deja hasn't seen ${label} yet — open it once and it'll start saving`
 }
 
-// A quiet at-a-glance proof that deja is actually listening. Stays
+// A quiet at-a-glance proof that Deja is actually listening. Stays
 // unobtrusive when all is well; speaks up only when a platform looks broken,
 // so a silently-broken selector can never masquerade as working capture.
 export function CaptureStatus() {
@@ -40,8 +40,8 @@ export function CaptureStatus() {
   const broken = PLATFORMS.filter((p) => stateFor(health, p) === 'broken')
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-ink-faint">
-      <span className="text-ink-soft">capture</span>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-ink-faint">
+      <span className="text-ink-soft">Saving on</span>
       {PLATFORMS.map((p) => {
         const state = stateFor(health, p)
         return (
@@ -55,7 +55,7 @@ export function CaptureStatus() {
       })}
       {broken.length > 0 && (
         <span className="text-danger">
-          · capture looks broken on {broken.map((p) => PLATFORM_LABEL[p]).join(', ')}
+          · Deja may not be saving on {broken.map((p) => PLATFORM_LABEL[p]).join(', ')} right now
         </span>
       )}
     </div>

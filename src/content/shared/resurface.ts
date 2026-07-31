@@ -13,9 +13,10 @@
 // host page is the opt-in insert, on an explicit click.
 //
 // Rendered inside a Shadow DOM so host-page CSS can't break the tooltip and
-// our CSS can't leak into the host page. Mirrors the "notebook meets terminal"
-// identity (warm paper / ink / indigo, JetBrains Mono for the mono bits) with
-// a handful of hardcoded colors and a dark-mode media query.
+// our CSS can't leak into the host page. Mirrors Deja's palette (warm paper /
+// ink / indigo) with a handful of hardcoded colors and a dark-mode media query.
+// Type is the system UI stack rather than Deja's bundled face: this overlay
+// should read as part of the page it sits on, not as a foreign widget.
 
 import type { Platform, SimilarMatch, SimilarResponse } from '@/lib/types'
 import { isCapturableField } from '@/lib/sensitive'
@@ -172,25 +173,26 @@ function createTooltip(onDismiss: () => void): Tooltip {
         display:flex;align-items:flex-start;gap:10px;text-align:left;cursor:pointer;
         background:#faf8f3;color:#1c1b19;border:1px solid #e7e2d8;
         border-radius:10px;padding:8px 10px;box-shadow:0 8px 28px rgba(0,0,0,.18);
-        font:13px/1.4 'Inter',system-ui,-apple-system,sans-serif;
+        font:13px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
         animation:dj-rs-in .14s ease-out;transition:opacity .1s ease}
       .dj-rs:hover{background:#f1ede4}
       .dj-rs:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
       .dj-rs-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
       .dj-rs-lead{display:flex;align-items:center;gap:6px;color:#5b54f0;font-weight:600;white-space:nowrap}
       .dj-rs-dot{width:6px;height:6px;border-radius:50%;background:#5b54f0;flex:none}
-      .dj-rs-preview{color:#6b6862;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-        font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(400px,calc(100vw - 80px))}
+      .dj-rs-preview{color:#6b6862;font-size:12px;white-space:nowrap;overflow:hidden;
+        text-overflow:ellipsis;max-width:min(400px,calc(100vw - 80px))}
       .dj-rs-meta{color:#9a968d;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
         max-width:min(400px,calc(100vw - 80px))}
       .dj-rs-meta:empty{display:none}
       .dj-rs-ctl{display:flex;align-items:center;gap:4px;flex:none;align-self:flex-start}
-      .dj-rs-count{color:#9a968d;font:600 10px/1 'JetBrains Mono',ui-monospace,monospace;white-space:nowrap}
+      .dj-rs-count{color:#9a968d;font-weight:600;font-size:10px;line-height:1;white-space:nowrap;
+        font-variant-numeric:tabular-nums}
       .dj-rs-all{pointer-events:auto;flex:none;background:none;border:none;cursor:pointer;white-space:nowrap;
-        color:#5b54f0;font:600 11px/1 'Inter',system-ui,sans-serif;padding:2px 5px;border-radius:6px}
+        color:#5b54f0;font-family:inherit;font-weight:600;font-size:11px;line-height:1;padding:2px 5px;border-radius:6px}
       .dj-rs-all:hover{background:#ecebfe}
       .dj-rs-next,.dj-rs-x{pointer-events:auto;flex:none;background:none;border:none;cursor:pointer;
-        color:#9a968d;font:600 14px/1 'JetBrains Mono',ui-monospace,monospace;
+        color:#9a968d;font-family:inherit;font-weight:600;font-size:14px;line-height:1;
         padding:2px 4px;border-radius:6px}
       .dj-rs-next:hover,.dj-rs-x:hover{background:#e7e2d8;color:#1c1b19}
       .dj-rs-all:focus-visible,.dj-rs-next:focus-visible,.dj-rs-x:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
@@ -251,7 +253,7 @@ function createTooltip(onDismiss: () => void): Tooltip {
 
     seeAllEl = document.createElement('span')
     seeAllEl.className = 'dj-rs-all'
-    seeAllEl.textContent = 'see all →'
+    seeAllEl.textContent = 'See all →'
     seeAllEl.addEventListener('click', (e) => {
       e.stopPropagation()
       seeAllHandler?.()
@@ -290,7 +292,8 @@ function createTooltip(onDismiss: () => void): Tooltip {
 
   const render = (view: CandidateView) => {
     if (previewEl) previewEl.textContent = view.preview
-    if (metaEl) metaEl.textContent = view.terms.length ? `matched on ${view.terms.join(', ')}` : ''
+    if (metaEl)
+      metaEl.textContent = view.terms.length ? `Because you mentioned ${view.terms.join(', ')}` : ''
     const multi = view.total > 1
     if (countEl) {
       countEl.textContent = multi ? `${view.index + 1}/${view.total}` : ''
@@ -492,7 +495,7 @@ export function attachResurface(
     }
     log('copied prior prompt to clipboard')
     confirming = true
-    tooltip.confirm('copied to clipboard ✓')
+    tooltip.confirm('Copied — paste it anywhere ✓')
     window.clearTimeout(confirmTimer)
     confirmTimer = window.setTimeout(hide, COPIED_CONFIRM_MS)
   }

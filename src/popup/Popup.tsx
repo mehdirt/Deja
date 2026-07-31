@@ -35,8 +35,8 @@ export function Popup() {
     return hits.map((h) => byId.get(h.id as number)).filter(Boolean) as Prompt[]
   }, [deferredQuery, prompts, index])
 
-  const onCopy = async (p: Prompt) => {
-    await navigator.clipboard.writeText(p.text)
+  const onCopy = async (p: Prompt, text?: string) => {
+    await navigator.clipboard.writeText(text ?? p.text)
     if (p.id) await touchUsage(p.id)
   }
 
@@ -47,7 +47,7 @@ export function Popup() {
       <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-line bg-bg/95 px-3 py-2.5 backdrop-blur">
         <Logo size={20} />
         <button onClick={openLibrary} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-          library →
+          All prompts →
         </button>
       </header>
 
@@ -59,8 +59,8 @@ export function Popup() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search your prompts"
-          placeholder="search your prompts…"
-          className="dj-input font-mono"
+          placeholder="Search your prompts"
+          className="dj-input"
         />
       </div>
 
@@ -71,14 +71,14 @@ export function Popup() {
           <div className="px-2 py-8 text-center text-sm text-ink-soft">
             {prompts.length === 0 ? (
               <>
-                <p className="text-ink">Nothing here yet — that&apos;s fine.</p>
+                <p className="text-ink">Nothing saved yet — that&apos;s normal.</p>
                 <p className="mt-1 text-ink-faint">
-                  Nothing to set up. Send a prompt on ChatGPT, Claude, Gemini, DeepSeek, or Grok and
-                  it lands here.
+                  There&apos;s nothing to set up. Ask ChatGPT, Claude, Gemini, DeepSeek, or Grok
+                  something, and it&apos;ll show up here.
                 </p>
               </>
             ) : (
-              <p className="text-ink-faint">No matches.</p>
+              <p className="text-ink-faint">Nothing matched that search.</p>
             )}
           </div>
         ) : (
