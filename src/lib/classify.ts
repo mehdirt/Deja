@@ -8,8 +8,10 @@
 //     soft flag on rows that still take up space. Set strength to 'off' to save
 //     everything. (Legacy soft-captured rows may still exist with `minor: true`;
 //     the library can reveal those under "filtered".)
-//   - The bar is deliberately CONSERVATIVE. We'd rather keep a borderline prompt
-//     than skip one the user wanted. Only obvious throwaways are skipped.
+//   - The bar is deliberately CONSERVATIVE. At the default ('balanced') we skip
+//     only exact conversational glue ("yes", "continue", …). The short/substance
+//     gate is reserved for 'strict'. We'd rather keep a borderline prompt than
+//     skip one the user wanted.
 //   - "Hard to remember & reusable" is the real target, but reusability is not
 //     detectable locally without a model (v1 ships zero LLM calls). So we proxy
 //     it with what we CAN measure: triviality, length, and structural substance.
@@ -21,17 +23,18 @@
 
 import type { FilterStrength } from './types'
 
-// At/under this many characters a prompt is "short" and must show some substance
-// (see hasSubstance) — or carry at least the words threshold — to be kept. The
-// 'strict' strength raises both bars so only longer / structured prompts survive.
-const SHORT_CHARS: Record<Exclude<FilterStrength, 'off'>, number> = { balanced: 35, strict: 80 }
-const RICH_WORDS: Record<Exclude<FilterStrength, 'off'>, number> = { balanced: 6, strict: 12 }
+// Short / substance gate — used only at 'strict'. 'balanced' skips exact throwaways
+// (and empty text) and keeps everything else, so the default matches what Settings
+// promises: skip “yes” / “continue”, not “ideas for date night”.
+const SHORT_CHARS = 60
+const RICH_WORDS = 10
 
 // Exact throwaway prompts: conversational glue that is never worth reusing.
 // Matched against the WHOLE normalized text (sans trailing punctuation), never
 // as a substring — so a bare "explain" is flagged while "explain the CAP
 // theorem" is untouched. Lowercase; keep this list tight and obvious.
 const TRIVIAL = new Set([
+  // Affirm / deny / acknowledge
   'yes',
   'no',
   'y',
@@ -46,6 +49,16 @@ const TRIVIAL = new Set([
   'nope',
   'yeah',
   'nah',
+  'got it',
+  'makes sense',
+  'sounds good',
+  'looks good',
+  "that's fine",
+  'thats fine',
+  'all good',
+  'done',
+  'finished',
+  // Thanks / praise
   'thanks',
   'thank you',
   'thank you!',
@@ -56,6 +69,12 @@ const TRIVIAL = new Set([
   'nice',
   'perfect',
   'cool',
+  'awesome',
+  'amazing',
+  'love it',
+  'works',
+  'working',
+  // Keep going / try again
   'continue',
   'go on',
   'go ahead',
@@ -65,6 +84,7 @@ const TRIVIAL = new Set([
   'more',
   'go',
   'do it',
+  'send it',
   'please',
   'please do',
   'ok do it',
@@ -75,9 +95,13 @@ const TRIVIAL = new Set([
   'redo',
   'retry',
   'rerun',
+  'try again',
+  'one more',
+  'another one',
   'fix it',
   'fix this',
   'undo',
+  // Bare verbs that are follow-ups, not requests
   'why',
   'how',
   'what',
@@ -95,12 +119,21 @@ const TRIVIAL = new Set([
   'shorten',
   'simplify',
   'translate',
+  'longer',
+  'shorter',
+  'more detail',
+  'less detail',
+  'be brief',
+  // Greetings / noise
   'hmm',
   'idk',
   'hi',
   'hello',
   'hey',
   'yo',
+  'lol',
+  'lmao',
+  'same',
   'test',
   'testing',
 ])
@@ -115,8 +148,15 @@ function normalize(text: string): string {
 // landlord", "explain gravity to a 6-year-old", "in 100 words, summarise this"),
 // and they're the everyday counterpart to a code fence — a cheap, local signal
 // that there was craft here worth keeping.
-const CRAFT_CUES =
-  /\b(as an?|act as|in the (style|tone|voice) of|style|tone|voice|formal|informal|casual|polite|friendly|professional|persuasive|concise|detailed|step by step|step-by-step|bullet|bullets|table|outline|draft|rewrite|translate|summari[sz]e|explain|compare|pros and cons|for (a|an|my|our)|to (a|an|my|our)|so that|without|make sure|avoid|include|in (english|spanish|french|german|italian|portuguese|arabic|persian|farsi|chinese|japanese|korean|hindi|russian|turkish|dutch))\b/i
+//
+// Kept fairly specific on purpose. Bare words like "style", "include", or "for"
+// alone would rescue half the short noise on the internet.
+const LANG =
+  'english|spanish|french|german|italian|portuguese|arabic|persian|farsi|chinese|japanese|korean|hindi|russian|turkish|dutch'
+const CRAFT_CUES = new RegExp(
+  String.raw`\b(as an?|act as|in the (style|tone|voice) of|formal|informal|casual|polite|friendly|professional|persuasive|concise|detailed|step by step|step-by-step|bullet points?|as a table|as (an? )?outline|rewrite|translate|summari[sz]e|explain|eli5|compare|pros and cons|for (a|an|my|our) |to (a|an|my|our) |for (kids|beginners)|so that|without|make sure|(in|to|into) (${LANG}))\b`,
+  'i',
+)
 
 // Signals that even a short prompt carries reusable substance and should be
 // kept. Any one of these rescues it from being skipped. Reads the RAW text so
@@ -136,12 +176,25 @@ function hasSubstance(text: string): boolean {
   if (/["“”'']{1}[^"“”'']{12,}["“”'']{1}/.test(text)) return true // quoted passage to work on
   // A quantity or limit — "5 ideas", "300 words", "two paragraphs". Real
   // constraints, and the kind of detail people don't want to retype.
-  if (/\b\d+\s*(word|words|character|characters|sentence|paragraph|bullet|item|idea|line|min)/i.test(text))
+  if (
+    /\b\d+\s*(word|words|character|characters|sentence|sentences|paragraph|paragraphs|bullet|bullets|item|items|idea|ideas|line|lines|min|mins|minute|minutes|day|days)\b/i.test(
+      text,
+    )
+  )
+    return true
+  // Spelled-out small counts people actually write: "two paragraphs", "five ideas".
+  if (
+    /\b(two|three|four|five|six|seven|eight|nine|ten)\s+(word|words|sentence|sentences|paragraph|paragraphs|bullet|bullets|idea|ideas|option|options|version|versions)\b/i.test(
+      text,
+    )
+  )
     return true
   const words = text.trim().split(/\s+/).length
   // A genuine question, not a one-word "why?".
   if (/\?/.test(text) && words >= 4) return true
-  if (words >= 4 && CRAFT_CUES.test(text)) return true
+  // Craft cues are already specific; two words is enough ("ELI5 photosynthesis",
+  // "translate to Spanish") — one-word bare cues like "formal" stay out.
+  if (words >= 2 && CRAFT_CUES.test(text)) return true
   return false
 }
 
@@ -153,9 +206,9 @@ export interface Classification {
 }
 
 /** Classify a prompt for selective capture at the given strength. Pure; safe to
- *  call in the capture hot path. Conservative by design — only obvious
- *  throwaways are skipped at 'balanced'; 'strict' also skips short non-structured
- *  prompts; 'off' keeps everything. */
+ *  call in the capture hot path. Conservative by design — 'balanced' skips only
+ *  obvious throwaways; 'strict' also skips short non-structured prompts; 'off'
+ *  keeps everything. */
 export function classifyPrompt(
   text: string,
   strength: FilterStrength = 'balanced',
@@ -166,8 +219,10 @@ export function classifyPrompt(
   // Strip trailing punctuation so "yes." / "continue!" still match the list.
   const bare = norm.replace(/[.!?…]+$/, '').trim()
   if (TRIVIAL.has(bare)) return { minor: true, reason: 'trivial' }
+  // Default: keep anything that isn't exact conversational glue.
+  if (strength === 'balanced') return { minor: false, reason: null }
   const words = bare ? bare.split(' ').length : 0
-  if (norm.length <= SHORT_CHARS[strength] && words < RICH_WORDS[strength] && !hasSubstance(text)) {
+  if (norm.length <= SHORT_CHARS && words < RICH_WORDS && !hasSubstance(text)) {
     return { minor: true, reason: 'short' }
   }
   return { minor: false, reason: null }

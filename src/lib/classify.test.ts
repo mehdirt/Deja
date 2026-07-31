@@ -16,10 +16,12 @@ describe('classifyPrompt', () => {
     expect(classifyPrompt('thanks…').minor).toBe(true)
   })
 
-  it('flags very short fragments with no substance as minor (short)', () => {
-    const c = classifyPrompt('make it blue')
-    expect(c.minor).toBe(true)
-    expect(c.reason).toBe('short')
+  it('at balanced, keeps short non-glue asks that strict would skip', () => {
+    for (const t of ['make it blue', 'ideas for date night', 'draft a resignation email']) {
+      expect(classifyPrompt(t, 'balanced').minor, t).toBe(false)
+      expect(classifyPrompt(t, 'strict').minor, t).toBe(true)
+      expect(classifyPrompt(t, 'strict').reason, t).toBe('short')
+    }
   })
 
   it('treats empty / whitespace-only as minor', () => {
@@ -40,22 +42,22 @@ describe('classifyPrompt', () => {
     ).toBe(false)
   })
 
-  it('rescues a short prompt that contains code', () => {
-    expect(classifyPrompt('fix `const x = 1`').minor).toBe(false)
-    expect(classifyPrompt('what does ```rm -rf``` do').minor).toBe(false)
+  it('rescues a short prompt that contains code (strict)', () => {
+    expect(classifyPrompt('fix `const x = 1`', 'strict').minor).toBe(false)
+    expect(classifyPrompt('what does ```rm -rf``` do', 'strict').minor).toBe(false)
   })
 
-  it('rescues a short prompt that contains a URL or file path', () => {
-    expect(classifyPrompt('summarize https://example.com/x').minor).toBe(false)
-    expect(classifyPrompt('explain main.py').minor).toBe(false)
+  it('rescues a short prompt that contains a URL or file path (strict)', () => {
+    expect(classifyPrompt('summarize https://example.com/x', 'strict').minor).toBe(false)
+    expect(classifyPrompt('explain main.py', 'strict').minor).toBe(false)
   })
 
-  it('rescues a short prompt with list structure or multiple sentences', () => {
-    expect(classifyPrompt('do this:\n- a\n- b').minor).toBe(false)
-    expect(classifyPrompt('Go left. Then stop.').minor).toBe(false)
+  it('rescues a short prompt with list structure or multiple sentences (strict)', () => {
+    expect(classifyPrompt('do this:\n- a\n- b', 'strict').minor).toBe(false)
+    expect(classifyPrompt('Go left. Then stop.', 'strict').minor).toBe(false)
   })
 
-  it('keeps a short-but-wordy prompt (>= RICH_WORDS words)', () => {
+  it('keeps a short-but-wordy prompt at balanced without needing craft cues', () => {
     expect(classifyPrompt('write a poem about a small cat').minor).toBe(false)
   })
 
@@ -65,6 +67,8 @@ describe('classifyPrompt', () => {
       'explain gravity to a 6 year old',
       'rewrite as a table',
       'say it in French',
+      'translate to Spanish',
+      'ELI5 photosynthesis',
     ]) {
       expect(classifyPrompt(t, 'strict').minor, t).toBe(false)
     }
@@ -82,6 +86,18 @@ describe('classifyPrompt', () => {
   it('still skips throwaways that merely happen to be questions', () => {
     expect(classifyPrompt('why?').minor).toBe(true)
     expect(classifyPrompt('really?').minor).toBe(true)
+  })
+
+  it('flags everyday acknowledgements and keep-going phrases as trivial', () => {
+    for (const t of ['got it', 'sounds good', 'try again', 'lol', 'more detail', 'send it']) {
+      const c = classifyPrompt(t)
+      expect(c.minor, t).toBe(true)
+      expect(c.reason, t).toBe('trivial')
+    }
+  })
+
+  it('rescues spelled-out small counts, not only digits', () => {
+    expect(classifyPrompt('give me five ideas', 'strict').minor).toBe(false)
   })
 
   it("strength 'off' keeps everything, even bare glue", () => {
@@ -104,5 +120,19 @@ describe('classifyPrompt', () => {
       ).minor,
     ).toBe(false)
     expect(classifyPrompt('fix `const x = 1`', 'strict').minor).toBe(false)
+  })
+
+  it('matches Settings golden examples for each strength', () => {
+    // balanced — skip glue, keep short real asks
+    expect(classifyPrompt('yes', 'balanced').minor).toBe(true)
+    expect(classifyPrompt('got it', 'balanced').minor).toBe(true)
+    expect(classifyPrompt('continue', 'balanced').minor).toBe(true)
+    expect(classifyPrompt('make it blue', 'balanced').minor).toBe(false)
+    expect(classifyPrompt('ideas for date night', 'balanced').minor).toBe(false)
+    // strict — skip short fragments, keep composed asks
+    expect(classifyPrompt('make it blue', 'strict').minor).toBe(true)
+    expect(classifyPrompt('try again', 'strict').minor).toBe(true)
+    expect(classifyPrompt('explain gravity to a 6-year-old', 'strict').minor).toBe(false)
+    expect(classifyPrompt('plan 3 days of dinners', 'strict').minor).toBe(false)
   })
 })
