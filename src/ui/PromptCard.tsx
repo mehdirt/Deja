@@ -1,12 +1,16 @@
 import { forwardRef, useState } from 'react'
 import type { Prompt } from '@/lib/types'
 import { PLATFORM_COLOR, PLATFORM_LABEL } from '@/lib/types'
-import { relativeTime, truncate } from '@/lib/format'
+import { conversationUrl, relativeTime, truncate } from '@/lib/format'
+import { isTemplate } from '@/lib/template'
 import { PinIcon } from '@/ui/PinIcon'
+import { TemplateFill } from '@/ui/TemplateFill'
 
 interface Props {
   prompt: Prompt
-  onCopy: (p: Prompt) => void
+  /** `text` overrides what lands on the clipboard — used when a template has
+   *  been filled in. Usage is still counted against the original prompt. */
+  onCopy: (p: Prompt, text?: string) => void
   onDelete?: (p: Prompt) => void
   onTogglePin?: (p: Prompt) => void
   onAddTag?: (p: Prompt, tag: string) => void
@@ -47,17 +51,22 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
   const [copied, setCopied] = useState(false)
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState('')
+  const [filling, setFilling] = useState(false)
 
   const tags = prompt.tags ?? []
   const pinned = prompt.pinned ?? false
   const minor = prompt.minor ?? false
+  const chatUrl = conversationUrl(prompt.url)
+  // Blanks are only offered in the full library — the popup is a glance surface
+  // and a form doesn't belong there.
+  const fillable = !compact && isTemplate(prompt.text)
   // A near-white dot (ChatGPT) would vanish on the light card — give it a
   // hairline ring so it's always visible.
   const dotColor = PLATFORM_COLOR[prompt.platform]
   const dotLight = dotColor.toLowerCase() === '#fff' || dotColor.toLowerCase() === '#ffffff'
 
-  const handleCopy = () => {
-    onCopy(prompt)
+  const handleCopy = (text?: string) => {
+    onCopy(prompt, text)
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1200)
   }
@@ -87,7 +96,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
               className="h-3.5 w-3.5 accent-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             />
           )}
-          <span className="dj-chip font-mono">
+          <span className="dj-chip">
             <span
               className="h-1.5 w-1.5 rounded-full"
               style={{
@@ -100,23 +109,32 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
           </span>
           {minor && (
             <span
-              className="dj-chip font-mono text-ink-faint"
-              title="A short throwaway prompt — hidden from your library and resurface by default"
+              className="dj-chip text-ink-faint"
+              title="A short one-off Deja used to hide instead of skipping"
             >
-              minor
+              Short
             </span>
           )}
         </span>
-        <span className="flex items-center gap-2 font-mono text-xs text-ink-faint">
+        <span className="dj-meta flex items-center gap-2">
           {pinned && <PinIcon filled className="text-accent" />}
           {relativeTime(prompt.createdAt)}
-          {prompt.usageCount > 0 && ` · used ${prompt.usageCount}×`}
+          {prompt.usageCount > 0 && ` · reused ${prompt.usageCount}×`}
         </span>
       </div>
 
-      <p className="whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-ink">
-        {truncate(prompt.text, compact ? 160 : 600)}
-      </p>
+      <p className="dj-prompt">{truncate(prompt.text, compact ? 160 : 600)}</p>
+
+      {filling && (
+        <TemplateFill
+          text={prompt.text}
+          onFilled={(text) => {
+            setFilling(false)
+            handleCopy(text)
+          }}
+          onCancel={() => setFilling(false)}
+        />
+      )}
 
       {(tags.length > 0 || (!compact && onAddTag)) && (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -162,9 +180,9 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
                     setAdding(false)
                   }
                 }}
-                placeholder="tag…"
+                placeholder="Add a tag"
                 aria-label="Add a tag"
-                className="dj-input w-24 px-2 py-0.5 font-mono text-[11px]"
+                className="dj-input w-28 px-2 py-0.5 text-[11px]"
               />
             ) : (
               <button
@@ -179,6 +197,19 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
       )}
 
       <div className="flex items-center justify-end gap-1 pt-1">
+        {/* Only shown when the captured URL points at a real conversation —
+            see conversationUrl(). */}
+        {!compact && chatUrl && (
+          <a
+            href={chatUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open the conversation where you sent this"
+            className="dj-btn dj-btn-ghost mr-auto px-2 py-1 text-xs"
+          >
+            Open chat ↗
+          </a>
+        )}
         {minor && onKeepMinor && (
           <button
             onClick={() => onKeepMinor(prompt)}
@@ -186,7 +217,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             title="Keep this in your library"
             className="dj-btn dj-btn-ghost px-2 py-1 text-xs hover:text-accent"
           >
-            keep
+            Keep
           </button>
         )}
         {onTogglePin && (
@@ -196,7 +227,7 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             aria-pressed={pinned}
             className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
           >
-            {pinned ? 'unpin' : 'pin'}
+            {pinned ? 'Unpin' : 'Pin'}
           </button>
         )}
         {onDelete && (
@@ -205,17 +236,26 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             aria-label="Delete prompt"
             className="dj-btn dj-btn-ghost px-2 py-1 text-xs hover:text-danger"
           >
-            delete
+            Delete
           </button>
         )}
         <button
-          onClick={handleCopy}
+          onClick={() => handleCopy()}
           aria-label="Copy prompt to clipboard"
           aria-live="polite"
-          className="dj-btn dj-btn-primary min-w-[68px] px-2 py-1 text-xs"
+          className={`dj-btn min-w-[76px] px-2 py-1 text-xs ${fillable ? '' : 'dj-btn-primary'}`}
         >
-          {copied ? 'copied ✓' : 'copy'}
+          {copied ? 'Copied ✓' : fillable ? 'Copy as is' : 'Copy'}
         </button>
+        {fillable && !filling && (
+          <button
+            onClick={() => setFilling(true)}
+            title="This prompt has blanks in it — fill them in before copying"
+            className="dj-btn dj-btn-primary px-2 py-1 text-xs"
+          >
+            Fill in &amp; copy
+          </button>
+        )}
       </div>
     </div>
   )
