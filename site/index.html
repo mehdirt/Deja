@@ -3,23 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Deja — your personal prompt library</title>
+    <title>Deja — your prompts, every AI, one library</title>
     <meta
       name="description"
-      content="Deja passively saves the prompts you send to ChatGPT, Claude, Gemini, DeepSeek, and Grok into a local, searchable library — and resurfaces the right one while you type. Local-first. No account. No cloud."
+      content="Deja saves the prompts you send to ChatGPT, Claude, Gemini, DeepSeek, and Grok into a private library on your computer — and brings the right one back when you start typing again. Free. No account. No cloud."
     />
     <!-- Open Graph / social -->
-    <meta property="og:title" content="Deja — your personal prompt library" />
+    <meta property="og:title" content="Deja — your prompts, every AI, one library" />
     <meta
       property="og:description"
-      content="Your prompts are work. Deja keeps them, makes them findable, and resurfaces the right one while you type the next. Local-first, no account, no cloud."
+      content="Your prompts are work. Deja keeps them on your computer and offers them back when you start to re-ask. Free, no account, no cloud."
     />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Deja — your personal prompt library" />
+    <meta name="twitter:title" content="Deja — your prompts, every AI, one library" />
     <meta
       name="twitter:description"
-      content="Your prompts are work. Deja keeps them, makes them findable, and resurfaces the right one while you type the next. Local-first, no account, no cloud."
+      content="Your prompts are work. Deja keeps them on your computer and offers them back when you start to re-ask. Free, no account, no cloud."
     />
     <!-- Theme the browser chrome to match light/dark; let form controls follow too. -->
     <meta name="color-scheme" content="light dark" />
@@ -31,12 +31,35 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b54f0'/%3E%3Crect x='7' y='7' width='13' height='13' rx='3.5' fill='white' opacity='0.4'/%3E%3Crect x='12' y='12' width='13' height='13' rx='3.5' fill='white' opacity='0.95'/%3E%3Crect x='15' y='17' width='2.4' height='3.6' rx='0.6' fill='%235b54f0'/%3E%3C/svg%3E"
     />
     <!--
-      No web fonts, no analytics, no third-party requests — on purpose. A page
-      that sells a privacy-first product shouldn't phone home either.
-      "Add to Chrome" points at the live Chrome Web Store listing; Source links
-      point at the public GitHub repo.
+      Fonts are bundled under fonts/ — never fetched from a CDN. No analytics,
+      no third-party requests. A page that sells a privacy-first product
+      shouldn't phone home either.
     -->
     <style>
+      @font-face {
+        font-family: 'Figtree Variable';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 300 900;
+        src: url('fonts/figtree-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: 'Figtree Variable';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 300 900;
+        src: url('fonts/figtree-latin-ext.woff2') format('woff2');
+        unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
+      @font-face {
+        font-family: 'JetBrains Mono Variable';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 100 800;
+        src: url('fonts/jetbrains-mono-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
       :root {
         --bg: #faf8f3;
         --surface: #ffffff;
@@ -49,8 +72,8 @@
         --accent-soft: #ecebfe;
         --line: #e7e2d8;
         --ok: #2f9e63;
-        --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        --mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         --maxw: 980px;
         --radius: 16px;
         --shadow-sm: 0 1px 2px rgba(28, 27, 25, 0.04), 0 1px 3px rgba(28, 27, 25, 0.06);
@@ -113,7 +136,7 @@
       header nav a:hover { color: var(--ink); }
 
       .eyebrow {
-        font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint);
+        font-size: 13px; letter-spacing: 0.02em; color: var(--ink-faint); font-weight: 500;
       }
 
       /* Hero */
@@ -136,8 +159,8 @@
       /* Block-level (display:flex, not inline-flex) so the caption always sits on
          its OWN line under the button — inline-flex let it ride up beside the
          button when there was room. */
-      .cta-sub { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-      .cta-sub .kbd { border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--ink-soft); }
+      .cta-sub { font-size: 13px; color: var(--ink-faint); margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+      .cta-sub .kbd { font-family: var(--mono); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--ink-soft); }
 
       /* The moment, illustrated — animated. Tooltip sits ABOVE the composer in
          normal flow (never covers it) and fades in/out with the typed text. */
@@ -156,15 +179,15 @@
       .tooltip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex: none; }
       .tooltip .t-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
       .tooltip .lead { color: var(--accent); font-weight: 600; font-size: 13px; }
-      .tooltip .preview { color: var(--ink-soft); font-family: var(--mono); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px; }
-      .tooltip .meta { color: var(--ink-faint); font-size: 10px; }
-      .tooltip .count { color: var(--ink-faint); font-family: var(--mono); font-weight: 600; font-size: 10px; flex: none; margin-top: 2px; }
+      .tooltip .preview { color: var(--ink-soft); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px; }
+      .tooltip .meta { color: var(--ink-faint); font-size: 11px; }
+      .tooltip .count { color: var(--ink-faint); font-weight: 600; font-size: 11px; flex: none; margin-top: 2px; font-variant-numeric: tabular-nums; }
       .composer {
         display: flex; align-items: center; gap: 11px; border: 1px solid var(--line); border-radius: 14px;
         background: var(--surface); padding: 14px 14px 14px 14px; box-shadow: var(--shadow-sm);
       }
       .composer .plat {
-        flex: none; display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px;
+        flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500;
         color: var(--ink-soft); background: var(--sunk); border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px;
       }
       .composer .plat .pdot { width: 7px; height: 7px; border-radius: 50%; background: #10a37f; }
@@ -188,7 +211,7 @@
       .step-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
       .step .num {
         width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: #fff;
-        font-family: var(--mono); font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; justify-content: center;
+        font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; justify-content: center;
       }
       .step .ic { color: var(--ink-faint); }
       .step h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -0.01em; }
@@ -249,9 +272,9 @@
       .footer-brand { max-width: 320px; }
       .footer-brand .brand { margin-bottom: 14px; }
       .footer-brand p { margin: 0; color: var(--ink-soft); line-height: 1.6; }
-      .footer-brand .footer-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); margin-top: 14px; }
+      .footer-brand .footer-meta { font-size: 13px; color: var(--ink-faint); margin-top: 14px; }
       .footer-cols { display: flex; gap: 56px; flex-wrap: wrap; }
-      .footer-col h4 { margin: 0 0 12px; font-size: 11px; font-family: var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; }
+      .footer-col h4 { margin: 0 0 12px; font-size: 13px; color: var(--ink-faint); font-weight: 600; }
       .footer-col a { display: block; color: var(--ink-soft); padding: 4px 0; }
       .footer-col a:hover { color: var(--accent); text-decoration: none; }
       .footer-bottom {
@@ -302,12 +325,12 @@
             <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity="0.95" />
             <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--accent)" />
           </svg>
-          <span class="eyebrow">your prompts · every ai · one library</span>
+          <span class="eyebrow">Your prompts · every AI · one library</span>
           <h1>Your prompts are work.<br />Stop <span class="accent">losing</span> them.</h1>
           <p class="lead">
-            You perfect a prompt, get a great answer — then it's gone in the scroll. Deja saves every
-            prompt you send across ChatGPT, Claude, Gemini, DeepSeek, and Grok, and slips the right
-            one back to you the moment you start to type it again.
+            You finally get the wording right — then it disappears into a chat you’ll never scroll
+            back through. Deja saves what you ask ChatGPT, Claude, Gemini, DeepSeek, and Grok, and
+            offers it back when you start to ask again.
           </p>
           <div class="cta-row">
             <a class="cta" href="https://chromewebstore.google.com/detail/deja/kighkbbfofcpkgjkpjmggmlhhhabobdp">
@@ -318,7 +341,7 @@
             >
           </div>
           <p class="cta-sub">
-            <span>free</span><span>·</span><span>local-first</span><span>·</span><span>no sign-up</span>
+            <span>Free</span><span>·</span><span>stays on your computer</span><span>·</span><span>no sign-up</span>
             <span>·</span><span>open with <span class="kbd">⌘⇧K</span></span>
           </p>
 
@@ -328,14 +351,14 @@
               <span class="dot"></span>
               <div class="t-body">
                 <div class="lead" id="m-lead">You've asked something like this before →</div>
-                <div class="preview" id="m-prev">write a bash script that backs up my postgres db every night…</div>
-                <div class="meta" id="m-meta">matched on backup, postgres</div>
+                <div class="preview" id="m-prev">Write a short, friendly email to my landlord about the broken heater…</div>
+                <div class="meta" id="m-meta">Because you mentioned landlord, heater</div>
               </div>
               <span class="count" id="m-count">1/3</span>
             </div>
             <div class="composer">
               <span class="plat"><span class="pdot" id="m-pdot" style="background:#fff; box-shadow: inset 0 0 0 1px var(--line)"></span><span id="m-pname">ChatGPT</span></span>
-              <span class="ctext"><span id="m-type">back up my postgres db nightly</span><span class="cursor"></span></span>
+              <span class="ctext"><span id="m-type">email my landlord about the heater</span><span class="cursor"></span></span>
               <span class="send" id="m-send" aria-hidden="true">↵</span>
             </div>
           </div>
@@ -345,11 +368,11 @@
       <section id="how">
         <div class="wrap">
           <div class="section-head">
-            <span class="eyebrow">how it works</span>
-            <h2>It works the way memory should — quietly</h2>
+            <span class="eyebrow">How it works</span>
+            <h2>It works the way memory should</h2>
             <p class="section-lead">
-              Three steps, and you only do the first one. No buttons, no copy-paste, no folders to
-              keep tidy — you work exactly as you do today and Deja does the remembering.
+              Three steps — you only do the first. Ask questions the way you already do; Deja does
+              the remembering.
             </p>
           </div>
 
@@ -359,16 +382,16 @@
                 <span class="num">1</span>
                 <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 3z"/><path d="M8 10h8M8 13h5"/></svg>
               </div>
-              <h3>Prompt like you always do</h3>
-              <p>Keep using ChatGPT, Claude, Gemini, DeepSeek, and Grok. Hit Enter — there's nothing new to learn and nothing to click.</p>
+              <h3>Ask like you always do</h3>
+              <p>Keep using ChatGPT, Claude, Gemini, DeepSeek, and Grok. Hit Enter — nothing new to learn.</p>
             </li>
             <li class="step">
               <div class="step-top">
                 <span class="num">2</span>
                 <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7.5" width="11" height="11" rx="2.5"/><rect x="9.5" y="3.5" width="11" height="11" rx="2.5"/></svg>
               </div>
-              <h3>Deja remembers — privately</h3>
-              <p>Every prompt lands in a local library on your machine. Searchable, taggable, and never sent anywhere.</p>
+              <h3>Deja saves it — privately</h3>
+              <p>Every prompt lands in a library on this computer. Searchable, reusable, and never sent anywhere.</p>
             </li>
             <li class="step">
               <div class="step-top">
@@ -376,7 +399,7 @@
                 <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-8.5 6"/><path d="M3 4v4h4"/><path d="m12 8 0 4 3 2"/></svg>
               </div>
               <h3>The right one comes back</h3>
-              <p>Start typing something you've asked before and your best past version floats up — one click to reuse it.</p>
+              <p>Start typing something you’ve asked before and your earlier version appears — one click to reuse it.</p>
             </li>
           </ol>
 
@@ -385,22 +408,22 @@
               <span class="ic" aria-hidden="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m20.5 20.5-4-4"/></svg>
               </span>
-              <h3>Find it in seconds</h3>
-              <p>Fuzzy search, tags, pins, and favorites. Sort by newest, most-used, or longest-unseen — built for a library of hundreds.</p>
+              <h3>Find it when you half-remember</h3>
+              <p>Search forgives plurals, spellings, and everyday synonyms. Fill blanks like {topic} when you reuse a prompt.</p>
             </div>
             <div class="card">
               <span class="ic" aria-hidden="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="17" r="2"/></svg>
               </span>
               <h3>Yours to control</h3>
-              <p>Pause capture in one click, switch off any site, or auto-pause in incognito. Filter out throwaways so only the keepers stay.</p>
+              <p>Pause saving in one click, turn Deja off for any site, or let it pause itself in a private window. Skip short throwaways so only the keepers stay.</p>
             </div>
             <div class="card">
               <span class="ic" aria-hidden="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
               </span>
               <h3>Yours to keep</h3>
-              <p>Export and import JSON, export Markdown, or wipe everything instantly. No lock-in, ever.</p>
+              <p>Download a document or full backup anytime. Wipe everything in one click. No lock-in.</p>
             </div>
           </div>
         </div>
@@ -409,9 +432,9 @@
       <section id="tools">
         <div class="wrap">
           <div class="section-head center">
-            <span class="eyebrow">one library, every assistant</span>
-            <h2>Works where you already work</h2>
-            <p class="section-lead">No single AI lab will let your prompt history follow you to a competitor. Deja will.</p>
+            <span class="eyebrow">One library, every assistant</span>
+            <h2>Works where you already ask</h2>
+            <p class="section-lead">No single AI carries your history to another. Deja does.</p>
           </div>
           <div class="tools">
             <span class="tool"><span class="pdot" style="background:#fff; box-shadow: inset 0 0 0 1px var(--line)"></span> ChatGPT</span>
@@ -420,36 +443,36 @@
             <span class="tool"><span class="pdot" style="background:#4d6bfe"></span> DeepSeek</span>
             <span class="tool"><span class="pdot" style="background:#71767b"></span> Grok</span>
           </div>
-          <p class="tools-note">Switch tools whenever you like — your craft comes with you, the same library on every site.</p>
+          <p class="tools-note">Switch tools anytime — your questions come with you.</p>
         </div>
       </section>
 
       <section id="privacy">
         <div class="wrap">
           <div class="privacy">
-            <span class="eyebrow">privacy</span>
+            <span class="eyebrow">Privacy</span>
             <h2 style="margin-top: 8px">Private by design — not by promise</h2>
-            <p class="section-lead">Deja can't leak what it never sends. Everything stays in your browser.</p>
+            <p class="section-lead">Deja can’t leak what it never sends. Everything stays on your computer.</p>
             <ul class="plist">
               <li>
                 <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
-                <span><strong>No network calls, no telemetry, no analytics.</strong> Nothing you type ever leaves your machine.</span>
+                <span><strong>No network calls, no tracking, no analytics.</strong> Nothing you type ever leaves your machine.</span>
               </li>
               <li>
                 <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
-                <span><strong>No accounts, no cloud, no third parties.</strong> Your library lives on your machine, in your browser (local IndexedDB).</span>
+                <span><strong>No accounts, no cloud, no other companies.</strong> Your library lives in your browser, on this device.</span>
               </li>
               <li>
                 <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
-                <span><strong>Only your prompt text</strong> is saved — never the AI's replies.</span>
+                <span><strong>Only what you type</strong> is saved — never the AI’s answers.</span>
               </li>
               <li>
                 <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
-                <span><strong>Credential-aware.</strong> Password, one-time-code, and payment fields are never read.</span>
+                <span><strong>Personal details can be hidden</strong> before anything is saved — emails, phone numbers, cards, and keys become placeholders like <span style="font-family:var(--mono);font-size:12px">[email]</span>.</span>
               </li>
               <li>
                 <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
-                <span><strong>Pause anytime.</strong> One click stops capture everywhere; incognito windows are paused by default.</span>
+                <span><strong>Pause anytime.</strong> One click stops saving everywhere; private windows are paused by default.</span>
               </li>
             </ul>
           </div>
@@ -464,11 +487,11 @@
               <rect x="12" y="12" width="15" height="15" rx="3.5" fill="#fff" />
             </svg>
             <div class="closing-inner">
-              <span class="eyebrow">ready when you are</span>
-              <h2>Stop rewriting prompts you've already perfected.</h2>
-              <p class="sub">Install once, keep working exactly as you do, and let Deja remember the rest.</p>
+              <span class="eyebrow">Get Deja</span>
+              <h2>Stop rewriting questions you’ve already asked well.</h2>
+              <p class="sub">Install once, keep asking the way you do — Deja remembers the rest.</p>
               <a class="cta-inv" href="https://chromewebstore.google.com/detail/deja/kighkbbfofcpkgjkpjmggmlhhhabobdp">Add to Chrome — free</a>
-              <p class="cta-sub"><span>free</span><span>·</span><span>local-first</span><span>·</span><span>no sign-up</span></p>
+              <p class="cta-sub"><span>Free</span><span>·</span><span>stays on your computer</span><span>·</span><span>no sign-up</span></p>
             </div>
           </div>
         </div>
@@ -488,8 +511,8 @@
               </svg>
               <span class="word">de<span class="ja">ja</span></span>
             </span>
-            <p>Your personal prompt library — quietly captured across every AI you use, and resurfaced the moment you need it.</p>
-            <p class="footer-meta">Local-first · No account · No cloud</p>
+            <p>Your personal prompt library — saved across every AI you use, offered back when you need it.</p>
+            <p class="footer-meta">Stays on your computer · No account · No cloud</p>
           </div>
           <div class="footer-cols">
             <div class="footer-col">
@@ -535,18 +558,18 @@
         // `dot` is the circle next to the platform name (white + ring for
         // ChatGPT); `color` is the brand color used for the send button.
         var samples = [
-          { platform: 'ChatGPT', color: '#10a37f', dot: '#fff', typed: 'back up my postgres db nightly',
+          { platform: 'ChatGPT', color: '#10a37f', dot: '#fff', typed: 'email my landlord about the heater',
             lead: "You've asked something like this before →",
-            preview: 'write a bash script that backs up my postgres db every night…',
-            meta: 'matched on backup, postgres', count: '1/3' },
-          { platform: 'Claude', color: '#d97757', dot: '#d97757', typed: 'summarize these notes',
+            preview: 'Write a short, friendly email to my landlord about the broken heater…',
+            meta: 'Because you mentioned landlord, heater', count: '1/3' },
+          { platform: 'Claude', color: '#d97757', dot: '#d97757', typed: 'explain this simply',
             lead: "You've written something like this →",
-            preview: 'summarize the attached notes into five key bullet points…',
-            meta: 'matched on notes, summary', count: '1/2' },
-          { platform: 'Gemini', color: '#4285f4', dot: '#4285f4', typed: 'make this function pure',
+            preview: 'Explain gravity to me like I know nothing about it, with one real-world comparison…',
+            meta: 'Because you mentioned explain, simply', count: '1/2' },
+          { platform: 'Gemini', color: '#4285f4', dot: '#4285f4', typed: 'plan a weekend trip',
             lead: 'Seen this one before →',
-            preview: 'refactor this code into a pure, testable function…',
-            meta: 'matched on function, pure', count: '1/4' }
+            preview: 'Plan a relaxed 2-day trip for two, with a simple packing list and one rainy-day option…',
+            meta: 'Because you mentioned plan, trip', count: '1/4' }
         ];
 
         function paintDot(s) {

@@ -6,7 +6,7 @@
     <title>Privacy Policy — Deja</title>
     <meta
       name="description"
-      content="Deja's privacy policy: your prompts are stored locally in your browser and never leave your machine. No network calls, no telemetry, no accounts."
+      content="Deja's privacy policy: your prompts stay on your computer and never leave. No network calls, no tracking, no accounts."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)" />
@@ -15,8 +15,32 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b54f0'/%3E%3Crect x='7' y='7' width='13' height='13' rx='3.5' fill='white' opacity='0.4'/%3E%3Crect x='12' y='12' width='13' height='13' rx='3.5' fill='white' opacity='0.95'/%3E%3Crect x='15' y='17' width='2.4' height='3.6' rx='0.6' fill='%235b54f0'/%3E%3C/svg%3E"
     />
-    <!-- Like the landing page: no web fonts, no analytics, no third-party requests. -->
+    <!-- Fonts bundled under fonts/ — no CDN, no analytics, no third-party requests. -->
     <style>
+      @font-face {
+        font-family: 'Figtree Variable';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 300 900;
+        src: url('fonts/figtree-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: 'Figtree Variable';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 300 900;
+        src: url('fonts/figtree-latin-ext.woff2') format('woff2');
+        unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
+      @font-face {
+        font-family: 'JetBrains Mono Variable';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 100 800;
+        src: url('fonts/jetbrains-mono-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
       :root {
         --bg: #faf8f3;
         --surface: #ffffff;
@@ -27,8 +51,8 @@
         --accent: #5b54f0;
         --line: #e7e2d8;
         --ok: #2f9e63;
-        --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        --mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -62,9 +86,9 @@
       header nav a:hover { color: var(--ink); }
 
       main { padding: 24px 0 64px; }
-      .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 10px; }
+      .eyebrow { font-size: 13px; font-weight: 500; color: var(--ink-faint); margin: 0 0 10px; }
       h1 { font-size: clamp(30px, 5vw, 40px); letter-spacing: -0.03em; line-height: 1.1; margin: 0 0 8px; }
-      .updated { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); margin: 0 0 28px; }
+      .updated { font-size: 13px; color: var(--ink-faint); margin: 0 0 28px; }
       .tldr {
         background: var(--sunk); border: 1px solid var(--line); border-radius: 14px;
         padding: 18px 20px; margin: 0 0 36px; color: var(--ink-soft); font-size: 15.5px;
@@ -81,7 +105,7 @@
       }
       table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14.5px; }
       th, td { text-align: left; padding: 8px 12px; border: 1px solid var(--line); color: var(--ink-soft); }
-      th { color: var(--ink); font-weight: 600; background: var(--sunk); font-family: var(--mono); font-size: 12.5px; }
+      th { color: var(--ink); font-weight: 600; background: var(--sunk); font-size: 13px; }
       footer { border-top: 1px solid var(--line); padding: 28px 0 48px; color: var(--ink-faint); font-size: 14px; }
       footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
     </style>
@@ -104,81 +128,79 @@
 
     <main>
       <div class="wrap">
-        <p class="eyebrow">privacy policy</p>
+        <p class="eyebrow">Privacy policy</p>
         <h1>Private by design — not by promise.</h1>
-        <p class="updated">Last updated: July 18, 2026 · Applies to the Deja browser extension</p>
+        <p class="updated">Last updated: July 31, 2026 · Applies to the Deja browser extension</p>
 
         <div class="tldr">
-          <strong>The short version:</strong> Deja stores the prompts you type in a local database
-          inside your own browser. It makes <strong>no network calls of any kind</strong> — nothing
-          you type, and no usage data, ever leaves your machine. There is no server, no account, no
-          analytics, and no third party. This page can be short because there is almost nothing to
-          disclose.
+          <strong>The short version:</strong> Deja stores the prompts you type in your browser, on
+          this computer. It makes <strong>no network calls</strong> — nothing you type, and no usage
+          data, ever leaves your machine. No server, no account, no analytics. This page is short
+          because there is almost nothing to disclose.
         </div>
 
-        <h2>What Deja collects and stores</h2>
+        <h2>What Deja saves</h2>
         <ul>
           <li>
-            <strong>Prompt text you submit</strong> on the supported sites below, saved to a local
-            database (IndexedDB) in your browser profile — on your device, nowhere else.
+            <strong>The prompts you send</strong> on the supported sites below, saved into your
+            browser’s own storage on this device — nowhere else.
           </li>
           <li>
-            <strong>Your settings</strong> (capture preferences, blocklist rules, capture-health
-            status), saved in the browser's local extension storage on your device.
+            <strong>Your settings</strong> (what gets saved, where Deja works, privacy rules), also
+            stored only on this device.
           </li>
           <li>
             <strong>Nothing else.</strong> Deja does not collect browsing history, page content, AI
-            responses, or any usage/telemetry data.
+            answers, or any usage or tracking data.
           </li>
         </ul>
 
         <h2>What Deja never does</h2>
         <ul>
-          <li><strong>No network transmission.</strong> The extension makes no requests to any server. Your data cannot leak because it is never sent.</li>
-          <li><strong>No telemetry or analytics</strong> — not even anonymous usage statistics or crash reports.</li>
-          <li><strong>No accounts, no cloud, no third-party services.</strong></li>
-          <li><strong>No reading of the AI's responses</strong> — only the prompt text you type is saved.</li>
-          <li><strong>No credential capture.</strong> Password, one-time-code, and payment fields are structurally excluded from capture, and saved URLs are stripped of query strings and fragments.</li>
+          <li><strong>Never sends anything over the internet.</strong> Your data cannot leak, because it is never sent.</li>
+          <li><strong>No tracking or analytics</strong> — not even anonymous usage statistics or crash reports.</li>
+          <li><strong>No accounts, no cloud, no other companies.</strong></li>
+          <li><strong>Never reads the AI’s answers</strong> — only the text you type is saved.</li>
+          <li><strong>Never reads password, verification-code, or payment boxes.</strong> Saved page links are shortened so they don’t keep search strings or private fragments.</li>
         </ul>
 
         <h2>Built-in protections</h2>
         <ul>
           <li>
-            <strong>Personal-info redaction (on by default).</strong> Before a prompt is saved,
-            detected personal information — email addresses, phone numbers, credit-card numbers,
-            API keys and similar secrets — is replaced with labels like <code>[email]</code>. The
-            raw values never reach the database or your exports. Tunable per category in settings.
+            <strong>Hide personal info (on by default).</strong> Before a prompt is saved, details
+            Deja recognises — email addresses, phone numbers, card numbers, API keys and similar
+            secrets — are replaced with placeholders like <code>[email]</code>. The real values
+            never reach your library or any backup you download. You can turn categories on or off
+            in settings.
           </li>
-          <li><strong>Pause anytime.</strong> One click pauses all capture; individual sites can be switched off; incognito windows are auto-paused by default.</li>
-          <li><strong>Blocklist.</strong> You can block sites or regex patterns so matching prompts are never stored.</li>
+          <li><strong>Pause anytime.</strong> One click stops saving everywhere; you can turn off any site; private windows are paused by default.</li>
+          <li><strong>Never save from…</strong> You can block a whole site, or add a text rule so matching prompts are never stored.</li>
         </ul>
 
         <h2>Where your data lives, and how to delete it</h2>
-        <p>
-          Everything lives in your browser profile on your device. You are in full control:
-        </p>
+        <p>Everything lives in your browser profile on your device. You are in full control:</p>
         <ul>
-          <li><strong>Export</strong> your entire library as JSON or Markdown at any time — no lock-in.</li>
-          <li><strong>Delete</strong> individual prompts (undoable), purge deleted prompts permanently, or erase everything with "Clear all data" in settings.</li>
-          <li><strong>Uninstalling the extension</strong> removes the extension's local database.</li>
+          <li><strong>Download</strong> your library as a readable document or a full backup anytime — no lock-in.</li>
+          <li><strong>Delete</strong> individual prompts (you can undo), erase deleted prompts for good, or wipe everything from settings.</li>
+          <li><strong>Uninstalling the extension</strong> removes Deja’s local data with it.</li>
         </ul>
 
-        <h2>Sites the extension runs on</h2>
-        <p>Deja's content scripts run only on these sites — the list is auditable in the extension manifest:</p>
+        <h2>Where Deja runs</h2>
+        <p>Deja is only active on these sites — you can check the full list in the extension’s manifest:</p>
         <table>
-          <tr><th>Platform</th><th>Hosts</th></tr>
-          <tr><td>ChatGPT</td><td>chatgpt.com, chat.openai.com</td></tr>
-          <tr><td>Claude</td><td>claude.ai</td></tr>
-          <tr><td>Gemini</td><td>gemini.google.com</td></tr>
-          <tr><td>DeepSeek</td><td>chat.deepseek.com</td></tr>
-          <tr><td>Grok</td><td>grok.com</td></tr>
+          <tr><th>Site</th><th>Address</th></tr>
+          <tr><td>ChatGPT</td><td><code>chatgpt.com</code>, <code>chat.openai.com</code></td></tr>
+          <tr><td>Claude</td><td><code>claude.ai</code></td></tr>
+          <tr><td>Gemini</td><td><code>gemini.google.com</code></td></tr>
+          <tr><td>DeepSeek</td><td><code>chat.deepseek.com</code></td></tr>
+          <tr><td>Grok</td><td><code>grok.com</code></td></tr>
         </table>
 
         <h2>Permissions, explained</h2>
         <ul>
           <li><code>storage</code> — save your library and settings locally in the browser.</li>
-          <li><code>alarms</code> — clear the "capture paused" toolbar badge when a timed pause ends. Local only.</li>
-          <li><strong>Host access</strong> (the five sites above) — read the prompt box you type into, so prompts can be saved and similar past prompts resurfaced. Deja reads only the prompt composer, never other page content.</li>
+          <li><code>alarms</code> — clear the “paused” toolbar badge when a timed pause ends. Local only.</li>
+          <li><strong>Access to the five sites above</strong> — read the message box you type into, so prompts can be saved and similar past prompts offered back. Deja reads only that composer, never other page content.</li>
         </ul>
 
         <h2>Data sharing and selling</h2>
@@ -189,16 +211,16 @@
 
         <h2>Changes to this policy</h2>
         <p>
-          If Deja's data practices ever change (for example, an optional cloud-sync feature), this
-          policy will be updated before that change ships, the "Last updated" date will change, and
-          any new data flow will be strictly opt-in — never a silent default.
+          If Deja’s data practices ever change (for example, an optional cloud backup), this policy
+          will be updated before that change ships, the “Last updated” date will change, and any new
+          data flow will be strictly opt-in — never a silent default.
         </p>
 
         <h2>Contact</h2>
         <p>
           Questions or concerns: open an issue on
-          <a href="https://github.com/mehdirt/Deja/issues">GitHub</a>, or use the feedback
-          links inside the extension's settings — they open a prefilled issue you review and submit
+          <a href="https://github.com/mehdirt/Deja/issues">GitHub</a>, or use the feedback links
+          inside the extension’s settings — they open a prefilled message you review and send
           yourself; nothing is reported automatically.
         </p>
       </div>
@@ -207,7 +229,7 @@
     <footer>
       <div class="wrap">
         <span>Deja — your prompts, every AI, one library.</span>
-        <span><a href="index.html">deja home</a></span>
+        <span><a href="index.html">Deja home</a></span>
       </div>
     </footer>
   </body>
