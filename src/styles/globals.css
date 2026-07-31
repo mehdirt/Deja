@@ -3,12 +3,53 @@
 @tailwind utilities;
 
 /* ──────────────────────────────────────────────────────────────
-   Deja design tokens — "notebook meets terminal"
+   Deja design tokens — "warm notebook"
    Single source of truth for the visual identity. Themed via
-   CSS variables so light/dark come from one place. No web fonts
-   (offline + local-first); we rely on locally installed faces
-   with system fallbacks.
+   CSS variables so light/dark come from one place.
+
+   Fonts are BUNDLED (src/assets/fonts), never fetched: naming a
+   font family we don't ship means most people fall back to
+   whatever their OS supplies, so the design only ever looked
+   right on machines that happened to have it installed.
    ────────────────────────────────────────────────────────────── */
+
+/* Figtree — the reading and UI face. Variable, so one file covers
+   every weight we use. */
+@font-face {
+  font-family: 'Figtree Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url('../assets/fonts/figtree-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Figtree Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 900;
+  src: url('../assets/fonts/figtree-latin-ext.woff2') format('woff2');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+/* JetBrains Mono — reserved for things that are literally code or
+   keys: the wordmark, keyboard hints, and code inside a prompt. */
+@font-face {
+  font-family: 'JetBrains Mono Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  src: url('../assets/fonts/jetbrains-mono-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   --dj-bg: #faf8f3; /* warm paper */
   --dj-surface: #ffffff; /* raised cards */
@@ -23,8 +64,9 @@
   --dj-danger: #c0392b;
   --dj-ok: #2f9e63; /* capture healthy */
 
-  --dj-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --dj-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --dj-font-sans: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --dj-font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -53,6 +95,19 @@ body {
 @layer components {
   .dj-card {
     @apply rounded-card border border-line bg-surface shadow-card;
+  }
+
+  /* The prompt text itself. Sans, generously spaced: this is something a
+     person reads, not a code listing. */
+  .dj-prompt {
+    @apply whitespace-pre-wrap break-words text-[15px] leading-[1.6] text-ink;
+  }
+
+  /* Timestamps, counts, "3 prompts saved" — quiet, and tabular so numbers
+     don't jitter as they change. */
+  .dj-meta {
+    @apply text-xs text-ink-faint;
+    font-variant-numeric: tabular-nums;
   }
 
   .dj-chip {
@@ -94,7 +149,7 @@ body {
   /* user tag — small, quiet, clickable to filter */
   .dj-tag {
     @apply inline-flex items-center gap-1 rounded-full border border-line bg-sunk px-2 py-0.5;
-    @apply font-mono text-[11px] text-ink-soft transition-colors hover:text-ink;
+    @apply text-[11px] font-medium text-ink-soft transition-colors hover:text-ink;
   }
   .dj-tag-active {
     @apply border-accent bg-accent-soft text-accent;
