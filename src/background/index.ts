@@ -190,6 +190,26 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
   return undefined
 })
 
+// ── First run ─────────────────────────────────────────────────────────────────
+// Deja does its work invisibly, so the failure mode after install isn't a
+// confusing setup screen — it's nothing happening and the extension being
+// forgotten. Open the welcome view once, on install only (never on update).
+
+try {
+  chrome.runtime.onInstalled.addListener((details) => {
+    if (details.reason !== 'install') return
+    try {
+      void chrome.tabs.create({
+        url: chrome.runtime.getURL('src/options/index.html?welcome=1'),
+      })
+    } catch {
+      /* tabs unavailable — skip; the extension still works */
+    }
+  })
+} catch {
+  /* onInstalled unavailable — ignore */
+}
+
 // ── Pause badge ───────────────────────────────────────────────────────────────
 // A quiet toolbar badge so a paused state is visible at a glance (and can't be
 // forgotten). Capture itself resumes on its own — the content gate checks the
