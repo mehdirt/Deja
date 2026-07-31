@@ -484,7 +484,7 @@ export function Library() {
             {prompts.length === 0 ? (
               <div className="flex flex-col gap-8">
                 <div>
-                  <p className="text-ink">Nothing here yet — take your time.</p>
+                  <p className="text-ink">Nothing here yet — take your time 🌱</p>
                   <p className="mt-1 text-ink-faint">
                     Ask ChatGPT, Claude, Gemini, DeepSeek, or Grok something the way you always do,
                     and it&apos;ll show up here on its own. Or borrow one of the starters below if

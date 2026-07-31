@@ -71,7 +71,7 @@ export function Popup() {
           <div className="px-2 py-8 text-center text-sm text-ink-soft">
             {prompts.length === 0 ? (
               <>
-                <p className="text-ink">Your library is empty for now — that&apos;s perfectly fine.</p>
+                <p className="text-ink">Your library is empty for now — that&apos;s perfectly fine 🌱</p>
                 <p className="mt-1 text-ink-faint">
                   Nothing to set up. Ask ChatGPT, Claude, Gemini, DeepSeek, or Grok something, and
                   it&apos;ll land here gently on its own.

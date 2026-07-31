@@ -21,43 +21,43 @@ export interface StarterPrompt {
 
 export const STARTER_PROMPTS: StarterPrompt[] = [
   {
-    kind: 'Email',
+    kind: '✉️ Email',
     text: 'Write a short, friendly email to {who} about {situation}. Keep it under 120 words, warm but direct, and end with a clear next step.',
   },
   {
-    kind: 'Email',
+    kind: '✉️ Email',
     text: 'Rewrite the message below so it sounds calm and professional, without losing what it actually says:\n\n{paste your message here}',
   },
   {
-    kind: 'Learning',
+    kind: '📚 Learning',
     text: 'Explain {topic} to me as if I know nothing about it. Use a real-world comparison, then tell me the one thing most people get wrong about it.',
   },
   {
-    kind: 'Learning',
+    kind: '📚 Learning',
     text: 'I want to learn {skill} in {how much time}. Give me a realistic week-by-week plan, and say what to skip.',
   },
   {
-    kind: 'Deciding',
+    kind: '🤔 Deciding',
     text: "Help me think through {decision}. Give me the strongest case for each option, then tell me what you'd want to know before choosing.",
   },
   {
-    kind: 'Writing',
+    kind: '✍️ Writing',
     text: 'Write three versions of a {kind of post} about {topic}: one plain, one playful, one thoughtful. No hashtags, no emoji.',
   },
   {
-    kind: 'Writing',
+    kind: '✍️ Writing',
     text: 'Summarise the text below in five bullet points a busy person could read in twenty seconds:\n\n{paste the text here}',
   },
   {
-    kind: 'Everyday',
+    kind: '🏠 Everyday',
     text: 'Plan {number} days of simple dinners for {how many people}, using ordinary supermarket ingredients. Give me one shopping list at the end.',
   },
   {
-    kind: 'Everyday',
+    kind: '🏠 Everyday',
     text: "I need to tell {who} that {awkward thing}. Give me three ways to say it kindly, and tell me which one you'd pick.",
   },
   {
-    kind: 'Work',
+    kind: '💼 Work',
     text: 'Turn these rough notes into a clear update for {audience}. Lead with what changed, keep it to one short paragraph plus bullets:\n\n{paste your notes here}',
   },
 ]

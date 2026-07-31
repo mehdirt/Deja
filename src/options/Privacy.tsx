@@ -15,7 +15,7 @@ export function Privacy() {
   return (
     <div className="flex max-w-2xl flex-col gap-7 text-sm leading-relaxed">
       <section className="flex flex-col gap-2">
-        <h2 className="text-base font-semibold text-ink">Privacy, plainly</h2>
+        <h2 className="text-base font-semibold text-ink">Privacy, plainly 🔒</h2>
         <p className="text-ink-soft">
           Your prompts stay on your computer and nowhere else — so you can use Deja without
           worrying. It&apos;s a quiet notebook in your browser, not a service. There&apos;s no

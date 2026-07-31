@@ -12,6 +12,17 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') },
   },
+  // CRXJS injects Vite's HMR client into the extension. Without an explicit
+  // port, Vite bakes `ws://localhost:undefined` into the client and Chrome
+  // throws on construct (crxjs/chrome-extension-tools#696).
+  server: {
+    port: 5173,
+    strictPort: true,
+    hmr: {
+      host: 'localhost',
+      port: 5173,
+    },
+  },
   build: {
     outDir: 'dist',
     sourcemap: true,

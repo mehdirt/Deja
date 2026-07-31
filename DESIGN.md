@@ -78,7 +78,7 @@ Warm, cozy, and plain — like a kind friend showing you around, not a product p
 
 **Sentence case everywhere** — headings, buttons, labels, pills, empty states, status messages. ("Copy", "Download a backup", "Nothing saved yet — that's normal.") The old all-lowercase convention for controls is gone: it was part of the terminal costume, and it made the interface feel like a config file.
 
-**Emojis, sparingly.** A warm greeting emoji (🤗) is welcome on the post-install screen — that's the one moment where a hug of a hello earns its place. Don't sprinkle emoji through settings, cards, or everyday chrome; comfort comes mostly from tone and clarity, not decoration.
+**Emojis, where they earn their place.** A warm greeting (🤗) on first install is the clearest yes. A single emoji can also soften an empty state, a tip heading, a starter category, or a feedback prompt — moments that feel human. Don't decorate buttons, settings pills, status chrome, or every sentence; if it starts to feel like a sticker sheet, take them back out.
 
 **Say the plain thing.** The vocabulary is the largest single signal of who a product is for, so prefer the everyday word:
 

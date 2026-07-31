@@ -22,7 +22,10 @@ export function StarterPrompts() {
   return (
     <section className="flex flex-col gap-3 text-left">
       <div className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-ink">Not sure what to ask? That&apos;s okay.</h2>
+        <h2 className="text-base font-semibold text-ink">
+          Not sure what to ask? That&apos;s okay{' '}
+          <span aria-hidden="true">💡</span>
+        </h2>
         <p className="text-sm leading-relaxed text-ink-soft">
           Here are a few friendly starters to borrow. Fill in the blanks, paste one into ChatGPT
           (or wherever you like), and it&apos;ll be waiting here afterwards — no pressure.

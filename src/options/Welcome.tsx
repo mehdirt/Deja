@@ -69,7 +69,9 @@ export function Welcome({ onDone }: { onDone: () => void }) {
         <h2 className="text-base font-semibold text-ink">Two gentle tips</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="dj-card flex flex-col gap-1.5 p-4">
-            <h3 className="text-sm font-semibold text-ink">Keep Deja close by</h3>
+            <h3 className="text-sm font-semibold text-ink">
+              <span aria-hidden="true">📌 </span>Keep Deja close by
+            </h3>
             <p className="text-sm leading-relaxed text-ink-soft">
               Click the puzzle-piece icon at the top right of Chrome and pin Deja, so your prompts
               are always one click away. You can also press{' '}
@@ -84,7 +86,9 @@ export function Welcome({ onDone }: { onDone: () => void }) {
             </p>
           </div>
           <div className="dj-card flex flex-col gap-1.5 p-4">
-            <h3 className="text-sm font-semibold text-ink">Your words stay here</h3>
+            <h3 className="text-sm font-semibold text-ink">
+              <span aria-hidden="true">🔒 </span>Your words stay here
+            </h3>
             <p className="text-sm leading-relaxed text-ink-soft">
               No account, no cloud, no tracking — nothing leaves this computer. Personal details
               like emails and phone numbers can be swapped for placeholders before anything is
@@ -95,7 +99,10 @@ export function Welcome({ onDone }: { onDone: () => void }) {
       </section>
 
       <div className="flex flex-col items-center gap-3 border-t border-line pt-6">
-        <p className="text-center text-sm text-ink-soft">Ready when you are — no rush.</p>
+        <p className="text-center text-sm text-ink-soft">
+          Ready when you are — no rush{' '}
+          <span aria-hidden="true">☕</span>
+        </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <a
             href="https://chatgpt.com"

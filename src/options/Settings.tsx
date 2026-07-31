@@ -826,7 +826,7 @@ export function Settings() {
 
       {/* Feedback — user-initiated, no telemetry */}
       <Section
-        title="Tell me what you think"
+        title="Tell me what you think 💬"
         description="Found something confusing, or wish Deja did something it doesn't? I'd love to hear it. Nothing is ever sent automatically — these open a message you read and send yourself."
       >
         <div className="flex flex-wrap gap-2">
@@ -836,7 +836,7 @@ export function Settings() {
             rel="noopener noreferrer"
             className="dj-btn px-3 py-1.5 text-sm"
           >
-            Something&apos;s broken
+            Something&apos;s broken 🛠️
           </a>
           <a
             href={feedbackHref('idea', undefined, version)}
@@ -844,7 +844,7 @@ export function Settings() {
             rel="noopener noreferrer"
             className="dj-btn dj-btn-ghost px-3 py-1.5 text-sm"
           >
-            I have an idea
+            I have an idea 💡
           </a>
         </div>
         {version && <p className="dj-meta">Deja v{version}</p>}
