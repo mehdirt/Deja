@@ -4,23 +4,21 @@ import {
   softDelete,
   restore,
   touchUsage,
-  exportAll,
   togglePin,
   addTag,
   removeTag,
   bulkSoftDelete,
   bulkRestore,
-  importPrompts,
   setMinor,
 } from '@/lib/db'
 import { readPrefs, onPrefsChange } from '@/lib/prefs'
 import { buildIndex, searchPrompts } from '@/lib/search'
-import { buildMarkdown } from '@/lib/markdown'
 import { usefulnessScore } from '@/lib/ranking'
 import { PromptCard } from '@/ui/PromptCard'
 import { SkeletonList } from '@/ui/Skeleton'
 import { PinIcon } from '@/ui/PinIcon'
 import { CaptureStatus } from '@/ui/CaptureStatus'
+import { StarterPrompts } from '@/ui/StarterPrompts'
 import { PLATFORM_LABEL, type Platform, type Prompt } from '@/lib/types'
 
 const PLATFORMS: Array<{ key: Platform | 'all'; label: string }> = [
@@ -30,10 +28,10 @@ const PLATFORMS: Array<{ key: Platform | 'all'; label: string }> = [
 
 type Sort = 'newest' | 'most-useful' | 'most-used' | 'longest-unseen'
 const SORTS: Array<{ key: Sort; label: string }> = [
-  { key: 'newest', label: 'newest' },
-  { key: 'most-useful', label: 'most useful' },
-  { key: 'most-used', label: 'most used' },
-  { key: 'longest-unseen', label: 'longest unseen' },
+  { key: 'newest', label: 'Newest first' },
+  { key: 'most-useful', label: 'Most useful' },
+  { key: 'most-used', label: 'Reused most' },
+  { key: 'longest-unseen', label: "Haven't used in a while" },
 ]
 
 export function Library() {
@@ -67,7 +65,6 @@ export function Library() {
   const [selecting, setSelecting] = useState(false)
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set())
   const [undoBatch, setUndoBatch] = useState<number[] | null>(null)
-  const [importMsg, setImportMsg] = useState<string | null>(null)
 
   const searchRef = useRef<HTMLInputElement>(null)
   const selectedRef = useRef<HTMLDivElement>(null)
@@ -158,8 +155,10 @@ export function Library() {
     selectedRef.current?.scrollIntoView({ block: 'nearest' })
   }, [selected])
 
-  const onCopy = useCallback(async (p: Prompt) => {
-    await navigator.clipboard.writeText(p.text)
+  // `text` is the filled-in version when the prompt had blanks; usage still
+  // counts against the original, since that's the prompt being reused.
+  const onCopy = useCallback(async (p: Prompt, text?: string) => {
+    await navigator.clipboard.writeText(text ?? p.text)
     if (p.id) await touchUsage(p.id)
   }, [])
 
@@ -257,7 +256,8 @@ export function Library() {
     reload()
   }, [undoBatch, reload])
 
-  // Keyboard ergonomics — this is a power-user tool.
+  // Keyboard shortcuts for people who want them. Everything here is also
+  // reachable by mouse — nothing is keyboard-only.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const active = document.activeElement
@@ -305,95 +305,13 @@ export function Library() {
 
   useEffect(() => () => window.clearTimeout(undoTimer.current), [])
 
-  const fileRef = useRef<HTMLInputElement>(null)
-
-  function download(content: string, type: string, ext: string) {
-    const blob = new Blob([content], { type })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `deja-${new Date().toISOString().slice(0, 10)}.${ext}`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const onExport = async () => {
-    const all = await exportAll()
-    download(JSON.stringify(all, null, 2), 'application/json', 'json')
-  }
-
-  // Markdown export — one readable .md file. buildMarkdown filters out
-  // soft-deleted rows and picks a fence longer than any backtick run in the
-  // text so multi-line / code prompts survive the round trip.
-  const onExportMarkdown = async () => {
-    const all = await exportAll()
-    download(buildMarkdown(all), 'text/markdown', 'md')
-  }
-
-  const onPickImport = () => fileRef.current?.click()
-
-  const onImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = '' // allow re-importing the same file
-    if (!file) return
-    setImportMsg(null)
-    try {
-      const parsed = JSON.parse(await file.text())
-      // A deja export is a JSON array of prompts. Anything else parses
-      // fine but isn't ours — say so plainly instead of reporting "imported 0",
-      // which reads like a successful no-op.
-      if (!Array.isArray(parsed)) {
-        setImportMsg("That file isn't a Deja export")
-        return
-      }
-      const res = await importPrompts(parsed)
-      setImportMsg(`Imported ${res.imported} · skipped ${res.skipped}`)
-      reload()
-    } catch {
-      setImportMsg("Couldn't read that file — expected a Deja JSON export")
-    }
-  }
-
   return (
     <div className="flex flex-col gap-5">
       <header className="flex items-center justify-between gap-2">
-        <p className="font-mono text-xs text-ink-faint">
-          {shownCount} {shownCount === 1 ? 'prompt' : 'prompts'} · stored locally
+        <p className="dj-meta">
+          {shownCount} {shownCount === 1 ? 'prompt' : 'prompts'} · saved on this device
         </p>
-        <div className="flex items-center gap-2">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/json,.json"
-            onChange={onImportFile}
-            className="hidden"
-            aria-hidden
-          />
-          <button onClick={onPickImport} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-            import json
-          </button>
-          <button
-            onClick={onExportMarkdown}
-            disabled={prompts.length === 0}
-            className="dj-btn px-2 py-1 text-xs disabled:opacity-40"
-          >
-            export markdown
-          </button>
-          <button
-            onClick={onExport}
-            disabled={prompts.length === 0}
-            className="dj-btn px-2 py-1 text-xs disabled:opacity-40"
-          >
-            export json
-          </button>
-        </div>
       </header>
-
-      {importMsg && (
-        <div className="rounded-btn border border-line bg-sunk px-3 py-2 font-mono text-xs text-ink-soft">
-          {importMsg}
-        </div>
-      )}
 
       <CaptureStatus />
 
@@ -404,8 +322,8 @@ export function Library() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search your prompts"
-          placeholder="search your prompts…"
-          className="dj-input pr-12 font-mono"
+          placeholder="Search your prompts"
+          className="dj-input pr-12"
         />
         <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">
           ⌘K
@@ -452,14 +370,14 @@ export function Library() {
               />
             </span>
             <PinIcon filled={favoritesOnly} />
-            <span className={favoritesOnly ? 'text-ink' : undefined}>favorites</span>
+            <span className={favoritesOnly ? 'text-ink' : undefined}>Favorites</span>
           </button>
         </div>
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as Sort)}
           aria-label="Sort prompts"
-          className="dj-input w-auto py-1 font-mono text-xs"
+          className="dj-input w-auto py-1 text-xs"
         >
           {SORTS.map((s) => (
             <option key={s.key} value={s.key}>
@@ -487,9 +405,9 @@ export function Library() {
           {activeTags.length > 0 && (
             <button
               onClick={() => setActiveTags([])}
-              className="dj-btn dj-btn-ghost px-2 py-0.5 font-mono text-[11px]"
+              className="dj-btn dj-btn-ghost px-2 py-0.5 text-[11px]"
             >
-              clear tags
+              Clear tags
             </button>
           )}
         </div>
@@ -498,17 +416,17 @@ export function Library() {
       <div className="flex items-center justify-between gap-2">
         {selecting ? (
           <>
-            <span className="font-mono text-xs text-ink-faint">{checkedIds.size} selected</span>
+            <span className="dj-meta">{checkedIds.size} selected</span>
             <div className="flex gap-2">
               <button onClick={exitSelecting} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-                cancel
+                Cancel
               </button>
               <button
                 onClick={onBulkDelete}
                 disabled={checkedIds.size === 0}
                 className="dj-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
               >
-                delete selected
+                Delete selected
               </button>
             </div>
           </>
@@ -516,9 +434,9 @@ export function Library() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSelecting(true)}
-              className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs"
+              className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
             >
-              select
+              Select several
             </button>
             {/* Legacy soft-capture rows only — new throwaways are never stored.
                 Hidden when there are none, or when the filter is off entirely. */}
@@ -526,12 +444,12 @@ export function Library() {
               <button
                 onClick={() => setShowMinor((v) => !v)}
                 aria-pressed={showMinor}
-                title="Throwaways saved under the old hide-instead-of-skip behavior — keep or delete"
-                className={`dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs ${
+                title="Short one-offs Deja used to hide instead of skipping — keep or delete them"
+                className={`dj-btn dj-btn-ghost px-2 py-1 text-xs ${
                   showMinor ? 'text-ink' : 'text-ink-faint'
                 }`}
               >
-                {showMinor ? 'hide filtered' : `filtered (${minorCount})`}
+                {showMinor ? 'Hide short ones' : `Short ones (${minorCount})`}
               </button>
             )}
           </div>
@@ -540,12 +458,9 @@ export function Library() {
 
       {undoId != null && (
         <div className="flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
-          <span className="text-ink-soft">prompt deleted</span>
-          <button
-            onClick={onUndoDelete}
-            className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs"
-          >
-            undo
+          <span className="text-ink-soft">Prompt deleted.</span>
+          <button onClick={onUndoDelete} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
+            Undo
           </button>
         </div>
       )}
@@ -553,10 +468,10 @@ export function Library() {
       {undoBatch != null && (
         <div className="flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
           <span className="text-ink-soft">
-            {undoBatch.length} {undoBatch.length === 1 ? 'prompt' : 'prompts'} deleted
+            {undoBatch.length} {undoBatch.length === 1 ? 'prompt' : 'prompts'} deleted.
           </span>
-          <button onClick={onUndoBatch} className="dj-btn dj-btn-ghost px-2 py-1 font-mono text-xs">
-            undo
+          <button onClick={onUndoBatch} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
+            Undo
           </button>
         </div>
       )}
@@ -567,15 +482,18 @@ export function Library() {
         ) : visible.length === 0 ? (
           <div className="py-16 text-center text-sm">
             {prompts.length === 0 ? (
-              <>
-                <p className="text-ink">Nothing here yet — that&apos;s fine.</p>
-                <p className="mt-1 text-ink-faint">
-                  Nothing to set up. Send a prompt on ChatGPT, Claude, Gemini, DeepSeek, or Grok and
-                  it lands here automatically.
-                </p>
-              </>
+              <div className="flex flex-col gap-8">
+                <div>
+                  <p className="text-ink">Nothing saved yet — that&apos;s normal.</p>
+                  <p className="mt-1 text-ink-faint">
+                    There&apos;s nothing to set up. Ask ChatGPT, Claude, Gemini, DeepSeek, or Grok
+                    something, and it&apos;ll show up here on its own.
+                  </p>
+                </div>
+                <StarterPrompts />
+              </div>
             ) : (
-              <p className="text-ink-faint">No matches for this filter.</p>
+              <p className="text-ink-faint">Nothing matched. Try a different word or filter.</p>
             )}
           </div>
         ) : (
