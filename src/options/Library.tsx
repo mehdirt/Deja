@@ -458,6 +458,21 @@ export function Library() {
                 onClick={() => setSelecting(true)}
                 className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
               >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="2" y="2" width="5" height="5" rx="1" />
+                  <rect x="9" y="2" width="5" height="5" rx="1" />
+                  <path d="M2.5 11.5h5M11 9.5l1 1.5 2.5-3" />
+                </svg>
                 Select several
               </button>
               {/* Legacy soft-capture rows only — new throwaways are never stored.
