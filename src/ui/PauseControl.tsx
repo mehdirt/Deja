@@ -76,9 +76,9 @@ export function PauseControl() {
   if (paused) {
     const label = remainingLabel(pauseUntil, now)
     return (
-      <div className="flex items-center justify-between gap-2 rounded-btn border border-[#c98a2b]/40 bg-[#c98a2b]/10 px-3 py-1.5">
-        <span className="inline-flex items-center gap-2 text-xs font-medium text-[#c98a2b]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#c98a2b]" aria-hidden />
+      <div className="flex items-center justify-between gap-2 rounded-btn border border-warn/40 bg-warn/10 px-3 py-1.5">
+        <span className="inline-flex items-center gap-2 text-xs font-medium text-warn">
+          <span className="h-1.5 w-1.5 rounded-full bg-warn" aria-hidden />
           Paused{label ? ` · ${label}` : ''}
         </span>
         <button onClick={resume} className="dj-btn dj-btn-ghost px-2 py-0.5 text-xs">
@@ -99,9 +99,13 @@ export function PauseControl() {
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="menu"
           aria-expanded={open}
-          className="dj-btn dj-btn-ghost px-2 py-0.5 text-xs"
+          className="dj-btn dj-btn-ghost gap-1 px-2 py-0.5 text-xs"
         >
-          ⏸ Pause
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <rect x="3" y="2" width="3.5" height="12" rx="1" />
+            <rect x="9.5" y="2" width="3.5" height="12" rx="1" />
+          </svg>
+          Pause
         </button>
       </div>
       {open && (

@@ -21,6 +21,7 @@ export default {
         line: 'var(--dj-line)',
         danger: 'var(--dj-danger)',
         ok: 'var(--dj-ok)',
+        warn: 'var(--dj-warn)',
       },
       fontFamily: {
         sans: 'var(--dj-font-sans)',

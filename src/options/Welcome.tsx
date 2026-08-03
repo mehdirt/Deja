@@ -74,7 +74,7 @@ export function Welcome({ onDone }: { onDone: () => void }) {
             </h3>
             <p className="text-sm leading-relaxed text-ink-soft">
               Click the puzzle-piece icon at the top right of Chrome and pin Deja, so your prompts
-              are always one click away. You can also press{' '}
+              are always one click away. Or press{' '}
               <kbd className="rounded border border-line px-1.5 py-0.5 font-mono text-[11px]">
                 ⌘⇧K
               </kbd>{' '}
@@ -82,7 +82,11 @@ export function Welcome({ onDone }: { onDone: () => void }) {
               <kbd className="rounded border border-line px-1.5 py-0.5 font-mono text-[11px]">
                 Ctrl+Shift+K
               </kbd>
-              ) whenever you like.
+              ) any time to open it — that&apos;s different from the plain{' '}
+              <kbd className="rounded border border-line px-1.5 py-0.5 font-mono text-[11px]">
+                ⌘K
+              </kbd>{' '}
+              you&apos;ll use later to search inside your library.
             </p>
           </div>
           <div className="dj-card flex flex-col gap-1.5 p-4">
