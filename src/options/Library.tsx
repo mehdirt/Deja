@@ -330,62 +330,83 @@ export function Library() {
         </kbd>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by platform">
-            {PLATFORMS.map((p) => (
-              <button
-                key={p.key}
-                role="tab"
-                aria-selected={platform === p.key}
-                onClick={() => setPlatform(p.key)}
-                className={`dj-pill ${platform === p.key ? 'dj-pill-active' : ''}`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+      {/* Filtering, sorting, and favoriting only make sense once there's
+          something to filter, sort, or favorite — showing this whole row on
+          an empty library is pure clutter for a first-time visitor. */}
+      {prompts.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by platform">
+              {PLATFORMS.map((p) => (
+                <button
+                  key={p.key}
+                  role="tab"
+                  aria-selected={platform === p.key}
+                  onClick={() => setPlatform(p.key)}
+                  className={`dj-pill ${platform === p.key ? 'dj-pill-active' : ''}`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
 
-          {/* favorites = pinned only. A switch, not a filter pill: the platform
-              tabs are single-select (radio-like), so an identical-looking pill
-              hid that this is an independent on/off toggle. The divider + track
-              make its state unmistakable. */}
-          <span className="mx-0.5 h-4 w-px bg-line" aria-hidden />
-          <button
-            role="switch"
-            aria-checked={favoritesOnly}
-            aria-label="Show favorites only"
-            onClick={() => setFavoritesOnly((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-line px-2 py-1 text-xs font-medium text-ink-soft transition-colors hover:bg-sunk focus:outline-none focus:ring-2 focus:ring-accent"
-          >
-            <span
-              className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
-                favoritesOnly ? 'bg-accent' : 'bg-line'
-              }`}
+            {/* favorites = pinned only. A switch, not a filter pill: the platform
+                tabs are single-select (radio-like), so an identical-looking pill
+                hid that this is an independent on/off toggle. The divider + track
+                make its state unmistakable. */}
+            <span className="mx-0.5 h-4 w-px bg-line" aria-hidden />
+            <button
+              role="switch"
+              aria-checked={favoritesOnly}
+              aria-label="Show favorites only"
+              onClick={() => setFavoritesOnly((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-line px-2 py-1 text-xs font-medium text-ink-soft transition-colors hover:bg-sunk focus:outline-none focus:ring-2 focus:ring-accent"
             >
               <span
-                className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
-                  favoritesOnly ? 'translate-x-[14px]' : 'translate-x-0.5'
+                className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+                  favoritesOnly ? 'bg-accent' : 'bg-line'
                 }`}
+              >
+                <span
+                  className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
+                    favoritesOnly ? 'translate-x-[14px]' : 'translate-x-0.5'
+                  }`}
+                />
+              </span>
+              <PinIcon filled={favoritesOnly} />
+              <span className={favoritesOnly ? 'text-ink' : undefined}>Favorites</span>
+            </button>
+          </div>
+          <div className="relative">
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as Sort)}
+              aria-label="Sort prompts"
+              className="dj-input w-auto appearance-none py-1 pr-7 text-xs"
+            >
+              {SORTS.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+            <svg
+              aria-hidden
+              viewBox="0 0 20 20"
+              className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint"
+            >
+              <path
+                d="M5.5 8l4.5 4.5L14.5 8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
-            </span>
-            <PinIcon filled={favoritesOnly} />
-            <span className={favoritesOnly ? 'text-ink' : undefined}>Favorites</span>
-          </button>
+            </svg>
+          </div>
         </div>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as Sort)}
-          aria-label="Sort prompts"
-          className="dj-input w-auto py-1 text-xs"
-        >
-          {SORTS.map((s) => (
-            <option key={s.key} value={s.key}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      )}
 
       {allTags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5" aria-label="Filter by tag (AND)">
@@ -413,48 +434,50 @@ export function Library() {
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-2">
-        {selecting ? (
-          <>
-            <span className="dj-meta">{checkedIds.size} selected</span>
-            <div className="flex gap-2">
-              <button onClick={exitSelecting} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-                Cancel
-              </button>
+      {prompts.length > 0 && (
+        <div className="flex items-center justify-between gap-2">
+          {selecting ? (
+            <>
+              <span className="dj-meta">{checkedIds.size} selected</span>
+              <div className="flex gap-2">
+                <button onClick={exitSelecting} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
+                  Cancel
+                </button>
+                <button
+                  onClick={onBulkDelete}
+                  disabled={checkedIds.size === 0}
+                  className="dj-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
+                >
+                  Delete selected
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
               <button
-                onClick={onBulkDelete}
-                disabled={checkedIds.size === 0}
-                className="dj-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
+                onClick={() => setSelecting(true)}
+                className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
               >
-                Delete selected
+                Select several
               </button>
-            </div>
-          </>
-        ) : (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSelecting(true)}
-              className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
-            >
-              Select several
-            </button>
-            {/* Legacy soft-capture rows only — new throwaways are never stored.
+              {/* Legacy soft-capture rows only — new throwaways are never stored.
                 Hidden when there are none, or when the filter is off entirely. */}
-            {!keepMinor && minorCount > 0 && (
-              <button
-                onClick={() => setShowMinor((v) => !v)}
-                aria-pressed={showMinor}
-                title="Short one-offs Deja used to hide instead of skipping — keep or delete them"
-                className={`dj-btn dj-btn-ghost px-2 py-1 text-xs ${
-                  showMinor ? 'text-ink' : 'text-ink-faint'
-                }`}
-              >
-                {showMinor ? 'Hide short ones' : `Short ones (${minorCount})`}
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+              {!keepMinor && minorCount > 0 && (
+                <button
+                  onClick={() => setShowMinor((v) => !v)}
+                  aria-pressed={showMinor}
+                  title="Short one-offs Deja used to hide instead of skipping — keep or delete them"
+                  className={`dj-btn dj-btn-ghost px-2 py-1 text-xs ${
+                    showMinor ? 'text-ink' : 'text-ink-faint'
+                  }`}
+                >
+                  {showMinor ? 'Hide short ones' : `Short ones (${minorCount})`}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {undoId != null && (
         <div className="flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">

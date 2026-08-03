@@ -153,6 +153,7 @@ export function Settings() {
   const [patternError, setPatternError] = useState<string | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
   const [cleared, setCleared] = useState(false)
+  const [confirmPurge, setConfirmPurge] = useState(false)
   const [purged, setPurged] = useState<number | null>(null)
   const [resurfaceClick, setResurfaceClick] = useState<ResurfaceClick>('copy')
   const [strength, setStrength] = useState<FilterStrength>('balanced')
@@ -336,6 +337,11 @@ export function Settings() {
   }
 
   const onPurgeDeleted = async () => {
+    if (!confirmPurge) {
+      setConfirmPurge(true)
+      return
+    }
+    setConfirmPurge(false)
     const n = await purgeDeleted()
     setPurged(n)
     window.setTimeout(() => setPurged(null), 5000)
@@ -449,9 +455,7 @@ export function Settings() {
                 <span className={`text-sm ${sites[p] ? 'text-ink' : 'text-ink-faint'}`}>
                   {PLATFORM_LABEL[p]}
                 </span>
-                <span className="dj-meta">
-                  {sites[p] ? siteStatus(health, p) : 'Turned off'}
-                </span>
+                <span className="dj-meta">{sites[p] ? siteStatus(health, p) : 'Turned off'}</span>
               </span>
               <Switch
                 checked={sites[p]}
@@ -808,10 +812,22 @@ export function Settings() {
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={onPurgeDeleted}
-                className="dj-btn px-3 py-1.5 text-sm hover:text-danger"
+                onBlur={() => setConfirmPurge(false)}
+                aria-live="polite"
+                className={`dj-btn px-3 py-1.5 text-sm ${
+                  confirmPurge ? 'border-danger text-danger' : 'hover:text-danger'
+                }`}
               >
-                Erase deleted prompts
+                {confirmPurge ? 'Sure? This erases them for good' : 'Erase deleted prompts'}
               </button>
+              {confirmPurge && (
+                <button
+                  onClick={() => setConfirmPurge(false)}
+                  className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
+                >
+                  Cancel
+                </button>
+              )}
               {purged != null && (
                 <span className="dj-meta">
                   {purged === 0

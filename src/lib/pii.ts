@@ -21,13 +21,13 @@ import type { PiiKind } from './types'
 import { PII_KINDS } from './types'
 
 export const PII_LABEL: Record<PiiKind, string> = {
-  secret: 'api keys & tokens',
+  secret: 'API keys & tokens',
   email: 'email addresses',
   card: 'credit-card numbers',
-  iban: 'ibans',
+  iban: 'IBANs',
   ssn: 'social-security numbers',
   phone: 'phone numbers',
-  ip: 'ip addresses',
+  ip: 'IP addresses',
 }
 
 // Labeled placeholders — unambiguous and template-friendly.
