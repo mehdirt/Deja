@@ -165,7 +165,7 @@ The content hot path reads all of this through a synchronous, fail-open cache (`
 
 **Identity — done.**
 
-- Fonts are **bundled** (`src/assets/fonts/*.woff2`, ~70 KB, still zero network calls). Figtree for everything readable; JetBrains Mono confined to the wordmark, key hints, `[email]` placeholders, hostnames, and pattern rules.
+- Fonts are **bundled** (`src/assets/fonts/*.woff2`, still zero network calls). Figtree for everything readable; Literata for the `deja` wordmark; JetBrains Mono confined to key hints, `[email]` placeholders, hostnames, and pattern rules.
 - Prompt bodies moved from monospace to sans (`.dj-prompt`); metadata to `.dj-meta` with tabular numerals.
 - **Sentence case everywhere.** The all-lowercase control convention was part of the terminal costume and is gone.
 - **Plain-English vocabulary** across every surface — "save" not "capture", "never save from…" not "blocklist", "download a backup" not "export JSON". Full mapping in `DESIGN.md`.

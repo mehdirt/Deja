@@ -48,6 +48,7 @@ Fonts are **bundled, not fetched** — the `.woff2` files live in `src/assets/fo
 Two primitives carry most of the type:
 
 - `.dj-prompt` — the prompt text itself. Sans, 15px, generous leading; this is something a person reads.
+- `.dj-wordmark` — the lowercase `deja` brand name. Literata semibold; `de` in ink, `.ja` in accent.
 - `.dj-meta` — timestamps, counts, quiet status lines. Small, faint, and `tabular-nums` so numbers don't jitter as they change.
 
 Scale: `text-xs` 12 · `text-sm` 13–14 · `text-base` 15 · `text-lg` 18 · `text-2xl` 28.
@@ -63,7 +64,7 @@ Scale: `text-xs` 12 · `text-sm` 13–14 · `text-base` 15 · `text-lg` 18 · `t
 
 Defined in `globals.css` `@layer components` — compose these instead of re-styling:
 
-`.dj-card` · `.dj-chip` · `.dj-input` · `.dj-btn` / `.dj-btn-primary` / `.dj-btn-ghost` · `.dj-pill` / `.dj-pill-active` · `.dj-tag` / `.dj-tag-active` / `.dj-tag-label` · `.dj-prompt` · `.dj-meta`
+`.dj-card` · `.dj-chip` · `.dj-input` · `.dj-btn` / `.dj-btn-primary` / `.dj-btn-ghost` · `.dj-pill` / `.dj-pill-active` · `.dj-tag` / `.dj-tag-active` / `.dj-tag-label` · `.dj-prompt` · `.dj-wordmark` · `.dj-meta`
 
 The in-page overlays (the save toast and the resurface tooltip) live in a Shadow DOM on the host site and can't use any of this — they re-declare the palette inline. They also deliberately use the **system UI font**, not Figtree: an overlay sitting on chatgpt.com should read as part of that page, not as a foreign widget.
 

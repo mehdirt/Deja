@@ -103,7 +103,7 @@ That's the whole flow for v1. No network. No external service. No latency added 
 
 ## UI direction
 
-**Notebook meets terminal.** Clean, slightly warm, monospaced where it matters, sans-serif where it doesn't. Two colors: ink and indigo accent. Dark mode follows OS. The library should feel like a personal cookbook — yours, browsable, alive.
+**Notebook meets terminal.** Clean, slightly warm, Literata for the brand wordmark, monospaced where it matters (keys and code), sans-serif where it doesn't. Two colors: ink and indigo accent. Dark mode follows OS. The library should feel like a personal cookbook — yours, browsable, alive.
 
 - **Popup** (toolbar icon): pause control, search box + recent/pinned prompts + link to full library
 - **Library** (options page): full-page view, fuzzy search, platform filter, tags, pins, favorites, copy, delete, export/import, settings, privacy

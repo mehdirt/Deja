@@ -14,7 +14,7 @@ Practical consequences, which the code is expected to honor:
 
 - **Warm, cozy, and guiding — not technical.** Everyday users should feel comfortable the whole time, like a kind friend is showing them around. Lead with what happens next in ordinary words; prefer reassurance over precision on the first screen. A welcome greeting (with 🤗) on first install is intentional; light emoji on empty states, tip headings, and starter categories is fine — don't decorate every button or settings control.
 - **Plain language beats precise jargon.** "Never save from…" not "blocklist". "Download a backup" not "export JSON". The full mapping is the voice table in `DESIGN.md` — follow it.
-- **Sentence case, sans-serif.** Monospace is reserved for the wordmark, key hints, `[email]` placeholders, hostnames, and pattern rules. Prompt bodies use `.dj-prompt`; metadata uses `.dj-meta`.
+- **Sentence case, sans-serif.** The lowercase `deja` wordmark uses bundled Literata (`font-brand`). Monospace is reserved for key hints, `[email]` placeholders, hostnames, and pattern rules. Prompt bodies use `.dj-prompt`; metadata uses `.dj-meta`.
 - **Technical controls stay, but move down.** Regex rules, per-category redaction, file import, and permanent erase all still exist — inside the collapsed *More options* drawer in settings. Don't delete power; don't lead with it.
 - **Fonts are bundled** in `src/assets/fonts/` and declared in `globals.css`. Never reference a family the repo doesn't ship (that bug shipped once already).
 
