@@ -16,9 +16,11 @@ import { buildIndex, searchPrompts } from '@/lib/search'
 import { usefulnessScore } from '@/lib/ranking'
 import { PromptCard } from '@/ui/PromptCard'
 import { SkeletonList } from '@/ui/Skeleton'
+import { ErrorRetry } from '@/ui/ErrorRetry'
 import { PinIcon } from '@/ui/PinIcon'
 import { CaptureStatus } from '@/ui/CaptureStatus'
 import { StarterPrompts } from '@/ui/StarterPrompts'
+import { useAsyncList } from '@/ui/useAsyncList'
 import { PLATFORM_LABEL, type Platform, type Prompt } from '@/lib/types'
 
 const PLATFORMS: Array<{ key: Platform | 'all'; label: string }> = [
@@ -35,8 +37,14 @@ const SORTS: Array<{ key: Sort; label: string }> = [
 ]
 
 export function Library() {
-  const [prompts, setPrompts] = useState<Prompt[]>([])
-  const [loading, setLoading] = useState(true)
+  // Fetch minors too — we filter them in-memory so the "filtered (N)" toggle
+  // and per-prompt "keep" work without a second query.
+  const {
+    items: prompts,
+    loading,
+    loadError,
+    reload,
+  } = useAsyncList(() => listPrompts({ includeMinor: true }))
   // Seed the search from a ?q= deep link (the resurface tooltip's "see all"
   // opens the library pre-searched with the user's in-progress text).
   const [query, setQuery] = useState(() => {
@@ -69,19 +77,6 @@ export function Library() {
   const searchRef = useRef<HTMLInputElement>(null)
   const selectedRef = useRef<HTMLDivElement>(null)
   const undoTimer = useRef<number | undefined>(undefined)
-
-  const reload = useCallback(
-    () =>
-      // Fetch minors too — we filter them in-memory so the "filtered (N)" toggle
-      // and per-prompt "keep" work without a second query.
-      listPrompts({ includeMinor: true })
-        .then(setPrompts)
-        .finally(() => setLoading(false)),
-    [],
-  )
-  useEffect(() => {
-    reload()
-  }, [reload])
 
   useEffect(() => {
     // filterStrength === 'off' means the filter is disabled, so show every
@@ -409,27 +404,34 @@ export function Library() {
       )}
 
       {allTags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5" aria-label="Filter by tag (AND)">
-          {allTags.map((t) => {
-            const active = activeTags.includes(t)
-            return (
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-1.5" aria-label="Filter by tag">
+            {allTags.map((t) => {
+              const active = activeTags.includes(t)
+              return (
+                <button
+                  key={t}
+                  aria-pressed={active}
+                  onClick={() => onTagClick(t)}
+                  className={`dj-tag ${active ? 'dj-tag-active' : ''}`}
+                >
+                  {t}
+                </button>
+              )
+            })}
+            {activeTags.length > 0 && (
               <button
-                key={t}
-                aria-pressed={active}
-                onClick={() => onTagClick(t)}
-                className={`dj-tag ${active ? 'dj-tag-active' : ''}`}
+                onClick={() => setActiveTags([])}
+                className="dj-btn dj-btn-ghost px-2 py-0.5 text-[11px]"
               >
-                {t}
+                Clear tags
               </button>
-            )
-          })}
+            )}
+          </div>
+          {/* AND semantics: picking a second tag narrows the list rather than
+              widening it. Say so once, right where the surprise would land. */}
           {activeTags.length > 0 && (
-            <button
-              onClick={() => setActiveTags([])}
-              className="dj-btn dj-btn-ghost px-2 py-0.5 text-[11px]"
-            >
-              Clear tags
-            </button>
+            <p className="dj-meta">Showing prompts with every tag you&apos;ve picked.</p>
           )}
         </div>
       )}
@@ -517,6 +519,8 @@ export function Library() {
       <div className="flex flex-col gap-3">
         {loading ? (
           <SkeletonList count={4} />
+        ) : loadError && prompts.length === 0 ? (
+          <ErrorRetry onRetry={reload} />
         ) : visible.length === 0 ? (
           <div className="py-16 text-center text-sm">
             {prompts.length === 0 ? (

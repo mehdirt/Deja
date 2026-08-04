@@ -1,23 +1,18 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import { listPrompts, touchUsage } from '@/lib/db'
 import { buildIndex, searchPrompts } from '@/lib/search'
 import { PromptCard } from '@/ui/PromptCard'
 import { SkeletonList } from '@/ui/Skeleton'
+import { ErrorRetry } from '@/ui/ErrorRetry'
 import { Logo } from '@/ui/Logo'
 import { PauseControl } from '@/ui/PauseControl'
+import { useAsyncList } from '@/ui/useAsyncList'
 import type { Prompt } from '@/lib/types'
 
 export function Popup() {
-  const [prompts, setPrompts] = useState<Prompt[]>([])
-  const [loading, setLoading] = useState(true)
+  const { items: prompts, loading, loadError, reload } = useAsyncList(listPrompts)
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query)
-
-  useEffect(() => {
-    listPrompts()
-      .then(setPrompts)
-      .finally(() => setLoading(false))
-  }, [])
 
   const index = useMemo(() => buildIndex(prompts), [prompts])
   const visible: Prompt[] = useMemo(() => {
@@ -67,6 +62,8 @@ export function Popup() {
       <div className="flex flex-1 flex-col gap-2 overflow-auto p-3">
         {loading ? (
           <SkeletonList count={3} />
+        ) : loadError && prompts.length === 0 ? (
+          <ErrorRetry onRetry={reload} compact />
         ) : visible.length === 0 ? (
           <div className="px-2 py-8 text-center text-sm text-ink-soft">
             {prompts.length === 0 ? (

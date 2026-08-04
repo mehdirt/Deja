@@ -30,6 +30,9 @@ function initialView(): View {
 // No router dependency — a handful of views, one bit of state.
 export function App() {
   const [view, setView] = useState<View>(initialView)
+  // Where to return once Welcome is dismissed — the view it was opened from,
+  // not always 'library' (e.g. reopened from Settings via onShowWelcome).
+  const [priorView, setPriorView] = useState<Exclude<View, 'welcome'>>('library')
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5 p-6">
@@ -57,9 +60,16 @@ export function App() {
         </nav>
       </header>
 
-      {view === 'welcome' && <Welcome onDone={() => setView('library')} />}
+      {view === 'welcome' && <Welcome onDone={() => setView(priorView)} />}
       {view === 'library' && <Library />}
-      {view === 'settings' && <Settings />}
+      {view === 'settings' && (
+        <Settings
+          onShowWelcome={() => {
+            setPriorView('settings')
+            setView('welcome')
+          }}
+        />
+      )}
       {view === 'privacy' && <Privacy />}
     </div>
   )

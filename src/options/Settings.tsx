@@ -146,7 +146,7 @@ function Section({
 // The precise, technical controls (pattern rules, per-category redaction, file
 // import, permanent erase) are real features people rely on — they're just not
 // what a newcomer should meet first, so they live in one collapsed drawer.
-export function Settings() {
+export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   const [bl, setBl] = useState<Blocklist>({ domains: [], patterns: [] })
   const [domainInput, setDomainInput] = useState('')
   const [patternInput, setPatternInput] = useState('')
@@ -400,6 +400,13 @@ export function Settings() {
 
   return (
     <div className="flex flex-col gap-9">
+      <button
+        onClick={onShowWelcome}
+        className="dj-meta w-fit underline-offset-2 hover:text-accent hover:underline"
+      >
+        Show me how this works again
+      </button>
+
       {/* Suggestions — the everyday preference, opens the page */}
       <Section
         title="Suggestions while you type"
