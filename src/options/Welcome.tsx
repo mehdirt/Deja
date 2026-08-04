@@ -1,4 +1,4 @@
-import { LogoMark } from '@/ui/Logo'
+import { Logo } from '@/ui/Logo'
 
 // Shown once, right after install (the background worker opens the options page
 // with ?welcome=1). Deja is a passive tool: the risk isn't that setup is hard,
@@ -26,7 +26,7 @@ export function Welcome({ onDone }: { onDone: () => void }) {
   return (
     <div className="flex flex-col gap-10 py-4">
       <header className="flex flex-col items-center gap-4 text-center">
-        <LogoMark size={48} />
+        <Logo size={48} />
         <div className="flex flex-col gap-3">
           <p className="text-[15px] font-medium text-ink-soft">
             Welcome{' '}

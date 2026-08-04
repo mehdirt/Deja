@@ -123,6 +123,14 @@ body {
     @apply whitespace-pre-wrap break-words text-[15px] leading-[1.6] text-ink;
   }
 
+  /* Lowercase `deja` wordmark — Literata only. Never use font-mono for this. */
+  .dj-wordmark {
+    @apply font-brand font-semibold tracking-tight text-ink;
+  }
+  .dj-wordmark .ja {
+    @apply text-accent;
+  }
+
   /* Timestamps, counts, "3 prompts saved" — quiet, and tabular so numbers
      don't jitter as they change. */
   .dj-meta {

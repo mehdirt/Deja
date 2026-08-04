@@ -29,8 +29,8 @@ export function Logo({ size = 24, withWordmark = true, className = '' }: Props) 
     <span className={`inline-flex items-center gap-2 ${className}`}>
       <LogoMark size={size} />
       {withWordmark && (
-        <span className="font-brand font-semibold tracking-tight text-ink text-[1.05em]">
-          de<span className="text-accent">ja</span>
+        <span className="dj-wordmark text-[1.05em]">
+          de<span className="ja">ja</span>
         </span>
       )}
     </span>
