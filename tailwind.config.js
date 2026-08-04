@@ -26,6 +26,7 @@ export default {
       fontFamily: {
         sans: 'var(--dj-font-sans)',
         mono: 'var(--dj-font-mono)',
+        brand: 'var(--dj-font-brand)',
       },
       borderRadius: {
         card: '10px',

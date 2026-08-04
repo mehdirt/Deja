@@ -42,7 +42,8 @@ Fonts are **bundled, not fetched** — the `.woff2` files live in `src/assets/fo
 > This matters more than it sounds. Deja previously *named* Inter and JetBrains Mono without shipping either, so anyone who didn't already have them installed silently got their OS default. The design only ever looked right on developers' machines. **If you add a family, add the file.**
 
 - **Sans** (`font-sans`, Figtree Variable → system-ui): everything a person reads or clicks. Prompt bodies, headings, buttons, labels, search boxes, timestamps.
-- **Mono** (`font-mono`, JetBrains Mono Variable → ui-monospace): only for things that are literally code or keys — the `deja` wordmark, `⌘K` hints, `[email]` placeholders, hostnames, and pattern rules. **Don't reach for it otherwise.** Monospace reads as "code" to a non-technical person, and most of what Deja stores is ordinary prose.
+- **Brand** (`font-brand`, Literata → Georgia): the lowercase `deja` wordmark only. Soft reading serif — ink on paper, remembered words, a little déjà vu. Keeps the name warm and personal instead of dressing it as code.
+- **Mono** (`font-mono`, JetBrains Mono Variable → ui-monospace): only for things that are literally code or keys — `⌘K` hints, `[email]` placeholders, hostnames, and pattern rules. **Don't reach for it otherwise.** Monospace reads as "code" to a non-technical person, and most of what Deja stores is ordinary prose.
 
 Two primitives carry most of the type:
 
@@ -68,7 +69,7 @@ The in-page overlays (the save toast and the resurface tooltip) live in a Shadow
 
 ## Logo
 
-`src/ui/Logo.tsx` — `<Logo />` (mark + wordmark) or `<LogoMark />` (mark only). The mark is a card and its echo — the "I've seen this before" double image of déjà vu — with a cursor tick on the front card, white on an accent tile. Wordmark is lowercase mono: `de` (ink) + `ja` (accent). Toolbar icons (`src/assets/icon-*.png`) are generated from `src/assets/icon.svg`, which mirrors the same mark.
+`src/ui/Logo.tsx` — `<Logo />` (mark + wordmark) or `<LogoMark />` (mark only). The mark is a card and its echo — the "I've seen this before" double image of déjà vu — with a cursor tick on the front card, white on an accent tile. Wordmark is lowercase Literata: `de` (ink) + `ja` (accent). Toolbar icons (`src/assets/icon-*.png`) are generated from `src/assets/icon.svg`, which mirrors the same mark.
 
 ## Voice
 

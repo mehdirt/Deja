@@ -8,12 +8,12 @@
       font-weight: 300 900;
     }
     @font-face {
-      font-family: 'JetBrains Mono Variable';
-      src: url('fonts/jetbrains-mono-latin.woff2') format('woff2');
-      font-weight: 100 800;
+      font-family: 'Literata';
+      src: url('fonts/literata-semibold.woff2') format('woff2');
+      font-weight: 600;
     }
     .sans { font-family: 'Figtree Variable', sans-serif; }
-    .mono { font-family: 'JetBrains Mono Variable', monospace; }
+    .brand { font-family: 'Literata', Georgia, serif; }
   </style>
 
   <!-- Deja's warm-notebook palette: bg #faf8f3, ink #1c1b19, indigo #5b54f0. -->
@@ -29,8 +29,8 @@
     <rect x="15" y="17" width="2.4" height="3.6" rx=".6" fill="#5b54f0"/>
   </g>
 
-  <!-- Wordmark uses the real mono face, as in the extension. -->
-  <text x="194" y="142" class="mono" font-size="54" font-weight="600" letter-spacing="-3" fill="#1c1b19">de<tspan fill="#5b54f0">ja</tspan></text>
+  <!-- Wordmark uses Literata, as in the extension. -->
+  <text x="194" y="142" class="brand" font-size="54" font-weight="600" letter-spacing="-1.5" fill="#1c1b19">de<tspan fill="#5b54f0">ja</tspan></text>
 
   <text x="72" y="268" class="sans" font-size="64" font-weight="720" letter-spacing="-2.6" fill="#1c1b19">Your prompts are work.</text>
   <text x="72" y="340" class="sans" font-size="64" font-weight="720" letter-spacing="-2.6" fill="#1c1b19">Stop losing them.</text>
@@ -52,7 +52,7 @@
       <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity=".95"/>
       <rect x="15" y="17" width="2.4" height="3.6" rx=".6" fill="#5b54f0"/>
     </g>
-    <text x="82" y="52" class="mono" font-size="22" font-weight="600" letter-spacing="-1.1" fill="#1c1b19">de<tspan fill="#5b54f0">ja</tspan></text>
+    <text x="82" y="52" class="brand" font-size="22" font-weight="600" letter-spacing="-0.6" fill="#1c1b19">de<tspan fill="#5b54f0">ja</tspan></text>
     <line x1="28" y1="87" x2="350" y2="87" stroke="#e7e2d8"/>
     <rect x="28" y="113" width="282" height="44" rx="10" fill="#ecebfe"/>
     <text x="44" y="141" class="sans" font-size="15" font-weight="650" fill="#5b54f0">You've asked something like this before</text>
