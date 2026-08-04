@@ -156,6 +156,22 @@
         src: url('fonts/jetbrains-mono-latin.woff2') format('woff2');
         unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
       }
+      /* Literata — wordmark only. Soft reading serif for remembered words:
+         ink on paper, déjà vu. Not mono (too engineer), not a system sans. */
+      @font-face {
+        font-family: 'Literata';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 600;
+        src: url('fonts/literata-semibold.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Literata';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 700;
+        src: url('fonts/literata-bold.woff2') format('woff2');
+      }
       :root {
         --bg: #faf8f3;
         --surface: #ffffff;
@@ -170,6 +186,7 @@
         --ok: #2f9e63;
         --mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         --sans: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        --brand: 'Literata', Georgia, 'Times New Roman', serif;
         --maxw: 980px;
         --radius: 16px;
         --shadow-sm: 0 1px 2px rgba(28, 27, 25, 0.04), 0 1px 3px rgba(28, 27, 25, 0.06);
@@ -224,27 +241,58 @@
          doesn't insert space between "de" and "ja". */
       .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
       .brand:hover { text-decoration: none; }
-      .brand .word { font-family: var(--mono); font-weight: 600; font-size: 19px; letter-spacing: -0.03em; color: var(--ink); }
+      .brand .word { font-family: var(--brand); font-weight: 600; font-size: 20px; letter-spacing: -0.02em; color: var(--ink); }
       .brand .word .ja { color: var(--accent); }
 
       header { padding: 26px 0; }
       header .wrap { display: flex; align-items: center; justify-content: space-between; }
-      header nav a { color: var(--ink-soft); font-size: 14px; margin-left: 22px; }
-      header nav a:hover { color: var(--ink); }
+      header nav { display: flex; align-items: center; }
+      header nav a {
+        color: var(--ink-soft); font-size: 14px; margin-left: 22px;
+        line-height: 1; text-decoration: none;
+      }
+      header nav a:hover { color: var(--ink); text-decoration: underline; }
+      header nav a.nav-source {
+        display: inline-flex; align-items: center; gap: 6px;
+      }
+      header nav a.nav-source svg {
+        display: block; width: 14px; height: 14px; flex: none; opacity: 0.85;
+      }
+      header nav a.nav-source:hover svg { opacity: 1; }
 
       .eyebrow {
         font-size: 13px; letter-spacing: 0.02em; color: var(--ink-faint); font-weight: 500;
       }
 
-      /* Hero */
-      .hero { text-align: center; padding: 58px 0 8px; }
-      .hero .eyebrow { display: block; margin: 18px 0 0; }
+      /* Hero — mock is the product moment; layout keeps it in the first viewport */
+      .hero { padding: 36px 0 48px; }
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "copy"
+          "mock"
+          "actions";
+        gap: 28px;
+        align-items: center;
+        text-align: center;
+      }
+      .hero-copy { grid-area: copy; }
+      .hero-actions { grid-area: actions; }
+      .hero .hero-mark {
+        width: 48px; height: 48px; display: block; margin: 0 auto 4px;
+      }
+      .hero .eyebrow { display: block; margin: 10px 0 0; }
       .hero h1 {
-        font-size: clamp(36px, 6.2vw, 60px); line-height: 1.04; letter-spacing: -0.035em; margin: 14px 0 16px; font-weight: 700;
+        font-size: clamp(30px, 7.2vw, 44px); line-height: 1.06; letter-spacing: -0.03em;
+        margin: 12px 0 12px; font-weight: 700; text-wrap: balance;
       }
       .hero h1 .accent { color: var(--accent); }
-      .hero p.lead { font-size: clamp(17px, 2.3vw, 20px); color: var(--ink-soft); max-width: 640px; margin: 0 auto 30px; }
-      .cta-row { display: flex; gap: 16px; justify-content: center; align-items: center; flex-wrap: wrap; }
+      .hero p.lead {
+        font-size: clamp(16px, 2.4vw, 18px); color: var(--ink-soft);
+        max-width: 34rem; margin: 0 auto; line-height: 1.5; text-wrap: pretty;
+      }
+      .cta-row { display: flex; gap: 14px; justify-content: center; align-items: center; flex-wrap: wrap; }
       .cta {
         display: inline-flex; align-items: center; gap: 9px; background: var(--accent); color: #fff; font-weight: 600;
         padding: 14px 24px; border-radius: 11px; font-size: 16px; box-shadow: var(--shadow-cta);
@@ -256,17 +304,41 @@
       /* Block-level (display:flex, not inline-flex) so the caption always sits on
          its OWN line under the button — inline-flex let it ride up beside the
          button when there was room. */
-      .cta-sub { font-size: 13px; color: var(--ink-faint); margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+      .cta-sub { font-size: 13px; color: var(--ink-faint); margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
       .cta-sub .kbd { font-family: var(--mono); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--ink-soft); }
 
-      /* The moment, illustrated — animated. Tooltip sits ABOVE the composer in
-         normal flow (never covers it) and fades in/out with the typed text. */
-      .mock { max-width: 560px; margin: 46px auto 0; text-align: left; }
+      /* The moment, illustrated — animated. On wide screens this sits inside a
+         quiet browser chrome so the resurface moment reads as “on the site.” */
+      .mock {
+        grid-area: mock;
+        width: 100%;
+        max-width: 560px;
+        margin: 0 auto;
+        text-align: left;
+      }
+      .browser {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+      }
+      .browser-bar {
+        display: none;
+      }
+      .browser-page {
+        position: relative;
+        padding: 18px 16px 16px;
+      }
+      .chat-ghost {
+        display: none;
+      }
       .tooltip {
         position: relative; display: inline-flex; align-items: flex-start; gap: 11px;
         background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px;
-        box-shadow: var(--shadow-pop); max-width: 96%; margin: 0 0 16px 14px;
+        box-shadow: var(--shadow-pop); max-width: 100%; margin: 0 0 14px 8px;
         opacity: 0; transform: translateY(6px); transition: opacity 0.35s ease, transform 0.35s ease;
+        z-index: 2;
       }
       .tooltip.show { opacity: 1; transform: none; }
       .tooltip::after {
@@ -276,70 +348,549 @@
       .tooltip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex: none; }
       .tooltip .t-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
       .tooltip .lead { color: var(--accent); font-weight: 600; font-size: 13px; }
-      .tooltip .preview { color: var(--ink-soft); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px; }
+      .tooltip .preview { color: var(--ink-soft); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: min(360px, 68vw); }
       .tooltip .meta { color: var(--ink-faint); font-size: 11px; }
       .tooltip .count { color: var(--ink-faint); font-weight: 600; font-size: 11px; flex: none; margin-top: 2px; font-variant-numeric: tabular-nums; }
       .composer {
+        position: relative; z-index: 1;
         display: flex; align-items: center; gap: 11px; border: 1px solid var(--line); border-radius: 14px;
-        background: var(--surface); padding: 14px 14px 14px 14px; box-shadow: var(--shadow-sm);
+        background: var(--surface); padding: 14px; box-shadow: var(--shadow-sm);
       }
       .composer .plat {
         flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500;
         color: var(--ink-soft); background: var(--sunk); border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px;
       }
-      .composer .plat .pdot { width: 7px; height: 7px; border-radius: 50%; background: #10a37f; }
+      .composer .plat .plogo {
+        width: 13px; height: 13px; display: inline-flex; flex: none; color: #10a37f;
+      }
+      .composer .plat .plogo svg { width: 100%; height: 100%; display: block; }
       .composer .ctext { flex: 1; min-width: 0; color: var(--ink); font-size: 15px; white-space: nowrap; overflow: hidden; }
       .composer .cursor { display: inline-block; width: 2px; height: 1.05em; vertical-align: text-bottom; background: var(--accent); margin-left: 1px; animation: blink 1.1s step-end infinite; }
       .composer .send { flex: none; width: 30px; height: 30px; border-radius: 9px; background: #10a37f; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
       @keyframes blink { 50% { opacity: 0; } }
 
+      /* Wide: copy + CTA left, mock right — demo stays in first viewport */
+      @media (min-width: 900px) {
+        .hero { padding: 48px 0 56px; }
+        .hero-grid {
+          grid-template-columns: minmax(0, 1fr) minmax(320px, 1.05fr);
+          grid-template-areas:
+            "copy mock"
+            "actions mock";
+          gap: 28px 52px;
+          text-align: left;
+          align-items: center;
+        }
+        .hero .hero-mark { margin: 0 0 2px; width: 52px; height: 52px; }
+        .hero h1 {
+          font-size: clamp(40px, 4.4vw, 56px); letter-spacing: -0.035em; margin: 14px 0 14px;
+        }
+        .hero p.lead { margin: 0; max-width: 28rem; font-size: 18px; }
+        .cta-row { justify-content: flex-start; }
+        .hero-actions .cta-sub { justify-content: flex-start; margin-top: 16px; }
+        .mock { margin: 0; max-width: none; }
+        .browser {
+          border-radius: 14px;
+          box-shadow:
+            0 1px 2px rgba(28, 27, 25, 0.04),
+            0 18px 44px rgba(28, 27, 25, 0.10);
+        }
+        @media (prefers-color-scheme: dark) {
+          .browser {
+            box-shadow:
+              0 1px 2px rgba(0, 0, 0, 0.2),
+              0 18px 44px rgba(0, 0, 0, 0.35);
+          }
+        }
+        .browser-bar {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 12px;
+          background: var(--sunk);
+          border-bottom: 1px solid var(--line);
+        }
+        .browser-dots {
+          display: flex; gap: 6px; flex: none; padding-left: 4px;
+        }
+        .browser-dots span {
+          width: 9px; height: 9px; border-radius: 50%;
+          background: color-mix(in srgb, var(--ink-faint) 42%, transparent);
+        }
+        .browser-url {
+          flex: 1; min-width: 0;
+          display: flex; align-items: center; gap: 7px;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          padding: 6px 11px;
+          font-family: var(--mono);
+          font-size: 12px;
+          color: var(--ink-soft);
+          letter-spacing: -0.01em;
+        }
+        .browser-url svg {
+          flex: none; width: 11px; height: 11px; color: var(--ok); opacity: 0.9;
+        }
+        .browser-url #m-url {
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .browser-page {
+          padding: 22px 20px 18px;
+          background:
+            radial-gradient(80% 70% at 50% 0%, color-mix(in srgb, var(--accent-soft) 55%, transparent), transparent 70%),
+            var(--bg);
+          min-height: 210px;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+        }
+        .chat-ghost {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin: 0 0 22px;
+          opacity: 0.55;
+        }
+        .chat-ghost .bubble {
+          height: 11px;
+          border-radius: 999px;
+          background: color-mix(in srgb, var(--ink-faint) 28%, transparent);
+        }
+        .chat-ghost .bubble.w1 { width: 42%; align-self: flex-end; }
+        .chat-ghost .bubble.w2 { width: 68%; }
+        .chat-ghost .bubble.w3 { width: 54%; }
+        .tooltip { margin-left: 10px; max-width: 96%; }
+        .tooltip .preview { max-width: 340px; }
+        .composer {
+          background: var(--surface);
+          box-shadow: 0 8px 24px rgba(28, 27, 25, 0.06);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero { padding: 24px 0 36px; }
+        .hero-grid { gap: 22px; }
+        .composer { gap: 8px; padding: 12px; }
+        .composer .plat { padding: 4px 8px; }
+        .composer .ctext { font-size: 14px; }
+        .tooltip { margin-left: 0; padding: 10px 11px; }
+        .cta-sub .kbd-hint { display: none; }
+        .browser { border: none; background: transparent; box-shadow: none; border-radius: 0; }
+        .browser-page { padding: 0; }
+      }
+
       /* Sections */
       section { padding: 58px 0; position: relative; z-index: 1; }
+      #how { padding-bottom: 40px; }
+      #tools { padding: 44px 0 48px; }
       .section-head { max-width: 660px; }
       .section-head.center { margin-left: auto; margin-right: auto; text-align: center; }
       .section-head .eyebrow { display: block; margin: 0 0 10px; }
       h2 { font-size: clamp(25px, 3.4vw, 34px); letter-spacing: -0.025em; margin: 0 0 12px; }
       .section-lead { color: var(--ink-soft); margin: 0; font-size: 16.5px; }
-
-      /* How it works — numbered steps */
-      .steps { list-style: none; margin: 36px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-      .step { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; transition: transform 0.15s ease, box-shadow 0.15s ease; }
-      .step:hover { transform: translateY(-3px); box-shadow: var(--shadow-pop); }
-      .step-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-      .step .num {
-        width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: #fff;
-        font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; justify-content: center;
+      /* Inline brand mark inside headings — same reading serif as the logo */
+      .wordmark {
+        font-family: var(--brand);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--ink);
       }
-      .step .ic { color: var(--ink-faint); }
-      .step h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -0.01em; }
-      .step p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+      .wordmark .ja { color: var(--accent); }
 
-      /* Capability cards */
-      .caps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
-      .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
-      .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-pop); border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
-      .card .ic { width: 38px; height: 38px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px; }
-      .card h3 { margin: 0 0 6px; font-size: 17px; letter-spacing: -0.01em; }
-      .card p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
-
-      /* Works where you work — a single framed bar */
-      .tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 30px; }
-      .tool {
-        display: inline-flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--line);
-        border-radius: 12px; padding: 13px 20px; font-size: 15px; font-weight: 500; color: var(--ink);
-        transition: border-color 0.15s ease, transform 0.15s ease;
+      /* How it works — a quiet memory flow (you ask; Deja remembers) */
+      .flow {
+        list-style: none; margin: 40px 0 0; padding: 0;
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+        position: relative;
       }
-      .tool:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); transform: translateY(-2px); }
-      .tool .pdot { width: 9px; height: 9px; border-radius: 50%; }
-      .tools-note { text-align: center; color: var(--ink-faint); font-size: 13.5px; margin: 20px auto 0; max-width: 560px; }
+      .flow::before {
+        content: ''; position: absolute; z-index: 0;
+        top: 27px; left: calc(16.66% + 8px); right: calc(16.66% + 8px);
+        height: 1px;
+        background: color-mix(in srgb, var(--accent) 28%, var(--line));
+        pointer-events: none;
+      }
+      .flow-step {
+        position: relative; z-index: 1;
+        background: var(--surface); border: 1px solid var(--line);
+        border-radius: 16px; padding: 22px 22px 24px;
+        display: flex; flex-direction: column; gap: 14px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      }
+      .flow-step:hover {
+        border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-2px);
+      }
+      .flow-step.flow-you {
+        background:
+          linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 70%, var(--surface)), var(--surface) 72%);
+        border-color: color-mix(in srgb, var(--accent) 22%, var(--line));
+        box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .flow-mark {
+        width: 34px; height: 34px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums;
+        background: var(--sunk); color: var(--ink-soft);
+        border: 1px solid var(--line);
+        box-shadow: 0 0 0 6px var(--bg);
+      }
+      .flow-you .flow-mark {
+        background: var(--accent); color: #fff; border-color: transparent;
+      }
+      .flow-who {
+        margin: 0 0 6px; font-size: 12px; font-weight: 600;
+        letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint);
+      }
+      .flow-you .flow-who { color: var(--accent); }
+      .flow-step h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.02em; line-height: 1.25; }
+      .flow-step p { margin: 0; color: var(--ink-soft); font-size: 14.5px; line-height: 1.55; }
+      .flow-echo {
+        margin-top: auto; padding-top: 14px;
+        border-top: 1px dashed color-mix(in srgb, var(--line) 80%, var(--ink-faint));
+        display: flex; align-items: center; gap: 8px;
+        color: var(--ink-faint); font-size: 12.5px;
+      }
+      .flow-echo svg { flex: none; opacity: 0.7; }
 
-      /* Privacy */
-      .privacy { background: var(--sunk); border: 1px solid var(--line); border-radius: var(--radius); padding: 34px; }
-      .privacy h2 { margin-top: 0; }
-      .privacy .plist { list-style: none; margin: 20px 0 0; padding: 0; display: grid; gap: 14px; }
-      .privacy .plist li { display: flex; gap: 12px; color: var(--ink-soft); align-items: flex-start; }
-      .privacy .plist .chk { color: var(--ok); flex: none; margin-top: 2px; }
-      .privacy .plist strong { color: var(--ink); font-weight: 600; }
+      /* Quiet extras — not a second card grid */
+      .also {
+        margin-top: 44px; padding: 28px 28px 26px;
+        background: var(--sunk); border: 1px solid var(--line); border-radius: 16px;
+      }
+      .also-label {
+        margin: 0 0 18px; font-size: 12px; font-weight: 600;
+        letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint);
+      }
+      .also-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+      }
+      .also-item {
+        padding: 0 22px;
+        border-left: 1px solid var(--line);
+      }
+      .also-item:first-child { padding-left: 0; border-left: none; }
+      .also-item:last-child { padding-right: 0; }
+      .also-item .ic {
+        width: 32px; height: 32px; border-radius: 9px; margin-bottom: 12px;
+        display: inline-flex; align-items: center; justify-content: center;
+        color: var(--accent); background: var(--surface);
+        border: 1px solid var(--line);
+      }
+      .also-item h3 { margin: 0 0 6px; font-size: 15.5px; letter-spacing: -0.015em; }
+      .also-item p { margin: 0; color: var(--ink-soft); font-size: 13.5px; line-height: 1.55; }
+
+      /* Works where you work — each assistant on its own orbit */
+      .orbit {
+        --orbit-size: min(520px, 94vw);
+        position: relative;
+        width: var(--orbit-size);
+        height: var(--orbit-size);
+        margin: 40px auto 0;
+      }
+      .orbit-lane {
+        --r: calc(var(--orbit-size) * 0.35);
+        --dur: 40s;
+        --start: 0deg;
+        position: absolute; inset: 0;
+        pointer-events: none;
+      }
+      .orbit-lane .orbit-ring {
+        position: absolute; left: 50%; top: 50%;
+        width: calc(var(--r) * 2); height: calc(var(--r) * 2);
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        border: 1px dashed color-mix(in srgb, var(--accent) 8%, var(--line));
+        opacity: 0.4;
+      }
+      .orbit-lane:nth-of-type(even) .orbit-ring {
+        border-style: solid;
+        border-width: 1px;
+        opacity: 0.28;
+      }
+      .orbit-core {
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2; text-align: center; pointer-events: none;
+      }
+      .core-sun {
+        position: relative;
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 64px; height: 64px;
+      }
+      .core-sun::before,
+      .core-sun::after {
+        content: ''; position: absolute; border-radius: 50%;
+        pointer-events: none; z-index: -1;
+      }
+      .core-sun::before {
+        inset: -40%;
+        background: radial-gradient(
+          circle,
+          color-mix(in srgb, var(--accent) 28%, #fff) 0%,
+          color-mix(in srgb, var(--accent) 14%, transparent) 38%,
+          color-mix(in srgb, var(--accent) 5%, transparent) 60%,
+          transparent 74%
+        );
+        filter: blur(14px);
+        animation: sun-breathe 5.5s ease-in-out infinite;
+      }
+      .core-sun::after {
+        inset: -78%;
+        background: radial-gradient(
+          circle,
+          color-mix(in srgb, var(--accent) 12%, transparent) 0%,
+          color-mix(in srgb, var(--accent) 4%, transparent) 45%,
+          transparent 70%
+        );
+        filter: blur(24px);
+        animation: sun-breathe 5.5s ease-in-out 1.1s infinite;
+      }
+      @keyframes sun-breathe {
+        0%, 100% { transform: scale(1); opacity: 0.55; }
+        50% { transform: scale(1.1); opacity: 0.85; }
+      }
+      .orbit-core .core-mark {
+        width: 48px; height: 48px; display: block; position: relative; z-index: 1;
+        border-radius: 12px;
+        box-shadow:
+          0 2px 4px color-mix(in srgb, var(--ink) 12%, transparent),
+          0 6px 14px color-mix(in srgb, var(--accent) 32%, transparent),
+          0 12px 28px color-mix(in srgb, var(--accent) 18%, transparent);
+      }
+      .orbit-core .core-word {
+        display: block; margin-top: 12px;
+        font-family: var(--brand); font-weight: 600; font-size: 20px;
+        letter-spacing: -0.02em; color: var(--ink);
+      }
+      .orbit-core .core-word .ja { color: var(--accent); }
+      .orbit-spinner {
+        position: absolute; inset: 0;
+        animation: orbit-spin var(--dur) linear infinite;
+        pointer-events: none;
+      }
+      @keyframes orbit-spin {
+        to { transform: rotate(360deg); }
+      }
+      .orbit-item {
+        position: absolute; left: 50%; top: 50%;
+        width: 0; height: 0;
+        /* place on ring at --start, keep logo upright */
+        transform: rotate(var(--start)) translateY(calc(var(--r) * -1)) rotate(calc(var(--start) * -1));
+        pointer-events: auto;
+      }
+      .tool-chip {
+        --glow: #888;
+        position: absolute; left: 0; top: 0;
+        transform: translate(-50%, -50%);
+        animation: orbit-counter var(--dur) linear infinite;
+        z-index: 1;
+        cursor: default;
+      }
+      @keyframes orbit-counter {
+        to { transform: translate(-50%, -50%) rotate(-360deg); }
+      }
+      .tool-logo {
+        width: 58px; height: 58px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow-sm);
+        color: var(--ink);
+        transition:
+          transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+          box-shadow 0.35s ease,
+          border-color 0.35s ease,
+          background 0.3s ease,
+          color 0.25s ease;
+      }
+      .tool-logo svg {
+        width: 28px; height: 28px; display: block; fill: currentColor;
+      }
+      .tool-chip.is-near { z-index: 4; }
+      .tool-chip.is-near .tool-logo {
+        border-color: color-mix(in srgb, var(--glow) 50%, var(--line));
+        background: color-mix(in srgb, var(--glow) 12%, var(--surface));
+        box-shadow:
+          0 0 0 5px color-mix(in srgb, var(--glow) 16%, transparent),
+          0 0 32px color-mix(in srgb, var(--glow) 48%, transparent),
+          0 10px 22px color-mix(in srgb, var(--glow) 28%, transparent);
+      }
+      .orbit:has(.tool-chip:hover) .orbit-spinner,
+      .orbit:has(.tool-chip:hover) .tool-chip {
+        animation-play-state: paused;
+      }
+      .tool-chip:hover { z-index: 5; }
+      .tool-chip:hover .tool-logo {
+        transform: scale(1.12);
+        border-color: color-mix(in srgb, var(--glow) 45%, var(--line));
+        background: color-mix(in srgb, var(--glow) 10%, var(--surface));
+        box-shadow:
+          0 0 0 5px color-mix(in srgb, var(--glow) 14%, transparent),
+          0 14px 34px color-mix(in srgb, var(--glow) 32%, transparent);
+      }
+      .tool-chip[data-tool="chatgpt"] { --glow: #10a37f; }
+      .tool-chip[data-tool="chatgpt"] .tool-logo { color: #10a37f; }
+      .tool-chip[data-tool="chatgpt"]:hover .tool-logo {
+        animation: tool-pulse-green 1.1s ease-in-out infinite;
+      }
+      @keyframes tool-pulse-green {
+        0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, #10a37f 35%, transparent), 0 14px 34px color-mix(in srgb, #10a37f 32%, transparent); }
+        50% { box-shadow: 0 0 0 10px transparent, 0 14px 34px color-mix(in srgb, #10a37f 32%, transparent); }
+      }
+      .tool-chip[data-tool="claude"] { --glow: #d97757; }
+      .tool-chip[data-tool="claude"] .tool-logo { color: #d97757; }
+      .tool-chip[data-tool="claude"]:hover .tool-logo {
+        animation: tool-wiggle 0.7s ease-in-out infinite;
+      }
+      @keyframes tool-wiggle {
+        0%, 100% { transform: scale(1.12) rotate(-6deg); }
+        50% { transform: scale(1.12) rotate(7deg); }
+      }
+      .tool-chip[data-tool="gemini"] { --glow: #4285f4; }
+      .tool-chip[data-tool="gemini"] .tool-logo { color: #4285f4; }
+      .tool-chip[data-tool="gemini"]:hover .tool-logo {
+        transform: scale(1.14) rotate(12deg);
+        color: #9b72cb;
+        box-shadow:
+          0 0 0 5px color-mix(in srgb, #9b72cb 16%, transparent),
+          0 14px 34px color-mix(in srgb, #4285f4 28%, transparent);
+      }
+      .tool-chip[data-tool="deepseek"] { --glow: #4d6bfe; }
+      .tool-chip[data-tool="deepseek"] .tool-logo { color: #4d6bfe; }
+      .tool-chip[data-tool="deepseek"]:hover .tool-logo {
+        animation: tool-float 1.15s ease-in-out infinite;
+      }
+      @keyframes tool-float {
+        0%, 100% { transform: scale(1.12) translateY(0); }
+        50% { transform: scale(1.12) translateY(-3px); }
+      }
+      .tool-chip[data-tool="grok"] { --glow: #1c1b19; }
+      .tool-chip[data-tool="grok"] .tool-logo { color: #1c1b19; }
+      .tool-chip[data-tool="grok"]:hover .tool-logo {
+        background: #1c1b19; color: #f3f1ea;
+        transform: scale(1.14);
+        box-shadow:
+          0 0 0 5px rgba(28, 27, 25, 0.08),
+          0 16px 36px rgba(28, 27, 25, 0.18);
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, color 0.2s ease, box-shadow 0.3s ease;
+      }
+      @media (prefers-color-scheme: dark) {
+        .tool-chip[data-tool="grok"] { --glow: #f3f1ea; }
+        .tool-chip[data-tool="grok"] .tool-logo { color: #f3f1ea; }
+        .tool-chip[data-tool="grok"]:hover .tool-logo {
+          background: #f3f1ea; color: #1c1b19;
+          box-shadow:
+            0 0 0 5px rgba(243, 241, 234, 0.1),
+            0 16px 36px rgba(0, 0, 0, 0.4);
+        }
+      }
+      .tools-note { text-align: center; color: var(--ink-faint); font-size: 13.5px; margin: 10px auto 0; max-width: 560px; }
+      .tools-sr {
+        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+      }
+
+      /* Privacy — quiet promise, not a checklist dump */
+      #privacy { padding: 48px 0 64px; }
+      .privacy-panel {
+        margin-top: 36px;
+        background: var(--sunk);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+      }
+      .privacy-promise {
+        position: relative;
+        padding: 36px 36px 32px;
+        border-bottom: 1px solid var(--line);
+        background:
+          radial-gradient(60% 80% at 8% 20%, color-mix(in srgb, var(--ok) 12%, transparent), transparent 55%),
+          var(--sunk);
+      }
+      .privacy-seal {
+        width: 44px; height: 44px; border-radius: 12px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: var(--surface); border: 1px solid var(--line);
+        color: var(--ok); margin-bottom: 16px;
+        box-shadow: var(--shadow-sm);
+      }
+      .privacy-thesis {
+        margin: 0 0 10px;
+        font-size: clamp(22px, 3vw, 28px);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        color: var(--ink);
+        max-width: 18ch;
+      }
+      .privacy-sub {
+        margin: 0;
+        color: var(--ink-soft);
+        font-size: 15.5px;
+        max-width: 42ch;
+        line-height: 1.5;
+      }
+      .privacy-pills {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        margin-top: 18px;
+      }
+      .privacy-pills span {
+        font-size: 12.5px; font-weight: 600;
+        color: var(--ink-soft);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 11px;
+      }
+      .privacy-grid {
+        list-style: none; margin: 0; padding: 0;
+        display: grid; grid-template-columns: repeat(2, 1fr);
+      }
+      .privacy-grid li {
+        padding: 24px 28px;
+        border-top: 1px solid var(--line);
+        border-right: 1px solid var(--line);
+      }
+      .privacy-grid li:nth-child(2n) { border-right: none; }
+      .privacy-grid li:nth-child(-n+2) { border-top: none; }
+      .privacy-grid .ic {
+        width: 30px; height: 30px; border-radius: 8px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: var(--surface); border: 1px solid var(--line);
+        color: var(--accent); margin-bottom: 12px;
+      }
+      .privacy-grid h3 {
+        margin: 0 0 6px;
+        font-size: 15.5px;
+        letter-spacing: -0.015em;
+        color: var(--ink);
+      }
+      .privacy-grid p {
+        margin: 0;
+        color: var(--ink-soft);
+        font-size: 13.5px;
+        line-height: 1.55;
+      }
+      .privacy-grid .mono {
+        font-family: var(--mono); font-size: 12px;
+      }
+      .privacy-foot {
+        padding: 16px 28px 18px;
+        border-top: 1px solid var(--line);
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 12px; flex-wrap: wrap;
+        background: color-mix(in srgb, var(--surface) 55%, var(--sunk));
+      }
+      .privacy-foot p {
+        margin: 0; font-size: 13.5px; color: var(--ink-faint);
+      }
+      .privacy-foot a {
+        font-size: 13.5px; font-weight: 600; color: var(--accent);
+      }
+      .privacy-foot a:hover { color: var(--accent-hover); }
 
       /* Closing CTA — the conversion climax: a bold indigo panel with the
          déjà-vu echo motif. Fixed indigo (not theme tokens) so white text reads
@@ -361,7 +912,11 @@
       }
       .cta-inv:hover { transform: translateY(-1px); background: #f3f2ff; text-decoration: none; }
       .cta-inv:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 11px; }
-      .closing-card .cta-sub { color: rgba(255, 255, 255, 0.72); margin-top: 22px; }
+      .closing-card .cta-sub {
+        color: rgba(255, 255, 255, 0.72);
+        margin-top: 22px;
+        justify-content: center;
+      }
       .closing-card .cta-sub .kbd { border-color: rgba(255, 255, 255, 0.32); color: rgba(255, 255, 255, 0.85); }
 
       footer { border-top: 1px solid var(--line); padding: 50px 0 40px; color: var(--ink-faint); font-size: 14px; position: relative; z-index: 1; }
@@ -380,16 +935,33 @@
       }
       .footer-bottom .credit a { color: var(--ink-soft); font-weight: 600; }
       .footer-bottom .credit a:hover { color: var(--accent); }
-      .heart { color: var(--accent); }
 
       @media (max-width: 720px) {
-        .steps, .caps { grid-template-columns: 1fr; }
+        .flow { grid-template-columns: 1fr; gap: 14px; }
+        .flow::before { display: none; }
+        .also-grid { grid-template-columns: 1fr; gap: 18px; }
+        .also-item { padding: 0; border-left: none; padding-top: 16px; border-top: 1px solid var(--line); }
+        .also-item:first-child { padding-top: 0; border-top: none; }
+        .privacy-grid { grid-template-columns: 1fr; }
+        .privacy-grid li { border-right: none; padding: 20px 22px; }
+        .privacy-grid li:nth-child(-n+2) { border-top: 1px solid var(--line); }
+        .privacy-grid li:first-child { border-top: none; }
+        .privacy-promise { padding: 28px 22px 24px; }
+        .privacy-thesis { max-width: none; }
+        .orbit { --orbit-size: min(360px, 94vw); }
+        .tool-logo { width: 48px; height: 48px; }
+        .tool-logo svg { width: 22px; height: 22px; }
+        .orbit-core .core-mark { width: 42px; height: 42px; }
+        .core-sun { width: 54px; height: 54px; }
+        .orbit-core .core-word { font-size: 16px; margin-top: 10px; }
       }
       @media (prefers-reduced-motion: reduce) {
         html { scroll-behavior: auto; }
         .composer .cursor { animation: none; }
-        .cta:hover, .cta-inv:hover, .card:hover, .step:hover, .tool:hover { transform: none; }
+        .cta:hover, .cta-inv:hover, .flow-step:hover { transform: none; }
         .tooltip { transition: none; }
+        .orbit-spinner, .tool-chip, .core-sun::before, .core-sun::after { animation: none !important; }
+        .tool-chip:hover .tool-logo { transform: none; animation: none; }
       }
     </style>
   </head>
@@ -408,56 +980,80 @@
         <nav aria-label="Primary">
           <a href="#how">How it works</a>
           <a href="#privacy">Privacy</a>
-          <a href="https://github.com/mehdirt/Deja">Source</a>
+          <a class="nav-source" href="https://github.com/mehdirt/Deja">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+            </svg>
+            Source
+          </a>
         </nav>
       </div>
     </header>
 
     <main>
       <section class="hero" aria-labelledby="hero-title">
-        <div class="wrap">
-          <svg width="68" height="68" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-            <rect width="32" height="32" rx="8" fill="var(--accent)" />
-            <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity="0.4" />
-            <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity="0.95" />
-            <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--accent)" />
-          </svg>
-          <span class="eyebrow">Your prompts · every AI · one library</span>
-          <h1 id="hero-title">Your prompts are work.<br />Stop <span class="accent">losing</span> them.</h1>
-          <p class="lead">
-            You finally get the wording right — then it disappears into a chat you’ll never scroll
-            back through. Deja quietly saves what you ask ChatGPT, Claude, Gemini, DeepSeek, and
-            Grok, and offers it back the moment you start to ask again.
-          </p>
-          <div class="cta-row">
-            <a class="cta" href="https://chromewebstore.google.com/detail/deja/kighkbbfofcpkgjkpjmggmlhhhabobdp">
-              Add to Chrome — free
-            </a>
-            <a class="ghost-link" href="https://github.com/mehdirt/Deja#install-load-unpacked"
-              >or load from source →</a
-            >
+        <div class="wrap hero-grid">
+          <div class="hero-copy">
+            <svg class="hero-mark" width="52" height="52" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <rect width="32" height="32" rx="8" fill="var(--accent)" />
+              <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity="0.4" />
+              <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity="0.95" />
+              <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--accent)" />
+            </svg>
+            <span class="eyebrow">Your prompts · every AI · one library</span>
+            <h1 id="hero-title">Your prompts are work.<br />Stop <span class="accent">losing</span> them.</h1>
+            <p class="lead">
+              Deja quietly saves what you ask — and offers it back the moment you start typing again.
+            </p>
           </div>
-          <p class="cta-sub">
-            <span>Free</span><span>·</span><span>stays on your computer</span><span>·</span><span>no sign-up</span>
-            <span>·</span><span>open with <span class="kbd">⌘⇧K</span></span>
-          </p>
 
-          <!-- animated demo -->
+          <!-- animated demo — the product moment, framed as a quiet browser -->
           <div class="mock" id="mock" aria-hidden="true">
-            <div class="tooltip show" id="m-pop">
-              <span class="dot"></span>
-              <div class="t-body">
-                <div class="lead" id="m-lead">You've asked something like this before →</div>
-                <div class="preview" id="m-prev">Write a short, friendly email to my landlord about the broken heater…</div>
-                <div class="meta" id="m-meta">Because you mentioned landlord, heater</div>
+            <div class="browser">
+              <div class="browser-bar">
+                <div class="browser-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+                <div class="browser-url">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                  <span id="m-url">chatgpt.com</span>
+                </div>
               </div>
-              <span class="count" id="m-count">1/3</span>
+              <div class="browser-page">
+                <div class="chat-ghost" aria-hidden="true">
+                  <span class="bubble w1"></span>
+                  <span class="bubble w2"></span>
+                  <span class="bubble w3"></span>
+                </div>
+                <div class="tooltip show" id="m-pop">
+                  <span class="dot"></span>
+                  <div class="t-body">
+                    <div class="lead" id="m-lead">You've asked something like this before →</div>
+                    <div class="preview" id="m-prev">Write a short, friendly email to my landlord about the broken heater…</div>
+                    <div class="meta" id="m-meta">Because you mentioned landlord, heater</div>
+                  </div>
+                  <span class="count" id="m-count">1/3</span>
+                </div>
+                <div class="composer">
+                  <span class="plat"><span class="plogo" id="m-plogo" aria-hidden="true"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg></span><span id="m-pname">ChatGPT</span></span>
+                  <span class="ctext"><span id="m-type">email my landlord about the heater</span><span class="cursor"></span></span>
+                  <span class="send" id="m-send" aria-hidden="true">↵</span>
+                </div>
+              </div>
             </div>
-            <div class="composer">
-              <span class="plat"><span class="pdot" id="m-pdot" style="background:#fff; box-shadow: inset 0 0 0 1px var(--line)"></span><span id="m-pname">ChatGPT</span></span>
-              <span class="ctext"><span id="m-type">email my landlord about the heater</span><span class="cursor"></span></span>
-              <span class="send" id="m-send" aria-hidden="true">↵</span>
+          </div>
+
+          <div class="hero-actions">
+            <div class="cta-row">
+              <a class="cta" href="https://chromewebstore.google.com/detail/deja/kighkbbfofcpkgjkpjmggmlhhhabobdp">
+                Add to Chrome — free
+              </a>
+              <a class="ghost-link" href="https://github.com/mehdirt/Deja#install-load-unpacked"
+                >or load from source →</a
+              >
             </div>
+            <p class="cta-sub">
+              <span>Free</span><span>·</span><span>stays on your computer</span><span>·</span><span>no sign-up</span>
+              <span class="kbd-hint"><span>·</span><span>open with <span class="kbd">⌘⇧K</span></span></span>
+            </p>
           </div>
         </div>
       </section>
@@ -466,61 +1062,75 @@
         <div class="wrap">
           <div class="section-head">
             <span class="eyebrow">How it works</span>
-            <h2 id="how-title">It works the way memory should — quietly</h2>
+            <h2 id="how-title">Ask once. <span class="wordmark">de<span class="ja">ja</span></span> remembers.</h2>
             <p class="section-lead">
-              Three steps, and you only do the first one. No buttons to remember, no folders to keep
-              tidy — you ask questions the way you already do, and Deja does the remembering.
+              Three quiet moments — you only do the first.
             </p>
           </div>
 
-          <ol class="steps">
-            <li class="step">
-              <div class="step-top">
-                <span class="num">1</span>
-                <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 3z"/><path d="M8 10h8M8 13h5"/></svg>
+          <ol class="flow">
+            <li class="flow-step flow-you">
+              <span class="flow-mark" aria-hidden="true">1</span>
+              <div>
+                <p class="flow-who">You</p>
+                <h3>Ask like you always do</h3>
+                <p>Keep using ChatGPT, Claude, Gemini, DeepSeek, and Grok. Nothing new to learn.</p>
               </div>
-              <h3>Ask like you always do</h3>
-              <p>Keep using ChatGPT, Claude, Gemini, DeepSeek, and Grok. Hit Enter — there’s nothing new to learn and nothing to click.</p>
+              <div class="flow-echo" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 3z"/><path d="M8 10h8M8 13h5"/></svg>
+                Just the chat you already open
+              </div>
             </li>
-            <li class="step">
-              <div class="step-top">
-                <span class="num">2</span>
-                <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7.5" width="11" height="11" rx="2.5"/><rect x="9.5" y="3.5" width="11" height="11" rx="2.5"/></svg>
+            <li class="flow-step">
+              <span class="flow-mark" aria-hidden="true">2</span>
+              <div>
+                <p class="flow-who">Deja</p>
+                <h3>Saves it on this computer</h3>
+                <p>Every prompt lands in a private library here — never sent anywhere.</p>
               </div>
-              <h3>Deja saves it — privately</h3>
-              <p>Every prompt lands in a library on this computer. Searchable, reusable, and never sent anywhere.</p>
+              <div class="flow-echo" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7.5" width="11" height="11" rx="2.5"/><rect x="9.5" y="3.5" width="11" height="11" rx="2.5"/></svg>
+                The echo of what you asked
+              </div>
             </li>
-            <li class="step">
-              <div class="step-top">
-                <span class="num">3</span>
-                <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-8.5 6"/><path d="M3 4v4h4"/><path d="m12 8 0 4 3 2"/></svg>
+            <li class="flow-step">
+              <span class="flow-mark" aria-hidden="true">3</span>
+              <div>
+                <p class="flow-who">Together</p>
+                <h3>The right one comes back</h3>
+                <p>Start typing something familiar and your earlier version floats up.</p>
               </div>
-              <h3>The right one comes back</h3>
-              <p>Start typing something you’ve asked before and your earlier version floats up — one click to reuse it.</p>
+              <div class="flow-echo" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 1-8.5 6"/><path d="M3 4v4h4"/><path d="m12 8 0 4 3 2"/></svg>
+                Déjà vu, on purpose
+              </div>
             </li>
           </ol>
 
-          <div class="caps">
-            <div class="card">
-              <span class="ic" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m20.5 20.5-4-4"/></svg>
-              </span>
-              <h3>Find it when you half-remember</h3>
-              <p>Search forgives plurals, spellings, and everyday synonyms. Fill in blanks like {topic} when you reuse a prompt that changes each time.</p>
-            </div>
-            <div class="card">
-              <span class="ic" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="17" r="2"/></svg>
-              </span>
-              <h3>Yours to control</h3>
-              <p>Pause saving in one click, turn Deja off for any site, or let it pause itself in a private window. Skip short throwaways so only the keepers stay.</p>
-            </div>
-            <div class="card">
-              <span class="ic" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
-              </span>
-              <h3>Yours to keep</h3>
-              <p>Download a readable document or a full backup anytime. Wipe everything in one click. No lock-in, ever.</p>
+          <div class="also">
+            <p class="also-label">Also quietly handy</p>
+            <div class="also-grid">
+              <div class="also-item">
+                <span class="ic" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m20.5 20.5-4-4"/></svg>
+                </span>
+                <h3>Find it when you half-remember</h3>
+                <p>Search that forgives fuzzy wording — and blanks you can fill in later.</p>
+              </div>
+              <div class="also-item">
+                <span class="ic" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+                </span>
+                <h3>Yours to control</h3>
+                <p>Pause anytime. Turn off a site. Private windows stay quiet.</p>
+              </div>
+              <div class="also-item">
+                <span class="ic" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
+                </span>
+                <h3>Yours to keep</h3>
+                <p>Download a backup anytime. Wipe everything in one click.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -531,47 +1141,146 @@
           <div class="section-head center">
             <span class="eyebrow">One library, every assistant</span>
             <h2 id="tools-title">Works where you already ask</h2>
-            <p class="section-lead">No single AI will let your history follow you to another. Deja will.</p>
+            <p class="section-lead">Switch AIs anytime — your questions come with you.</p>
           </div>
-          <div class="tools">
-            <span class="tool"><span class="pdot" style="background:#fff; box-shadow: inset 0 0 0 1px var(--line)"></span> ChatGPT</span>
-            <span class="tool"><span class="pdot" style="background:#d97757"></span> Claude</span>
-            <span class="tool"><span class="pdot" style="background:#4285f4"></span> Gemini</span>
-            <span class="tool"><span class="pdot" style="background:#4d6bfe"></span> DeepSeek</span>
-            <span class="tool"><span class="pdot" style="background:#71767b"></span> Grok</span>
+
+          <div class="orbit" role="presentation">
+            <p class="tools-sr">Supported assistants: ChatGPT, Claude, Gemini, DeepSeek, and Grok.</p>
+            <div class="orbit-core" aria-hidden="true">
+              <div class="core-sun">
+                <svg class="core-mark" viewBox="0 0 32 32" fill="none">
+                  <rect width="32" height="32" rx="8" fill="var(--accent)" />
+                  <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity="0.4" />
+                  <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity="0.95" />
+                  <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--accent)" />
+                </svg>
+              </div>
+              <span class="core-word">de<span class="ja">ja</span></span>
+            </div>
+            <div class="orbit-lane" style="--r: calc(var(--orbit-size) * 0.22); --dur: 28s; --start: 12deg">
+              <div class="orbit-ring"></div>
+              <div class="orbit-spinner">
+                <div class="orbit-item">
+                  <span class="tool-chip" data-tool="chatgpt" title="ChatGPT">
+                    <span class="tool-logo" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="orbit-lane" style="--r: calc(var(--orbit-size) * 0.30); --dur: 36s; --start: 95deg">
+              <div class="orbit-ring"></div>
+              <div class="orbit-spinner">
+                <div class="orbit-item">
+                  <span class="tool-chip" data-tool="claude" title="Claude">
+                    <span class="tool-logo" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="orbit-lane" style="--r: calc(var(--orbit-size) * 0.38); --dur: 44s; --start: 200deg">
+              <div class="orbit-ring"></div>
+              <div class="orbit-spinner">
+                <div class="orbit-item">
+                  <span class="tool-chip" data-tool="gemini" title="Gemini">
+                    <span class="tool-logo" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></svg>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="orbit-lane" style="--r: calc(var(--orbit-size) * 0.45); --dur: 52s; --start: 310deg">
+              <div class="orbit-ring"></div>
+              <div class="orbit-spinner">
+                <div class="orbit-item">
+                  <span class="tool-chip" data-tool="deepseek" title="DeepSeek">
+                    <span class="tool-logo" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M23.748 4.651c-.254-.124-.364.113-.512.233-.051.04-.094.09-.137.137-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.155-.708-.311-.955-.65-.172-.24-.219-.509-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434 1.202-.422 1.84.027 1.436.633 2.58 1.838 3.393.137.094.172.187.129.323-.082.28-.18.553-.266.833-.055.179-.137.218-.328.14a5.5 5.5 0 0 1-1.737-1.179c-.857-.828-1.631-1.743-2.597-2.46a12 12 0 0 0-.689-.47c-.985-.957.13-1.743.387-1.836.27-.098.094-.433-.778-.428-.872.003-1.67.295-2.687.685a3 3 0 0 1-.465.136 9.6 9.6 0 0 0-2.883-.101c-1.885.21-3.39 1.1-4.497 2.622C.082 8.776-.231 10.854.152 13.02c.403 2.284 1.568 4.175 3.36 5.653 1.857 1.533 3.997 2.284 6.438 2.14 1.482-.085 3.132-.284 4.994-1.86.47.234.962.328 1.78.398.629.058 1.235-.031 1.705-.129.735-.155.684-.836.418-.961-2.155-1.004-1.682-.595-2.112-.926 1.095-1.295 2.768-3.598 3.284-6.733.05-.346.115-.834.108-1.114-.004-.171.035-.238.23-.257a4.2 4.2 0 0 0 1.545-.475c1.397-.763 1.96-2.016 2.093-3.517.02-.23-.004-.467-.247-.588M11.58 18.168c-2.088-1.642-3.101-2.183-3.52-2.16-.39.024-.32.472-.234.763.09.288.207.487.371.74.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.168-1.361-.801-2.5-1.86-3.301-3.306-.775-1.393-1.225-2.888-1.299-4.482-.02-.385.094-.522.477-.592a4.7 4.7 0 0 1 1.53-.038c2.131.311 3.946 1.264 5.467 2.774.868.86 1.525 1.887 2.202 2.89.72 1.066 1.494 2.082 2.48 2.915.348.291.626.513.892.677-.802.09-2.14.109-3.055-.615zm1.001-6.44a.306.306 0 0 1 .415-.287.3.3 0 0 1 .113.074.3.3 0 0 1 .086.214c0 .17-.136.307-.308.307a.303.303 0 0 1-.306-.307m3.11 1.596c-.2.081-.4.151-.591.16a1.25 1.25 0 0 1-.798-.254c-.274-.23-.47-.358-.551-.758a1.7 1.7 0 0 1 .015-.588c.07-.327-.007-.537-.238-.727-.188-.156-.426-.199-.689-.199a.6.6 0 0 1-.254-.078.253.253 0 0 1-.114-.358 1 1 0 0 1 .192-.21c.356-.202.767-.136 1.146.016.352.144.618.408 1.001.782.392.451.462.576.685.915.176.264.336.536.446.848.066.194-.02.353-.25.45"/></svg>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="orbit-lane" style="--r: calc(var(--orbit-size) * 0.52); --dur: 60s; --start: 155deg">
+              <div class="orbit-ring"></div>
+              <div class="orbit-spinner">
+                <div class="orbit-item">
+                  <span class="tool-chip" data-tool="grok" title="Grok">
+                    <span class="tool-logo" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z"/></svg>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-          <p class="tools-note">Switch tools whenever you like — the questions you already asked come with you.</p>
         </div>
       </section>
 
       <section id="privacy" aria-labelledby="privacy-title">
         <div class="wrap">
-          <div class="privacy">
+          <div class="section-head">
             <span class="eyebrow">Privacy</span>
-            <h2 id="privacy-title" style="margin-top: 8px">Private by design — not by promise 🔒</h2>
-            <p class="section-lead">Deja can’t leak what it never sends. Everything stays on your computer.</p>
-            <ul class="plist">
+            <h2 id="privacy-title">Private by design — not by promise</h2>
+            <p class="section-lead">Built so there’s almost nothing to disclose.</p>
+          </div>
+
+          <div class="privacy-panel">
+            <div class="privacy-promise">
+              <span class="privacy-seal" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="5" y="11" width="14" height="10" rx="2"/>
+                  <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+                </svg>
+              </span>
+              <p class="privacy-thesis">Nothing you type ever leaves this computer.</p>
+              <p class="privacy-sub">No servers. No accounts. No tracking. The notebook stays on your shelf.</p>
+              <div class="privacy-pills" aria-hidden="true">
+                <span>No network</span>
+                <span>No tracking</span>
+                <span>No cloud</span>
+              </div>
+            </div>
+
+            <ul class="privacy-grid">
               <li>
-                <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
-                <span><strong>No network calls, no tracking, no analytics.</strong> Nothing you type ever leaves your machine.</span>
+                <span class="ic" aria-hidden="true">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8 9h8M8 13h5"/></svg>
+                </span>
+                <h3>Lives in your browser</h3>
+                <p>Your library stays on this device. Nothing is uploaded.</p>
               </li>
               <li>
-                <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
-                <span><strong>No accounts, no cloud, no other companies.</strong> Your library lives in your browser, on this device.</span>
+                <span class="ic" aria-hidden="true">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
+                </span>
+                <h3>Only what you type</h3>
+                <p>Your prompts only — never the AI’s answers.</p>
               </li>
               <li>
-                <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
-                <span><strong>Only what you type</strong> is saved — never the AI’s answers.</span>
+                <span class="ic" aria-hidden="true">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10"/><path d="M4 12h16"/><path d="M4 17h8"/><circle cx="18" cy="7" r="2"/></svg>
+                </span>
+                <h3>Personal details can stay hidden</h3>
+                <p>Emails and numbers can become <span class="mono">[email]</span> before anything is saved.</p>
               </li>
               <li>
-                <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
-                <span><strong>Personal details can be hidden</strong> before anything is saved — emails, phone numbers, cards, and keys become placeholders like <span style="font-family:var(--mono);font-size:12px">[email]</span>.</span>
-              </li>
-              <li>
-                <svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>
-                <span><strong>Pause anytime.</strong> One click stops saving everywhere; private windows are paused by default.</span>
+                <span class="ic" aria-hidden="true">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M8 12h8"/></svg>
+                </span>
+                <h3>Pause whenever you want</h3>
+                <p>One click stops saving. Private windows stay quiet by default.</p>
               </li>
             </ul>
+
+            <div class="privacy-foot">
+              <p>Want the fine print? It’s short.</p>
+              <a href="privacy.html">Read the privacy policy →</a>
+            </div>
           </div>
         </div>
       </section>
@@ -585,8 +1294,8 @@
             </svg>
             <div class="closing-inner">
               <span class="eyebrow">Ready when you are ☕</span>
-              <h2>Stop rewriting questions you’ve already asked well.</h2>
-              <p class="sub">Install once, keep asking the way you do, and let Deja remember the rest.</p>
+              <h2>Stop rewriting questions — leave it to Deja.</h2>
+              <p class="sub">Install once. Keep asking the way you do.</p>
               <a class="cta-inv" href="https://chromewebstore.google.com/detail/deja/kighkbbfofcpkgjkpjmggmlhhhabobdp">Add to Chrome — free</a>
               <p class="cta-sub"><span>Free</span><span>·</span><span>stays on your computer</span><span>·</span><span>no sign-up</span></p>
             </div>
@@ -608,7 +1317,7 @@
               </svg>
               <span class="word">de<span class="ja">ja</span></span>
             </span>
-            <p>Your personal prompt library — quietly saved across every AI you use, and offered back when you need it.</p>
+            <p>Your prompts, every AI, one library — on this computer.</p>
             <p class="footer-meta">Stays on your computer · No account · No cloud</p>
           </div>
           <div class="footer-cols">
@@ -629,7 +1338,7 @@
         </div>
         <div class="footer-bottom">
           <span>© 2026 Deja</span>
-          <span class="credit">Crafted with <span class="heart">♥</span> by <a href="https://github.com/mehdirt">mehdirt</a></span>
+          <span class="credit">Created by <a href="https://github.com/mehdirt">mehdirt</a> 🕊️</span>
         </div>
       </div>
     </footer>
@@ -648,41 +1357,53 @@
         var prev = document.getElementById('m-prev');
         var meta = document.getElementById('m-meta');
         var count = document.getElementById('m-count');
-        var pdot = document.getElementById('m-pdot');
+        var plogo = document.getElementById('m-plogo');
         var pname = document.getElementById('m-pname');
+        var purl = document.getElementById('m-url');
         var send = document.getElementById('m-send');
 
-        // `dot` is the circle next to the platform name (white + ring for
-        // ChatGPT); `color` is the brand color used for the send button.
+        // Brand mark SVGs (same paths as orbit / site logos). `color` tints
+        // the logo + send button.
+        var ICONS = {
+          ChatGPT: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>',
+          Claude: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg>',
+          Gemini: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></svg>'
+        };
+
         var samples = [
-          { platform: 'ChatGPT', color: '#10a37f', dot: '#fff', typed: 'email my landlord about the heater',
+          { platform: 'ChatGPT', host: 'chatgpt.com', color: '#10a37f', typed: 'email my landlord about the heater',
             lead: "You've asked something like this before →",
             preview: 'Write a short, friendly email to my landlord about the broken heater…',
             meta: 'Because you mentioned landlord, heater', count: '1/3' },
-          { platform: 'Claude', color: '#d97757', dot: '#d97757', typed: 'explain this simply',
+          { platform: 'Claude', host: 'claude.ai', color: '#d97757', typed: 'explain this simply',
             lead: "You've written something like this →",
             preview: 'Explain gravity to me like I know nothing about it, with one real-world comparison…',
             meta: 'Because you mentioned explain, simply', count: '1/2' },
-          { platform: 'Gemini', color: '#4285f4', dot: '#4285f4', typed: 'plan a weekend trip',
+          { platform: 'Gemini', host: 'gemini.google.com', color: '#4285f4', typed: 'plan a weekend trip',
             lead: 'Seen this one before →',
             preview: 'Plan a relaxed 2-day trip for two, with a simple packing list and one rainy-day option…',
             meta: 'Because you mentioned plan, trip', count: '1/4' }
         ];
 
-        function paintDot(s) {
-          pdot.style.background = s.dot;
-          pdot.style.boxShadow = s.dot === '#fff' ? 'inset 0 0 0 1px var(--line)' : 'none';
+        function paintLogo(s) {
+          plogo.innerHTML = ICONS[s.platform] || '';
+          plogo.style.color = s.color;
+        }
+        function paintChrome(s) {
+          paintLogo(s);
+          pname.textContent = s.platform;
+          if (purl) purl.textContent = s.host;
+          send.style.background = s.color;
         }
 
-        // Set the static first sample's platform colors immediately.
-        paintDot(samples[0]);
-        send.style.background = samples[0].color;
+        // Set the static first sample's platform mark + send color immediately.
+        paintChrome(samples[0]);
 
         if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
         var THRESH = 12, TYPE = 46, DEL = 22, HOLD = 2300, FADE = 420, GAP = 320;
         function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-        function setPlatform(s) { paintDot(s); pname.textContent = s.platform; send.style.background = s.color; }
+        function setPlatform(s) { paintChrome(s); }
         function setMeta(s) { lead.textContent = s.lead; prev.textContent = s.preview; meta.textContent = s.meta; count.textContent = s.count; }
 
         async function typeText(s) {
@@ -711,6 +1432,66 @@
             await sleep(HOLD);
           }
         })();
+      })();
+
+      // Orbit proximity glow: when assistant logos pass near each other,
+      // light their brand glow until they separate again.
+      (function () {
+        var orbit = document.querySelector('#tools .orbit');
+        if (!orbit) return;
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        var chips = Array.prototype.slice.call(orbit.querySelectorAll('.tool-chip'));
+        if (chips.length < 2) return;
+
+        var active = false;
+        var raf = 0;
+        // ~ logo diameter + a little room so the glow reads before they overlap
+        var THRESH = 78;
+
+        function tick() {
+          if (!active) { raf = 0; return; }
+          var pts = chips.map(function (c) {
+            var r = c.getBoundingClientRect();
+            return { el: c, x: r.left + r.width / 2, y: r.top + r.height / 2 };
+          });
+          var near = [];
+          for (var i = 0; i < pts.length; i++) near[i] = false;
+          for (var a = 0; a < pts.length; a++) {
+            for (var b = a + 1; b < pts.length; b++) {
+              var dx = pts[a].x - pts[b].x;
+              var dy = pts[a].y - pts[b].y;
+              if (dx * dx + dy * dy < THRESH * THRESH) {
+                near[a] = true;
+                near[b] = true;
+              }
+            }
+          }
+          for (var k = 0; k < chips.length; k++) {
+            chips[k].classList.toggle('is-near', near[k]);
+          }
+          raf = requestAnimationFrame(tick);
+        }
+
+        function start() {
+          if (active) return;
+          active = true;
+          if (!raf) raf = requestAnimationFrame(tick);
+        }
+        function stop() {
+          active = false;
+          for (var i = 0; i < chips.length; i++) chips[i].classList.remove('is-near');
+        }
+
+        if ('IntersectionObserver' in window) {
+          var io = new IntersectionObserver(function (entries) {
+            if (entries[0] && entries[0].isIntersecting) start();
+            else stop();
+          }, { threshold: 0.05 });
+          io.observe(orbit);
+        } else {
+          start();
+        }
       })();
     </script>
   </body>

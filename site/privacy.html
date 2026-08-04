@@ -89,6 +89,20 @@
         src: url('fonts/jetbrains-mono-latin.woff2') format('woff2');
         unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
       }
+      @font-face {
+        font-family: 'Literata';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 600;
+        src: url('fonts/literata-semibold.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Literata';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 700;
+        src: url('fonts/literata-bold.woff2') format('woff2');
+      }
       :root {
         --bg: #faf8f3;
         --surface: #ffffff;
@@ -97,10 +111,17 @@
         --ink-soft: #6b6862;
         --ink-faint: #9a968d;
         --accent: #5b54f0;
+        --accent-hover: #4a43e0;
+        --accent-soft: #ecebfe;
         --line: #e7e2d8;
         --ok: #2f9e63;
         --mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         --sans: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        --brand: 'Literata', Georgia, 'Times New Roman', serif;
+        --maxw: 980px;
+        --measure: 38rem;
+        --shadow-sm: 0 1px 2px rgba(28, 27, 25, 0.04), 0 1px 3px rgba(28, 27, 25, 0.06);
+        --glow: rgba(91, 84, 240, 0.1);
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -111,52 +132,371 @@
           --ink-soft: #a8a49b;
           --ink-faint: #6e6a62;
           --accent: #8983f5;
+          --accent-hover: #9c97f7;
+          --accent-soft: #272534;
           --line: #2e2c36;
           --ok: #56c98a;
+          --glow: rgba(137, 131, 245, 0.14);
         }
       }
+
       * { box-sizing: border-box; }
-      body {
-        margin: 0; background: var(--bg); color: var(--ink);
-        font-family: var(--sans); line-height: 1.65; -webkit-font-smoothing: antialiased;
+      html { scroll-behavior: smooth; }
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        .doc-enter { animation: none !important; }
       }
-      .wrap { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        position: relative;
+      }
+      body::before {
+        content: '';
+        position: absolute; inset: 0 0 auto 0; height: 520px; z-index: 0;
+        background: radial-gradient(58% 50% at 50% -4%, var(--glow), transparent 72%);
+        pointer-events: none;
+      }
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 24px;
+        position: relative;
+        z-index: 1;
+      }
       a { color: var(--accent); text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+      a:hover { text-decoration: underline; color: var(--accent-hover); }
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 6px;
+        text-decoration: none;
+      }
 
       .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
       .brand:hover { text-decoration: none; }
-      .brand .word { font-family: var(--mono); font-weight: 600; font-size: 19px; letter-spacing: -0.03em; color: var(--ink); }
+      .brand .word {
+        font-family: var(--brand); font-weight: 600; font-size: 20px;
+        letter-spacing: -0.02em; color: var(--ink);
+      }
       .brand .word .ja { color: var(--accent); }
+
       header { padding: 26px 0; }
       header .wrap { display: flex; align-items: center; justify-content: space-between; }
-      header nav a { color: var(--ink-soft); font-size: 14px; }
+      header nav a {
+        color: var(--ink-soft); font-size: 14px;
+        display: inline-flex; align-items: center; gap: 6px;
+      }
       header nav a:hover { color: var(--ink); }
+      header nav a svg { opacity: 0.7; }
 
-      main { padding: 24px 0 64px; }
-      .eyebrow { font-size: 13px; font-weight: 500; color: var(--ink-faint); margin: 0 0 10px; }
-      h1 { font-size: clamp(30px, 5vw, 40px); letter-spacing: -0.03em; line-height: 1.1; margin: 0 0 8px; }
-      .updated { font-size: 13px; color: var(--ink-faint); margin: 0 0 28px; }
-      .tldr {
-        background: var(--sunk); border: 1px solid var(--line); border-radius: 14px;
-        padding: 18px 20px; margin: 0 0 36px; color: var(--ink-soft); font-size: 15.5px;
+      main { padding: 12px 0 88px; }
+
+      .doc-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 40px;
+        align-items: start;
       }
-      .tldr strong { color: var(--ink); }
-      h2 { font-size: 20px; letter-spacing: -0.015em; margin: 36px 0 10px; }
-      p, li { color: var(--ink-soft); font-size: 15.5px; }
-      ul { padding-left: 20px; margin: 10px 0; }
-      li { margin: 6px 0; }
-      li strong, p strong { color: var(--ink); font-weight: 600; }
+      @media (min-width: 900px) {
+        .doc-layout {
+          grid-template-columns: 168px minmax(0, 1fr);
+          gap: 56px;
+        }
+      }
+
+      .toc {
+        display: none;
+      }
+      @media (min-width: 900px) {
+        .toc {
+          display: block;
+          position: sticky;
+          top: 28px;
+          padding-top: 8px;
+        }
+      }
+      .toc-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin: 0 0 14px;
+      }
+      .toc ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .toc a {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 13px;
+        line-height: 1.35;
+        padding: 7px 0 7px 12px;
+        border-left: 1px solid var(--line);
+        text-decoration: none;
+        transition: color 160ms ease, border-color 160ms ease;
+      }
+      .toc a:hover,
+      .toc a[aria-current="true"] {
+        color: var(--ink);
+        border-left-color: var(--accent);
+        text-decoration: none;
+      }
+
+      .doc-enter {
+        animation: rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+        to { opacity: 1; transform: none; filter: none; }
+      }
+
+      .doc-hero { margin-bottom: 28px; max-width: var(--measure); }
+      .doc-hero h1 {
+        font-size: clamp(32px, 5.2vw, 44px);
+        letter-spacing: -0.03em;
+        line-height: 1.08;
+        font-weight: 700;
+        margin: 0 0 16px;
+        text-wrap: balance;
+      }
+      .doc-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0;
+      }
+      .doc-meta span {
+        font-size: 12.5px;
+        color: var(--ink-soft);
+        background: var(--sunk);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 11px;
+      }
+
+      .promise {
+        background:
+          linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 65%, var(--surface)), var(--surface) 78%);
+        border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--line));
+        border-radius: 16px;
+        padding: 26px 28px 24px;
+        margin: 0 0 40px;
+        box-shadow: var(--shadow-sm);
+        max-width: 42rem;
+      }
+      .promise-mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #fff;
+        margin-bottom: 14px;
+      }
+      .promise p {
+        margin: 0;
+        color: var(--ink-soft);
+        font-size: 15.5px;
+        line-height: 1.6;
+        max-width: 36rem;
+      }
+      .promise p strong { color: var(--ink); font-weight: 600; }
+      .promise-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .promise-pills span {
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 11px;
+      }
+
+      .article {
+        max-width: var(--measure);
+      }
+      .article section {
+        padding: 28px 0 4px;
+        border-top: 1px solid var(--line);
+      }
+      .article section:first-of-type { border-top: none; padding-top: 0; }
+      .article h2 {
+        font-size: 19px;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+        font-weight: 650;
+        margin: 0 0 14px;
+        scroll-margin-top: 24px;
+      }
+      .article p {
+        margin: 0 0 12px;
+        color: var(--ink-soft);
+        font-size: 15.5px;
+      }
+      .article p:last-child { margin-bottom: 0; }
+      .article strong { color: var(--ink); font-weight: 600; }
+
+      .fact-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .fact-list li {
+        display: grid;
+        grid-template-columns: 22px 1fr;
+        gap: 12px;
+        align-items: start;
+        color: var(--ink-soft);
+        font-size: 15.5px;
+        line-height: 1.55;
+      }
+      .fact-list .ic {
+        width: 22px;
+        height: 22px;
+        margin-top: 1px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        background: var(--sunk);
+        color: var(--ink-soft);
+        flex: none;
+      }
+      .fact-list.never .ic {
+        background: color-mix(in srgb, var(--ok) 14%, var(--sunk));
+        color: var(--ok);
+      }
+      .fact-list.guard .ic {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .site-list {
+        list-style: none;
+        margin: 14px 0 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+        background: var(--surface);
+      }
+      .site-list li {
+        display: grid;
+        grid-template-columns: 108px 1fr;
+        gap: 12px;
+        align-items: baseline;
+        padding: 12px 16px;
+        border-top: 1px solid var(--line);
+        font-size: 14.5px;
+        color: var(--ink-soft);
+      }
+      .site-list li:first-child { border-top: none; }
+      .site-list .name {
+        color: var(--ink);
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .site-list .hosts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
       code {
-        font-family: var(--mono); font-size: 13px; background: var(--sunk);
-        border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--ink);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--sunk);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 1px 6px;
+        color: var(--ink);
       }
-      table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14.5px; }
-      th, td { text-align: left; padding: 8px 12px; border: 1px solid var(--line); color: var(--ink-soft); }
-      th { color: var(--ink); font-weight: 600; background: var(--sunk); font-size: 13px; }
-      footer { border-top: 1px solid var(--line); padding: 28px 0 48px; color: var(--ink-faint); font-size: 14px; }
-      footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+      .perm-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .perm-list li {
+        padding: 14px 0;
+        border-top: 1px solid var(--line);
+        color: var(--ink-soft);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+      .perm-list li:first-child { border-top: none; padding-top: 2px; }
+      .perm-list .perm-key {
+        display: block;
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--ink);
+        margin-bottom: 4px;
+      }
+
+      .contact-box {
+        margin-top: 8px;
+        padding: 18px 20px;
+        background: var(--sunk);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        color: var(--ink-soft);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+      .contact-box p { margin: 0; color: inherit; font-size: inherit; }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 28px 0 48px;
+        color: var(--ink-faint);
+        font-size: 14px;
+        position: relative;
+        z-index: 1;
+      }
+      footer .wrap {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+      footer a { color: var(--ink-soft); }
+      footer a:hover { color: var(--ink); }
+
+      @media (max-width: 560px) {
+        .site-list li {
+          grid-template-columns: 1fr;
+          gap: 6px;
+        }
+        .promise { padding: 22px 20px 20px; }
+        .doc-hero h1 { font-size: clamp(28px, 8vw, 36px); }
+      }
     </style>
   </head>
   <body>
@@ -171,108 +511,253 @@
           </svg>
           <span class="word">de<span class="ja">ja</span></span>
         </a>
-        <nav><a href="index.html">← Back to Deja</a></nav>
+        <nav>
+          <a href="index.html">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+            Back to Deja
+          </a>
+        </nav>
       </div>
     </header>
 
     <main>
       <div class="wrap">
-        <p class="eyebrow">Privacy policy</p>
-        <h1>Private by design — not by promise 🔒</h1>
-        <p class="updated">Last updated: July 31, 2026 · Applies to the Deja browser extension</p>
+        <div class="doc-layout">
+          <nav class="toc" aria-label="On this page">
+            <p class="toc-label">On this page</p>
+            <ol>
+              <li><a href="#saves">What Deja saves</a></li>
+              <li><a href="#never">What Deja never does</a></li>
+              <li><a href="#protections">Built-in protections</a></li>
+              <li><a href="#control">Your data, your control</a></li>
+              <li><a href="#sites">Where Deja runs</a></li>
+              <li><a href="#permissions">Permissions</a></li>
+              <li><a href="#sharing">Sharing &amp; selling</a></li>
+              <li><a href="#changes">Policy changes</a></li>
+              <li><a href="#contact">Contact</a></li>
+            </ol>
+          </nav>
 
-        <div class="tldr">
-          <strong>The short version:</strong> Deja stores the prompts you type in your own browser,
-          on this computer. It makes <strong>no network calls of any kind</strong> — nothing you
-          type, and no usage data, ever leaves your machine. There is no server, no account, no
-          analytics, and no other company involved. This page can be short because there is almost
-          nothing to disclose.
+          <div class="doc-enter">
+            <header class="doc-hero">
+              <h1>Private by design — not by promise</h1>
+              <p class="doc-meta">
+                <span>Last updated July 31, 2026</span>
+                <span>Applies to the Deja browser extension</span>
+              </p>
+            </header>
+
+            <aside class="promise" aria-label="Short version">
+              <span class="promise-mark" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+              </span>
+              <p>
+                <strong>The short version:</strong> Deja stores the prompts you type in your own browser,
+                on this computer. It makes <strong>no network calls of any kind</strong> — nothing you
+                type, and no usage data, ever leaves your machine. There is no server, no account, no
+                analytics, and no other company involved. This page can be short because there is almost
+                nothing to disclose.
+              </p>
+              <div class="promise-pills" aria-hidden="true">
+                <span>Stays on this device</span>
+                <span>No network calls</span>
+                <span>No accounts</span>
+                <span>No analytics</span>
+              </div>
+            </aside>
+
+            <article class="article">
+              <section id="saves" aria-labelledby="saves-title">
+                <h2 id="saves-title">What Deja saves</h2>
+                <ul class="fact-list">
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+                    </span>
+                    <span><strong>The prompts you send</strong> on the supported sites below, saved into your browser’s own storage on this device — nowhere else.</span>
+                  </li>
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </span>
+                    <span><strong>Your settings</strong> (what gets saved, where Deja works, privacy rules), also stored only on this device.</span>
+                  </li>
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+                    </span>
+                    <span><strong>Nothing else.</strong> Deja does not collect browsing history, page content, AI answers, or any usage or tracking data.</span>
+                  </li>
+                </ul>
+              </section>
+
+              <section id="never" aria-labelledby="never-title">
+                <h2 id="never-title">What Deja never does</h2>
+                <ul class="fact-list never">
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                    <span><strong>Never sends anything over the internet.</strong> Your data cannot leak, because it is never sent.</span>
+                  </li>
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                    <span><strong>No tracking or analytics</strong> — not even anonymous usage statistics or crash reports.</span>
+                  </li>
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                    <span><strong>No accounts, no cloud, no other companies.</strong></span>
+                  </li>
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                    <span><strong>Never reads the AI’s answers</strong> — only the text you type is saved.</span>
+                  </li>
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                    <span><strong>Never reads password, verification-code, or payment boxes.</strong> Saved page links are shortened so they don’t keep search strings or private fragments.</span>
+                  </li>
+                </ul>
+              </section>
+
+              <section id="protections" aria-labelledby="protections-title">
+                <h2 id="protections-title">Built-in protections</h2>
+                <ul class="fact-list guard">
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </span>
+                    <span>
+                      <strong>Hide personal info (on by default).</strong> Before a prompt is saved, details
+                      Deja recognises — email addresses, phone numbers, card numbers, API keys and similar
+                      secrets — are replaced with placeholders like <code>[email]</code>. The real values
+                      never reach your library or any backup you download. You can turn categories on or off
+                      in settings.
+                    </span>
+                  </li>
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M10 15l-3-3 3-3M14 9l3 3-3 3"/></svg>
+                    </span>
+                    <span><strong>Pause anytime.</strong> One click stops saving everywhere; you can turn off any site; private windows are paused by default.</span>
+                  </li>
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9l14.2 14.2"/></svg>
+                    </span>
+                    <span><strong>Never save from…</strong> You can block a whole site, or add a text rule so matching prompts are never stored.</span>
+                  </li>
+                </ul>
+              </section>
+
+              <section id="control" aria-labelledby="control-title">
+                <h2 id="control-title">Where your data lives, and how to delete it</h2>
+                <p>Everything lives in your browser profile on your device. You are in full control:</p>
+                <ul class="fact-list">
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    </span>
+                    <span><strong>Download</strong> your library as a readable document or a full backup anytime — no lock-in.</span>
+                  </li>
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+                    </span>
+                    <span><strong>Delete</strong> individual prompts (you can undo), erase deleted prompts for good, or wipe everything from settings.</span>
+                  </li>
+                  <li>
+                    <span class="ic" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </span>
+                    <span><strong>Uninstalling the extension</strong> removes Deja’s local data with it.</span>
+                  </li>
+                </ul>
+              </section>
+
+              <section id="sites" aria-labelledby="sites-title">
+                <h2 id="sites-title">Where Deja runs</h2>
+                <p>Deja is only active on these sites — you can check the full list in the extension’s manifest:</p>
+                <ul class="site-list">
+                  <li>
+                    <span class="name">ChatGPT</span>
+                    <span class="hosts"><code>chatgpt.com</code> <code>chat.openai.com</code></span>
+                  </li>
+                  <li>
+                    <span class="name">Claude</span>
+                    <span class="hosts"><code>claude.ai</code></span>
+                  </li>
+                  <li>
+                    <span class="name">Gemini</span>
+                    <span class="hosts"><code>gemini.google.com</code></span>
+                  </li>
+                  <li>
+                    <span class="name">DeepSeek</span>
+                    <span class="hosts"><code>chat.deepseek.com</code></span>
+                  </li>
+                  <li>
+                    <span class="name">Grok</span>
+                    <span class="hosts"><code>grok.com</code></span>
+                  </li>
+                </ul>
+              </section>
+
+              <section id="permissions" aria-labelledby="permissions-title">
+                <h2 id="permissions-title">Permissions, explained</h2>
+                <ul class="perm-list">
+                  <li>
+                    <span class="perm-key">storage</span>
+                    Save your library and settings locally in the browser.
+                  </li>
+                  <li>
+                    <span class="perm-key">alarms</span>
+                    Clear the “paused” toolbar badge when a timed pause ends. Local only.
+                  </li>
+                  <li>
+                    <span class="perm-key">Access to the five sites above</span>
+                    Read the message box you type into, so prompts can be saved and similar past prompts offered back. Deja reads only that composer, never other page content.
+                  </li>
+                </ul>
+              </section>
+
+              <section id="sharing" aria-labelledby="sharing-title">
+                <h2 id="sharing-title">Data sharing and selling</h2>
+                <p>
+                  Deja does not share, sell, or transfer your data to anyone — including us. Since no data
+                  ever leaves your device, there is nothing we could share even if we wanted to.
+                </p>
+              </section>
+
+              <section id="changes" aria-labelledby="changes-title">
+                <h2 id="changes-title">Changes to this policy</h2>
+                <p>
+                  If Deja’s data practices ever change (for example, an optional cloud backup), this policy
+                  will be updated before that change ships, the “Last updated” date will change, and any new
+                  data flow will be strictly opt-in — never a silent default.
+                </p>
+              </section>
+
+              <section id="contact" aria-labelledby="contact-title">
+                <h2 id="contact-title">Contact</h2>
+                <div class="contact-box">
+                  <p>
+                    Questions or concerns: open an issue on
+                    <a href="https://github.com/mehdirt/Deja/issues">GitHub</a>, or use the feedback links
+                    inside the extension’s settings — they open a prefilled message you review and send
+                    yourself; nothing is reported automatically.
+                  </p>
+                </div>
+              </section>
+            </article>
+          </div>
         </div>
-
-        <h2>What Deja saves</h2>
-        <ul>
-          <li>
-            <strong>The prompts you send</strong> on the supported sites below, saved into your
-            browser’s own storage on this device — nowhere else.
-          </li>
-          <li>
-            <strong>Your settings</strong> (what gets saved, where Deja works, privacy rules), also
-            stored only on this device.
-          </li>
-          <li>
-            <strong>Nothing else.</strong> Deja does not collect browsing history, page content, AI
-            answers, or any usage or tracking data.
-          </li>
-        </ul>
-
-        <h2>What Deja never does</h2>
-        <ul>
-          <li><strong>Never sends anything over the internet.</strong> Your data cannot leak, because it is never sent.</li>
-          <li><strong>No tracking or analytics</strong> — not even anonymous usage statistics or crash reports.</li>
-          <li><strong>No accounts, no cloud, no other companies.</strong></li>
-          <li><strong>Never reads the AI’s answers</strong> — only the text you type is saved.</li>
-          <li><strong>Never reads password, verification-code, or payment boxes.</strong> Saved page links are shortened so they don’t keep search strings or private fragments.</li>
-        </ul>
-
-        <h2>Built-in protections</h2>
-        <ul>
-          <li>
-            <strong>Hide personal info (on by default).</strong> Before a prompt is saved, details
-            Deja recognises — email addresses, phone numbers, card numbers, API keys and similar
-            secrets — are replaced with placeholders like <code>[email]</code>. The real values
-            never reach your library or any backup you download. You can turn categories on or off
-            in settings.
-          </li>
-          <li><strong>Pause anytime.</strong> One click stops saving everywhere; you can turn off any site; private windows are paused by default.</li>
-          <li><strong>Never save from…</strong> You can block a whole site, or add a text rule so matching prompts are never stored.</li>
-        </ul>
-
-        <h2>Where your data lives, and how to delete it</h2>
-        <p>Everything lives in your browser profile on your device. You are in full control:</p>
-        <ul>
-          <li><strong>Download</strong> your library as a readable document or a full backup anytime — no lock-in.</li>
-          <li><strong>Delete</strong> individual prompts (you can undo), erase deleted prompts for good, or wipe everything from settings.</li>
-          <li><strong>Uninstalling the extension</strong> removes Deja’s local data with it.</li>
-        </ul>
-
-        <h2>Where Deja runs</h2>
-        <p>Deja is only active on these sites — you can check the full list in the extension’s manifest:</p>
-        <table>
-          <tr><th>Site</th><th>Address</th></tr>
-          <tr><td>ChatGPT</td><td><code>chatgpt.com</code>, <code>chat.openai.com</code></td></tr>
-          <tr><td>Claude</td><td><code>claude.ai</code></td></tr>
-          <tr><td>Gemini</td><td><code>gemini.google.com</code></td></tr>
-          <tr><td>DeepSeek</td><td><code>chat.deepseek.com</code></td></tr>
-          <tr><td>Grok</td><td><code>grok.com</code></td></tr>
-        </table>
-
-        <h2>Permissions, explained</h2>
-        <ul>
-          <li><code>storage</code> — save your library and settings locally in the browser.</li>
-          <li><code>alarms</code> — clear the “paused” toolbar badge when a timed pause ends. Local only.</li>
-          <li><strong>Access to the five sites above</strong> — read the message box you type into, so prompts can be saved and similar past prompts offered back. Deja reads only that composer, never other page content.</li>
-        </ul>
-
-        <h2>Data sharing and selling</h2>
-        <p>
-          Deja does not share, sell, or transfer your data to anyone — including us. Since no data
-          ever leaves your device, there is nothing we could share even if we wanted to.
-        </p>
-
-        <h2>Changes to this policy</h2>
-        <p>
-          If Deja’s data practices ever change (for example, an optional cloud backup), this policy
-          will be updated before that change ships, the “Last updated” date will change, and any new
-          data flow will be strictly opt-in — never a silent default.
-        </p>
-
-        <h2>Contact</h2>
-        <p>
-          Questions or concerns: open an issue on
-          <a href="https://github.com/mehdirt/Deja/issues">GitHub</a>, or use the feedback links
-          inside the extension’s settings — they open a prefilled message you review and send
-          yourself; nothing is reported automatically.
-        </p>
       </div>
     </main>
 
@@ -282,5 +767,40 @@
         <span><a href="index.html">Deja home</a></span>
       </div>
     </footer>
+
+    <script>
+      (function () {
+        var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+        if (!links.length) return;
+        var sections = links
+          .map(function (a) {
+            var id = a.getAttribute('href').slice(1);
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+
+        function setCurrent(id) {
+          links.forEach(function (a) {
+            if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'true');
+            else a.removeAttribute('aria-current');
+          });
+        }
+
+        if ('IntersectionObserver' in window) {
+          var visible = {};
+          var io = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (e) {
+                visible[e.target.id] = e.isIntersecting;
+              });
+              var active = sections.find(function (s) { return visible[s.id]; });
+              if (active) setCurrent(active.id);
+            },
+            { rootMargin: '-20% 0px -65% 0px', threshold: 0 }
+          );
+          sections.forEach(function (s) { io.observe(s); });
+        }
+      })();
+    </script>
   </body>
 </html>
