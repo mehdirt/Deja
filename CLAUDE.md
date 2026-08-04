@@ -2,6 +2,27 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation map
+
+- `README.md` — project overview, install, usage.
+- `DESIGN.md` — voice table, UI/copy rules.
+- `docs/README.md` — index into the doc suite (`docs/plans/`, `docs/ops/`, `docs/corpus-reference/`).
+- `docs/plans/` — dated implementation plans.
+- `docs/ops/` — operational runbooks.
+- `docs/corpus-reference/` — prompt corpora / fixture reference material.
+- `MEMORY/LOG.md` — append-only decision log. **Read before nontrivial work; append an entry after.**
+
+## Workflow rules
+
+1. **Set explicit goal, loop it.** Nontrivial task → state goal, break into tracked steps (TaskCreate), work loop to completion. No partial passes.
+2. **Use subagents when it genuinely helps.** Independent research, parallel investigation, batch content generation. Brief with full context — subagent starts cold, no memory of this conversation.
+3. **Review subagent output before trusting it.** Check the actual diff/result, not just the summary.
+4. **Whole-system review before done.** Run the code-review skill (or `compound-engineering:ce-code-review` for deeper) over the full diff before calling work finished.
+5. **Commit atomically at the end.** One commit per logical unit, not one giant bundle. Standing authorization to commit without asking each time — does NOT cover force-push, amending published commits, or other destructive ops.
+6. **Keep docs current.** Anything touching architecture/API/DB schema/config/deployment/auth must update the matching `docs/` file (or at minimum a dated `MEMORY/LOG.md` entry) in the same body of work.
+
+Always have an eye on: clean code, best practices, documenting, commenting, logging and error handling, design patterns, optimized algorithms and suitable data structures, system architecture and design.
+
 ## What this is
 
 Deja is a Manifest V3 Chrome extension that **passively saves the prompts** sent on ChatGPT, Claude, Gemini, DeepSeek, and Grok into a local, searchable library. v1 is intentionally lean: no LLM calls, no backend, no accounts. Everything lives in IndexedDB on the user's machine.
