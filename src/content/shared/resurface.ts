@@ -1,16 +1,16 @@
 // "You've Been Here Before" — the resurface moment. As the user types, we
 // debounce, ask the background worker for the closest prior prompts, and float
-// a gentle tooltip above the input. Clicking a match COPIES it to the clipboard
-// by default (and confirms it did); if the user opts into "insert at cursor" in
-// settings, the click instead inserts it at the caret in the composer. Either
-// way it's an explicit click — we never silently auto-fill, and never overwrite
-// what's already typed. When more than one prompt matches, the user can step
+// a gentle tooltip above the input. Clicking a match replaces the composer
+// with the remembered prompt by default (clear, then type); if the user opts
+// into copy in settings, the click copies instead and confirms it did. Either
+// way it's an explicit click — we never silently auto-fill. When more than one
+// prompt matches, the user can step
 // through them, and when more match than we surface, a "see all" jumps to the
 // library. Dismissible per query (× / Esc) — a later, different prompt can
 // resurface again.
 //
 // This file never captures (saves) anything. The only time it writes to the
-// host page is the opt-in insert, on an explicit click.
+// host page is the replace path, on an explicit click.
 //
 // Rendered inside a Shadow DOM so host-page CSS can't break the tooltip and
 // our CSS can't leak into the host page. Mirrors Deja's palette (warm paper /
@@ -62,26 +62,34 @@ function readText(el: HTMLElement): string {
   return el.innerText
 }
 
-// Insert text at the caret in the composer the user is typing in (opt-in path).
-// execCommand('insertText') is deprecated but remains the most reliable way to
-// insert at the caret across both <textarea> and rich contenteditable editors
+// Replace the composer's contents with the remembered prompt (insert-mode path).
+// Select-all + execCommand('insertText') is deprecated but remains the most
+// reliable way across both <textarea> and rich contenteditable editors
 // (ProseMirror, Quill) — it's undoable and the site's framework registers it as
-// real input. Falls back to a manual splice for plain textareas. Returns false
-// if nothing could be inserted (caller then falls back to copy). Never throws.
-function insertAtCaret(el: HTMLElement, text: string): boolean {
+// real input. Falls back to a direct value/text write for plain fields. Returns
+// false if nothing could be written (caller then falls back to copy). Never throws.
+function replaceComposerText(el: HTMLElement, text: string): boolean {
   try {
     el.focus()
-    if (document.execCommand('insertText', false, text)) return true
     if (el instanceof HTMLTextAreaElement) {
-      const start = el.selectionStart ?? el.value.length
-      const end = el.selectionEnd ?? el.value.length
-      el.value = el.value.slice(0, start) + text + el.value.slice(end)
-      const caret = start + text.length
-      el.selectionStart = el.selectionEnd = caret
+      el.select()
+      if (document.execCommand('insertText', false, text)) return true
+      el.value = text
+      el.selectionStart = el.selectionEnd = text.length
       el.dispatchEvent(new Event('input', { bubbles: true }))
       return true
     }
-    return false
+    const sel = window.getSelection()
+    if (sel) {
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    }
+    if (document.execCommand('insertText', false, text)) return true
+    el.textContent = text
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+    return true
   } catch {
     return false
   }
@@ -219,8 +227,8 @@ function createTooltip(onDismiss: () => void): Tooltip {
     card.setAttribute('aria-label', 'Reuse a similar prompt you saved before')
     card.style.display = 'none'
     // Keep the composer focused when the card is pressed: preventing the default
-    // mousedown stops focus from moving to the button, so the opt-in insert can
-    // write at the caret of the field the user was typing in.
+    // mousedown stops focus from moving to the button, so the opt-in replace can
+    // still target the field the user was typing in.
     card.addEventListener('mousedown', (e) => e.preventDefault())
 
     const body = document.createElement('div')
@@ -401,7 +409,7 @@ export function attachResurface(
   let confirmTimer: number | undefined
   let confirming = false // showing the "copied" confirmation; suppress re-query
   let queryToken = 0
-  // Click behavior, from prefs: copy to clipboard (default) or insert at caret.
+  // Click behavior, from prefs: replace composer (default) or copy to clipboard.
   let insertMode = false
   // The editable the user is currently typing in, as resolved from the input
   // event. We anchor and re-read from this (falling back to the page selector)
@@ -475,14 +483,14 @@ export function attachResurface(
     hide()
   }
 
-  // Primary click on a match: insert at the caret if the user opted in (and the
+  // Primary click on a match: replace the composer if the user opted in (and the
   // composer is still around), otherwise copy to the clipboard and confirm it.
   const onAction = () => {
     const match = currentMatches[currentIndex]
     if (!match) return
     const el = activeEl ?? getInput()
-    if (insertMode && el && insertAtCaret(el, match.text)) {
-      log('inserted prior prompt at caret')
+    if (insertMode && el && replaceComposerText(el, match.text)) {
+      log('replaced composer with prior prompt')
       hide()
       return
     }

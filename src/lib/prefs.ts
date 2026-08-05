@@ -3,15 +3,14 @@
 // shape discipline as blocklist.ts / health.ts (typed read/write + onChanged
 // subscription). Nothing here ever leaves the machine.
 //
-// FAIL SAFE: if storage can't be read, we fall back to DEFAULT_PREFS. The
-// default for the resurface click is the conservative one (copy, not insert),
-// so a storage glitch can never cause the extension to start writing into the
-// host page on its own.
+// FAIL SAFE: if storage can't be read, we fall back to DEFAULT_PREFS. Insert
+// on click is the product default; a storage glitch still never auto-fills —
+// the content script only writes the host page on an explicit suggestion click.
 
 // What clicking a resurface match does:
-//   - 'copy'   → copy the prior prompt to the clipboard (default; non-destructive)
-//   - 'insert' → insert it at the caret in the composer (opt-in; the content
-//                script writes to the host page only on this explicit click)
+//   - 'copy'   → copy the prior prompt to the clipboard (opt-out; non-destructive)
+//   - 'insert' → clear the composer and type the remembered prompt in (default;
+//                the content script writes to the host page only on this click)
 import {
   PLATFORM_LABEL,
   PII_KINDS,
@@ -65,7 +64,7 @@ function allPiiEnabled(): Record<PiiKind, boolean> {
 }
 
 export const DEFAULT_PREFS: Prefs = {
-  resurfaceClick: 'copy',
+  resurfaceClick: 'insert',
   filterStrength: 'balanced',
   minorNoticeSeen: false,
   pauseUntil: 0,
@@ -106,7 +105,7 @@ function coercePiiKinds(raw: unknown): Record<PiiKind, boolean> {
 function coerce(raw: unknown): Prefs {
   const obj = (raw ?? {}) as Partial<Prefs> & { keepMinor?: unknown }
   return {
-    resurfaceClick: obj.resurfaceClick === 'insert' ? 'insert' : 'copy',
+    resurfaceClick: obj.resurfaceClick === 'copy' ? 'copy' : 'insert',
     filterStrength: coerceStrength(obj),
     minorNoticeSeen: obj.minorNoticeSeen === true,
     pauseUntil:

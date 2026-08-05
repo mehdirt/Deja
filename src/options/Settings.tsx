@@ -46,7 +46,7 @@ const RESURFACE_OPTIONS: Array<{ key: ResurfaceClick; label: string; hint: strin
   {
     key: 'insert',
     label: 'Type it in for me',
-    hint: 'Clicking a suggestion drops it straight into the box at your cursor.',
+    hint: 'Clicking a suggestion clears the box and types the remembered prompt in.',
   },
 ]
 
@@ -155,7 +155,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   const [cleared, setCleared] = useState(false)
   const [confirmPurge, setConfirmPurge] = useState(false)
   const [purged, setPurged] = useState<number | null>(null)
-  const [resurfaceClick, setResurfaceClick] = useState<ResurfaceClick>('copy')
+  const [resurfaceClick, setResurfaceClick] = useState<ResurfaceClick>('insert')
   const [strength, setStrength] = useState<FilterStrength>('balanced')
   const [sites, setSites] = useState<Record<Platform, boolean>>(
     () => Object.fromEntries(PLATFORMS.map((p) => [p, true])) as Record<Platform, boolean>,
