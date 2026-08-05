@@ -1,62 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">Deja - your prompts are work. Stop losing them.</title>
-  <desc id="desc">A warm-paper Deja social card with the Deja card-and-echo mark, its lowercase wordmark, and a short description of its private prompt library.</desc>
-  <style>
-    @font-face {
-      font-family: 'Figtree Variable';
-      src: url('fonts/figtree-latin.woff2') format('woff2');
-      font-weight: 300 900;
-    }
-    @font-face {
-      font-family: 'Literata';
-      src: url('fonts/literata-semibold.woff2') format('woff2');
-      font-weight: 600;
-    }
-    .sans { font-family: 'Figtree Variable', sans-serif; }
-    .brand { font-family: 'Literata', Georgia, serif; }
-  </style>
-
-  <!-- Deja's warm-notebook palette: bg #faf8f3, ink #1c1b19, indigo #5b54f0. -->
-  <rect width="1200" height="630" fill="#faf8f3"/>
-  <circle cx="1110" cy="-80" r="370" fill="#ecebfe" opacity=".8"/>
-  <circle cx="1180" cy="-120" r="250" fill="#5b54f0" opacity=".06"/>
-
-  <!-- The actual Deja card-and-echo mark from src/ui/Logo.tsx. -->
-  <g transform="translate(72 68) scale(3.25)">
-    <rect width="32" height="32" rx="8" fill="#5b54f0"/>
-    <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity=".4"/>
-    <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity=".95"/>
-    <rect x="15" y="17" width="2.4" height="3.6" rx=".6" fill="#5b54f0"/>
-  </g>
-
-  <!-- Wordmark uses Literata, as in the extension. -->
-  <text x="194" y="142" class="brand" font-size="54" font-weight="600" letter-spacing="-1.5" fill="#1c1b19">de<tspan fill="#5b54f0">ja</tspan></text>
-
-  <text x="72" y="268" class="sans" font-size="64" font-weight="720" letter-spacing="-2.6" fill="#1c1b19">Your prompts are work.</text>
-  <text x="72" y="340" class="sans" font-size="64" font-weight="720" letter-spacing="-2.6" fill="#1c1b19">Stop losing them.</text>
-
-  <line x1="72" y1="384" x2="590" y2="384" stroke="#e7e2d8" stroke-width="2"/>
-  <text x="72" y="433" class="sans" font-size="25" font-weight="500" fill="#6b6862">Private prompt library for ChatGPT, Claude, Gemini &amp; more.</text>
-
-  <rect x="72" y="474" width="470" height="58" rx="12" fill="#fff" stroke="#e7e2d8" stroke-width="2"/>
-  <circle cx="105" cy="503" r="7" fill="#2f9e63"/>
-  <text x="128" y="511" class="sans" font-size="22" font-weight="600" fill="#1c1b19">Free - no account - stays on your computer</text>
-
-  <!-- A quiet Deja-like prompt card, not a borrowed chat-product UI. -->
-  <g transform="translate(790 183)">
-    <rect x="-29" y="-29" width="378" height="272" rx="20" fill="#ecebfe" transform="rotate(-5 160 110)"/>
-    <rect width="378" height="272" rx="20" fill="#fff" stroke="#e7e2d8" stroke-width="2"/>
-    <g transform="translate(28 28) scale(1.2)">
-      <rect width="32" height="32" rx="8" fill="#5b54f0"/>
-      <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity=".4"/>
-      <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity=".95"/>
-      <rect x="15" y="17" width="2.4" height="3.6" rx=".6" fill="#5b54f0"/>
-    </g>
-    <text x="82" y="52" class="brand" font-size="22" font-weight="600" letter-spacing="-0.6" fill="#1c1b19">de<tspan fill="#5b54f0">ja</tspan></text>
-    <line x1="28" y1="87" x2="350" y2="87" stroke="#e7e2d8"/>
-    <rect x="28" y="113" width="282" height="44" rx="10" fill="#ecebfe"/>
-    <text x="44" y="141" class="sans" font-size="15" font-weight="650" fill="#5b54f0">You've asked something like this before</text>
-    <text x="28" y="194" class="sans" font-size="18" font-weight="500" fill="#1c1b19">Write a warm email to my landlord</text>
-    <text x="28" y="220" class="sans" font-size="15" fill="#6b6862">about the broken heater...</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Deja — your prompts are worth keeping</title>
+  <desc id="desc">Warm-paper Deja social card with brand copy and a chatgpt.com browser showing the resurface tip.</desc>
+  <!-- Raster master lives in og-image.jpg; this SVG mirrors it 1:1 for tools that expect .svg. -->
+  <image href="og-image.jpg" xlink:href="og-image.jpg" width="1200" height="630" preserveAspectRatio="xMidYMid slice"/>
 </svg>
