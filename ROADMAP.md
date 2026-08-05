@@ -70,7 +70,7 @@ The moment exists and we've watched people use it. Now sharpen it from what we l
 - Short-prompt behavior handled explicitly ✅ — `similarity()` blends symmetric Jaccard with the overlap coefficient so a brief query that's nearly a substring of a longer stored prompt still scores (plain trigram Jaccard tanked these). Trigrams are also IDF-weighted (distinctive terms outweigh boilerplate, damped so the score scale stays stable as the library grows), and the threshold scales up for short queries. The tuning *constants* are centralized and provisional — they still wait on real Phase 1 reactions.
 - Smarter match preview ✅ — resurface returns the top candidates; the tooltip shows *why* each matched ("matched on …" shared terms) and lets the user step through them (`1/3` + `›`).
 - Polish the tooltip's look, timing, and placement so it feels like part of the host page, not an intrusion — *needs real reactions*
-- Opt-in one-tap insert ✅ — settings toggle (`prefs.resurfaceClick`: copy by default, insert-at-cursor opt-in). Still tune from real reactions whether copy-only should stay the default.
+- Opt-in one-tap insert ✅ — settings toggle (`prefs.resurfaceClick`: insert by default, copy available). Still tune from real reactions whether insert-by-default stays right.
 
 **Exit criteria:** During a normal week of AI use, the tooltip surfaces 3–10 times and is genuinely helpful in a clear majority of them — enough that users would notice and miss it if it were gone.
 
