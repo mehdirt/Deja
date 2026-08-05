@@ -26,6 +26,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    // Local extension pages don't gain from modulepreload, and Chrome warns
+    // when Vite preloads shared chunks (e.g. db) that the entry imports only
+    // indirectly — "preloaded … but not used within a few seconds".
+    modulePreload: false,
   },
   test: {
     environment: 'happy-dom',

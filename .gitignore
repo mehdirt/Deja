@@ -7,3 +7,4 @@ dist
 .vite
 coverage
 deja-*.zip
+.tmp/
