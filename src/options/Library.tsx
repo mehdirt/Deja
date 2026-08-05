@@ -36,7 +36,7 @@ const SORTS: Array<{ key: Sort; label: string }> = [
   { key: 'longest-unseen', label: "Haven't used in a while" },
 ]
 
-export function Library() {
+export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
   // Fetch minors too — we filter them in-memory so the "filtered (N)" toggle
   // and per-prompt "keep" work without a second query.
   const {
@@ -308,7 +308,7 @@ export function Library() {
         </p>
       </header>
 
-      <CaptureStatus />
+      <CaptureStatus onOpenSettings={onOpenSettings} />
 
       <div className="relative">
         <input

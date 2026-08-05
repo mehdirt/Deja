@@ -387,7 +387,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
       const res = await importPrompts(parsed)
       setImportMsg(`Added ${res.imported}. Skipped ${res.skipped} you already had.`)
     } catch {
-      setImportMsg("Couldn't read that file. It should be a .json backup from Deja.")
+      setImportMsg("Couldn't read that file. It should be a backup from Deja.")
     }
   }
 
@@ -568,7 +568,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
             More options
           </span>
           <span className="ml-6 block text-xs font-normal text-ink-faint">
-            Fine-grained privacy rules, restoring a backup, and permanent erase.
+            Exactly which details to hide, restoring a backup, and erasing prompts for good.
           </span>
         </summary>
 
@@ -790,7 +790,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
           {/* Restore a backup */}
           <Section
             title="Restore from a backup"
-            description="Bring back a .json backup you downloaded earlier, on this computer or another one. Prompts you already have are skipped."
+            description="Bring back a backup you downloaded earlier, on this computer or another one. Prompts you already have are skipped."
           >
             <input
               ref={fileRef}
@@ -859,7 +859,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
             rel="noopener noreferrer"
             className="dj-btn px-3 py-1.5 text-sm"
           >
-            Something&apos;s broken 🛠️
+            Something&apos;s broken
           </a>
           <a
             href={feedbackHref('idea', undefined, version)}
@@ -867,7 +867,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
             rel="noopener noreferrer"
             className="dj-btn dj-btn-ghost px-3 py-1.5 text-sm"
           >
-            I have an idea 💡
+            I have an idea
           </a>
         </div>
         {version && <p className="dj-meta">Deja v{version}</p>}

@@ -88,13 +88,18 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2">
           {selectable && (
-            <input
-              type="checkbox"
-              checked={!!checked}
-              onChange={() => onToggleCheck?.(prompt)}
-              aria-label={`Select prompt: "${truncate(prompt.text, 40)}"`}
-              className="h-3.5 w-3.5 accent-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            />
+            // Padding + negative margin enlarges the tap target without
+            // shifting layout — the 14px visual checkbox alone is too small
+            // to reliably hit.
+            <label className="-m-2 flex cursor-pointer items-center p-2">
+              <input
+                type="checkbox"
+                checked={!!checked}
+                onChange={() => onToggleCheck?.(prompt)}
+                aria-label={`Select prompt: "${truncate(prompt.text, 40)}"`}
+                className="h-3.5 w-3.5 accent-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              />
+            </label>
           )}
           <span className="dj-chip">
             <span

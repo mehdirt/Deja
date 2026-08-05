@@ -61,7 +61,7 @@ export function App() {
       </header>
 
       {view === 'welcome' && <Welcome onDone={() => setView(priorView)} />}
-      {view === 'library' && <Library />}
+      {view === 'library' && <Library onOpenSettings={() => setView('settings')} />}
       {view === 'settings' && (
         <Settings
           onShowWelcome={() => {

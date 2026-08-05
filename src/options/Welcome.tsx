@@ -103,10 +103,7 @@ export function Welcome({ onDone }: { onDone: () => void }) {
       </section>
 
       <div className="flex flex-col items-center gap-3 border-t border-line pt-6">
-        <p className="text-center text-sm text-ink-soft">
-          Ready when you are — no rush{' '}
-          <span aria-hidden="true">☕</span>
-        </p>
+        <p className="text-center text-sm text-ink-soft">Ready when you are — no rush.</p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <a
             href="https://chatgpt.com"

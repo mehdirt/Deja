@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { readPrefs, writePrefs, onPrefsChange, PAUSE_FOREVER } from '@/lib/prefs'
 
 // The capture pause control. Lives in the popup (the natural "off switch"
@@ -29,6 +29,8 @@ export function PauseControl() {
   const [now, setNow] = useState(() => Date.now())
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     void readPrefs().then((p) => setPauseUntil(p.pauseUntil))
@@ -45,14 +47,18 @@ export function PauseControl() {
     return () => window.clearInterval(t)
   }, [paused, pauseUntil])
 
-  // Close the menu on outside click or Escape.
+  // Close the menu on outside click or Escape; Escape also returns focus to
+  // the trigger, matching the standard menu-button keyboard contract.
   useEffect(() => {
     if (!open) return
     const onDoc = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key === 'Escape') {
+        setOpen(false)
+        triggerRef.current?.focus()
+      }
     }
     document.addEventListener('mousedown', onDoc)
     document.addEventListener('keydown', onKey)
@@ -61,6 +67,35 @@ export function PauseControl() {
       document.removeEventListener('keydown', onKey)
     }
   }, [open])
+
+  const menuItems = () =>
+    Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])
+
+  // Move focus into the menu when it opens, so keyboard users land on the
+  // first option instead of having to Tab in from the trigger.
+  useEffect(() => {
+    if (open) menuItems()[0]?.focus()
+  }, [open])
+
+  // Roving arrow-key navigation between menu items, per the standard ARIA
+  // menu keyboard contract that role="menu"/"menuitem" implies.
+  const onMenuKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const items = menuItems()
+    const i = items.findIndex((item) => item === document.activeElement)
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      items[(i + 1) % items.length]?.focus()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      items[(i - 1 + items.length) % items.length]?.focus()
+    } else if (e.key === 'Home') {
+      e.preventDefault()
+      items[0]?.focus()
+    } else if (e.key === 'End') {
+      e.preventDefault()
+      items[items.length - 1]?.focus()
+    }
+  }
 
   const pause = (until: number) => {
     setOpen(false)
@@ -96,6 +131,7 @@ export function PauseControl() {
           Quietly saving for you
         </span>
         <button
+          ref={triggerRef}
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="menu"
           aria-expanded={open}
@@ -110,7 +146,9 @@ export function PauseControl() {
       </div>
       {open && (
         <div
+          ref={menuRef}
           role="menu"
+          onKeyDown={onMenuKeyDown}
           className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-btn border border-line bg-surface shadow-pop"
         >
           <button

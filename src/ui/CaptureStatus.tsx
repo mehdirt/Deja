@@ -29,7 +29,7 @@ function titleFor(state: State, p: Platform): string {
 // A quiet at-a-glance proof that Deja is actually listening. Stays
 // unobtrusive when all is well; speaks up only when a platform looks broken,
 // so a silently-broken selector can never masquerade as working capture.
-export function CaptureStatus() {
+export function CaptureStatus({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const [health, setHealth] = useState<CaptureHealth>({})
 
   useEffect(() => {
@@ -56,6 +56,14 @@ export function CaptureStatus() {
       {broken.length > 0 && (
         <span className="text-danger">
           · Deja may not be saving on {broken.map((p) => PLATFORM_LABEL[p]).join(', ')} right now
+          {onOpenSettings && (
+            <button
+              onClick={onOpenSettings}
+              className="ml-1 underline-offset-2 hover:underline"
+            >
+              Check settings
+            </button>
+          )}
         </span>
       )}
     </div>
