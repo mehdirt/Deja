@@ -26,6 +26,12 @@ function titleFor(state: State, p: Platform): string {
   return `Deja hasn't seen ${label} yet — open it once and it'll gently start saving`
 }
 
+function statusLabel(state: State): string {
+  if (state === 'ok') return 'saving'
+  if (state === 'broken') return 'needs attention'
+  return 'not yet'
+}
+
 // A quiet at-a-glance proof that Deja is actually listening. Stays
 // unobtrusive when all is well; speaks up only when a platform looks broken,
 // so a silently-broken selector can never masquerade as working capture.
@@ -45,26 +51,34 @@ export function CaptureStatus({ onOpenSettings }: { onOpenSettings?: () => void 
       {PLATFORMS.map((p) => {
         const state = stateFor(health, p)
         return (
-          <span key={p} className="inline-flex items-center gap-1.5" title={titleFor(state, p)}>
+          <span
+            key={p}
+            className="inline-flex items-center gap-1.5"
+            title={titleFor(state, p)}
+            aria-label={titleFor(state, p)}
+          >
             <span className={`h-1.5 w-1.5 rounded-full ${dotClass(state)}`} aria-hidden />
             <span className={state === 'broken' ? 'text-danger' : undefined}>
               {PLATFORM_LABEL[p]}
             </span>
+            <span
+              className={
+                state === 'broken'
+                  ? 'text-danger'
+                  : state === 'unknown'
+                    ? 'text-ink-faint'
+                    : 'text-ink-soft'
+              }
+            >
+              · {statusLabel(state)}
+            </span>
           </span>
         )
       })}
-      {broken.length > 0 && (
-        <span className="text-danger">
-          · Deja may not be saving on {broken.map((p) => PLATFORM_LABEL[p]).join(', ')} right now
-          {onOpenSettings && (
-            <button
-              onClick={onOpenSettings}
-              className="ml-1 underline-offset-2 hover:underline"
-            >
-              Check settings
-            </button>
-          )}
-        </span>
+      {broken.length > 0 && onOpenSettings && (
+        <button onClick={onOpenSettings} className="text-danger underline-offset-2 hover:underline">
+          Check settings
+        </button>
       )}
     </div>
   )

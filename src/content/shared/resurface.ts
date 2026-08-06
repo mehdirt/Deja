@@ -42,11 +42,10 @@ const LEAD_PHRASES = [
   "You've asked something like this before →",
   "You've been here before →",
   'This looks familiar — here you go →',
-  'A past you might help →',
-  "Wait — you've done this before →",
   'Déjà vu — you saved one like this →',
   'Your earlier version is right here →',
   "Looks like you've written this before →",
+  'Wait — you’ve done this before →',
 ]
 
 function randomLead(): string {
@@ -144,14 +143,14 @@ interface Tooltip {
 
 function createTooltip(onDismiss: () => void): Tooltip {
   let host: HTMLDivElement | null = null
-  let card: HTMLButtonElement | null = null
+  let card: HTMLElement | null = null
   let leadEl: HTMLSpanElement | null = null
   let previewEl: HTMLSpanElement | null = null
   let metaEl: HTMLSpanElement | null = null
-  let ctlEl: HTMLSpanElement | null = null
+  let ctlEl: HTMLElement | null = null
   let countEl: HTMLSpanElement | null = null
-  let nextEl: HTMLSpanElement | null = null
-  let seeAllEl: HTMLSpanElement | null = null
+  let nextEl: HTMLButtonElement | null = null
+  let seeAllEl: HTMLButtonElement | null = null
   let actionHandler: (() => void) | null = null
   let nextHandler: (() => void) | null = null
   let seeAllHandler: (() => void) | null = null
@@ -174,33 +173,36 @@ function createTooltip(onDismiss: () => void): Tooltip {
     const style = document.createElement('style')
     // Colors are hardcoded to mirror the --dj-* tokens in src/styles/globals.css
     // (shadow DOM + :host{all:initial} blocks variable inheritance). If the
-    // palette there changes, update these to match.
+    // palette there changes, update these to match. Meta uses the AA-safe
+    // faint tokens (#736f67 / dark #8f8a80), not the old under-contrast greys.
     style.textContent = `
       :host{all:initial}
       .dj-rs{position:fixed;left:0;top:0;max-width:min(440px,calc(100vw - 16px));pointer-events:auto;
-        display:flex;align-items:flex-start;gap:10px;text-align:left;cursor:pointer;
+        display:flex;align-items:flex-start;gap:10px;text-align:left;
         background:#faf8f3;color:#1c1b19;border:1px solid #e7e2d8;
         border-radius:10px;padding:8px 10px;box-shadow:0 8px 28px rgba(0,0,0,.18);
         font:13px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
         animation:dj-rs-in .14s ease-out;transition:opacity .1s ease}
       .dj-rs:hover{background:#f1ede4}
-      .dj-rs:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
-      .dj-rs-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+      .dj-rs-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;
+        background:none;border:none;padding:0;margin:0;cursor:pointer;text-align:left;
+        color:inherit;font:inherit;border-radius:6px}
+      .dj-rs-main:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
       .dj-rs-lead{display:flex;align-items:center;gap:6px;color:#5b54f0;font-weight:600;white-space:nowrap}
       .dj-rs-dot{width:6px;height:6px;border-radius:50%;background:#5b54f0;flex:none}
       .dj-rs-preview{color:#6b6862;font-size:12px;white-space:nowrap;overflow:hidden;
         text-overflow:ellipsis;max-width:min(400px,calc(100vw - 80px))}
-      .dj-rs-meta{color:#9a968d;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      .dj-rs-meta{color:#736f67;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
         max-width:min(400px,calc(100vw - 80px))}
       .dj-rs-meta:empty{display:none}
       .dj-rs-ctl{display:flex;align-items:center;gap:4px;flex:none;align-self:flex-start}
-      .dj-rs-count{color:#9a968d;font-weight:600;font-size:10px;line-height:1;white-space:nowrap;
+      .dj-rs-count{color:#736f67;font-weight:600;font-size:10px;line-height:1;white-space:nowrap;
         font-variant-numeric:tabular-nums}
-      .dj-rs-all{pointer-events:auto;flex:none;background:none;border:none;cursor:pointer;white-space:nowrap;
+      .dj-rs-all{flex:none;background:none;border:none;cursor:pointer;white-space:nowrap;
         color:#5b54f0;font-family:inherit;font-weight:600;font-size:11px;line-height:1;padding:2px 5px;border-radius:6px}
       .dj-rs-all:hover{background:#ecebfe}
-      .dj-rs-next,.dj-rs-x{pointer-events:auto;flex:none;background:none;border:none;cursor:pointer;
-        color:#9a968d;font-family:inherit;font-weight:600;font-size:14px;line-height:1;
+      .dj-rs-next,.dj-rs-x{flex:none;background:none;border:none;cursor:pointer;
+        color:#736f67;font-family:inherit;font-weight:600;font-size:14px;line-height:1;
         padding:2px 4px;border-radius:6px}
       .dj-rs-next:hover,.dj-rs-x:hover{background:#e7e2d8;color:#1c1b19}
       .dj-rs-all:focus-visible,.dj-rs-next:focus-visible,.dj-rs-x:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
@@ -212,27 +214,30 @@ function createTooltip(onDismiss: () => void): Tooltip {
         .dj-rs-lead{color:#9c97f7}
         .dj-rs-dot{background:#8983f5}
         .dj-rs-preview{color:#a8a49b}
-        .dj-rs-meta,.dj-rs-count{color:#6e6a62}
+        .dj-rs-meta,.dj-rs-count{color:#8f8a80}
         .dj-rs-all{color:#9c97f7}
         .dj-rs-all:hover{background:#272534}
-        .dj-rs-next,.dj-rs-x{color:#6e6a62}
+        .dj-rs-next,.dj-rs-x{color:#8f8a80}
         .dj-rs-next:hover,.dj-rs-x:hover{background:#2e2c36;color:#f3f1ea}
       }
     `
     shadow.appendChild(style)
 
-    card = document.createElement('button')
-    card.type = 'button'
+    // Shell is a group, not a button — secondary controls are real <button>s
+    // so keyboard / SR users can reach See all, next, and dismiss independently.
+    card = document.createElement('div')
     card.className = 'dj-rs'
+    card.setAttribute('role', 'group')
     card.setAttribute('aria-label', 'Reuse a similar prompt you saved before')
     card.style.display = 'none'
-    // Keep the composer focused when the card is pressed: preventing the default
-    // mousedown stops focus from moving to the button, so the opt-in replace can
-    // still target the field the user was typing in.
-    card.addEventListener('mousedown', (e) => e.preventDefault())
 
-    const body = document.createElement('div')
-    body.className = 'dj-rs-body'
+    const main = document.createElement('button')
+    main.type = 'button'
+    main.className = 'dj-rs-main'
+    main.setAttribute('aria-label', 'Use this remembered prompt')
+    // Keep the composer focused on press so replace can target the field.
+    main.addEventListener('mousedown', (e) => e.preventDefault())
+    main.addEventListener('click', () => actionHandler?.())
 
     const lead = document.createElement('span')
     lead.className = 'dj-rs-lead'
@@ -249,19 +254,16 @@ function createTooltip(onDismiss: () => void): Tooltip {
     metaEl = document.createElement('span')
     metaEl.className = 'dj-rs-meta'
 
-    body.append(lead, previewEl, metaEl)
+    main.append(lead, previewEl, metaEl)
 
-    // Right-side controls: a "see all" link (only when more matched than we
-    // surface), a "1/3" counter and a "›" step button (only when >1 surfaced),
-    // then the dismiss ×. These are <span>s — not interactive content per HTML,
-    // so nesting them inside the <button> card is valid — and each stops
-    // propagation so it doesn't trip the card's primary action.
-    ctlEl = document.createElement('span')
+    ctlEl = document.createElement('div')
     ctlEl.className = 'dj-rs-ctl'
 
-    seeAllEl = document.createElement('span')
+    seeAllEl = document.createElement('button')
+    seeAllEl.type = 'button'
     seeAllEl.className = 'dj-rs-all'
     seeAllEl.textContent = 'See all →'
+    seeAllEl.addEventListener('mousedown', (e) => e.preventDefault())
     seeAllEl.addEventListener('click', (e) => {
       e.stopPropagation()
       seeAllHandler?.()
@@ -270,19 +272,23 @@ function createTooltip(onDismiss: () => void): Tooltip {
     countEl = document.createElement('span')
     countEl.className = 'dj-rs-count'
 
-    nextEl = document.createElement('span')
+    nextEl = document.createElement('button')
+    nextEl.type = 'button'
     nextEl.className = 'dj-rs-next'
     nextEl.setAttribute('aria-label', 'Show the next match')
     nextEl.textContent = '›'
+    nextEl.addEventListener('mousedown', (e) => e.preventDefault())
     nextEl.addEventListener('click', (e) => {
       e.stopPropagation()
       nextHandler?.()
     })
 
-    const close = document.createElement('span')
+    const close = document.createElement('button')
+    close.type = 'button'
     close.className = 'dj-rs-x'
     close.setAttribute('aria-label', 'Dismiss')
     close.textContent = '×'
+    close.addEventListener('mousedown', (e) => e.preventDefault())
     close.addEventListener('click', (e) => {
       e.stopPropagation()
       // Dismissal is owned by the caller (per-session, no nag).
@@ -290,10 +296,7 @@ function createTooltip(onDismiss: () => void): Tooltip {
     })
 
     ctlEl.append(seeAllEl, countEl, nextEl, close)
-
-    card.addEventListener('click', () => actionHandler?.())
-
-    card.append(body, ctlEl)
+    card.append(main, ctlEl)
     shadow.appendChild(card)
     document.documentElement.appendChild(host)
   }
@@ -483,7 +486,7 @@ export function attachResurface(
     hide()
   }
 
-  // Primary click on a match: replace the composer if the user opted in (and the
+  // Primary click on a match: replace the composer if insert mode is on (and the
   // composer is still around), otherwise copy to the clipboard and confirm it.
   const onAction = () => {
     const match = currentMatches[currentIndex]
@@ -491,11 +494,14 @@ export function attachResurface(
     const el = activeEl ?? getInput()
     if (insertMode && el && replaceComposerText(el, match.text)) {
       log('replaced composer with prior prompt')
-      hide()
+      confirming = true
+      tooltip.confirm('Typed in for you — undo in the chat box ✓')
+      window.clearTimeout(confirmTimer)
+      confirmTimer = window.setTimeout(hide, COPIED_CONFIRM_MS)
       return
     }
-    // Copy (the default, or insert fell back). Confirm in-place so the user
-    // knows it landed on the clipboard, then tuck the tooltip away.
+    // Copy (or insert fell back). Confirm in-place so the user knows it
+    // landed on the clipboard, then tuck the tooltip away.
     try {
       void navigator.clipboard?.writeText(match.text)?.catch(() => {})
     } catch {

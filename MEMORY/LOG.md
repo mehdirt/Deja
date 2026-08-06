@@ -8,6 +8,10 @@ Silenced Chrome "modulepreload … not used within a few seconds" on popup/optio
 
 "Type it in for me" resurface click now clears the composer then types the remembered prompt (was insert-at-caret, which left the half-typed draft in place). Settings hint updated to match. Default flipped to insert (was copy); coerce keeps an explicit stored `copy`.
 
+Full Impeccable critique (popup + options + resurface): dual-agent, **28/40** (Good, low). Prior Aug-4 P1s (Welcome re-entry, tag-AND copy) closed. New lead issues: insert-default undertaught at Welcome/overlay, Library filter wall once populated, resurface nested-span a11y. Snapshot under `.impeccable/critique/`.
+
+Critique fix pass (all P1+P2): Welcome teaches replace + undo; insert path confirms like copy; Library filters/sort/bulk behind “Filter & sort” disclosure (platform pills only when multi-site); resurface real buttons + AA meta contrast + cut weak lead; CaptureStatus pairs each site with status text; Pin→Favorite, Privacy confirm wording, Never-save labels, sort “Handy lately”.
+
 Browser-verified the 2026-08-04 Impeccable critique fixes in headed Chrome for Testing with the unpacked `dist/` extension loaded (`--load-extension`; agent-browser's `--extension` flag did not attach Deja — connected via CDP `:9222` instead). Confirmed live: Welcome install view, Settings "Show me how this works again" re-entry, tag-filter AND copy under multi-tag selection, feedback heading emoji without button emoji, pause menu focus-on-open + ArrowDown/Escape return, CaptureStatus broken-state "Check settings" → Settings. Screenshots under `.tmp/browser-verify/` (gitignored). `listPrompts` error UI left as unit-test coverage only — no live DB-failure injection this pass.
 
 ## 2026-08-04

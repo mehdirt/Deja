@@ -18,7 +18,7 @@ const STEPS: Array<{ title: string; body: string }> = [
   },
   {
     title: 'Later, it finds you again',
-    body: "When you start typing something you’ve asked before, your earlier version gently appears above the box. One click, and it’s yours again.",
+    body: "When you start typing something you’ve asked before, your earlier version gently appears above the box. One click replaces what you were typing with that saved version — change your mind with Undo in the chat box.",
   },
 ]
 
@@ -74,19 +74,7 @@ export function Welcome({ onDone }: { onDone: () => void }) {
             </h3>
             <p className="text-sm leading-relaxed text-ink-soft">
               Click the puzzle-piece icon at the top right of Chrome and pin Deja, so your prompts
-              are always one click away. Or press{' '}
-              <kbd className="rounded border border-line px-1.5 py-0.5 font-mono text-[11px]">
-                ⌘⇧K
-              </kbd>{' '}
-              (or{' '}
-              <kbd className="rounded border border-line px-1.5 py-0.5 font-mono text-[11px]">
-                Ctrl+Shift+K
-              </kbd>
-              ) any time to open it — that&apos;s different from the plain{' '}
-              <kbd className="rounded border border-line px-1.5 py-0.5 font-mono text-[11px]">
-                ⌘K
-              </kbd>{' '}
-              you&apos;ll use later to search inside your library.
+              are always one click away.
             </p>
           </div>
           <div className="dj-card flex flex-col gap-1.5 p-4">

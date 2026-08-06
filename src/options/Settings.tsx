@@ -643,11 +643,11 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
           {/* Blocklist */}
           <Section
             title="Never save from…"
-            description="Block a whole site, or add a rule so anything matching it is never saved — handy if you paste secrets into a chat. None of this leaves your machine."
+            description="Skip a whole site, or add a rule so anything matching it is never saved — handy if you paste secrets into a chat. None of this leaves your machine."
           >
             <div className="flex flex-col gap-2">
               <label className="text-xs text-ink-soft" htmlFor="bl-domain">
-                Blocked sites
+                Sites to skip
               </label>
               <div className="flex gap-2">
                 <input
@@ -659,7 +659,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
                   className="dj-input text-sm"
                 />
                 <button onClick={addDomain} className="dj-btn px-3 py-1 text-xs">
-                  Block
+                  Never save
                 </button>
               </div>
               {bl.domains.length > 0 && (
@@ -669,7 +669,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
                       <span className="dj-tag-label">{d}</span>
                       <button
                         onClick={() => removeDomain(d)}
-                        aria-label={`Unblock ${d}`}
+                        aria-label={`Stop skipping ${d}`}
                         className="text-ink-faint hover:text-danger"
                       >
                         ×
@@ -682,7 +682,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
 
             <div className="flex flex-col gap-2">
               <label className="text-xs text-ink-soft" htmlFor="bl-pattern">
-                Blocked text patterns
+                Text patterns to skip
                 <span className="ml-1 text-ink-faint">
                   (regular expressions — leave alone if unsure)
                 </span>

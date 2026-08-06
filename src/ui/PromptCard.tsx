@@ -228,11 +228,11 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
         {onTogglePin && (
           <button
             onClick={() => onTogglePin(prompt)}
-            aria-label={pinned ? 'Unpin prompt' : 'Pin prompt'}
+            aria-label={pinned ? 'Remove from favorites' : 'Add to favorites'}
             aria-pressed={pinned}
             className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
           >
-            {pinned ? 'Unpin' : 'Pin'}
+            {pinned ? 'Unfavorite' : 'Favorite'}
           </button>
         )}
         {onDelete && (

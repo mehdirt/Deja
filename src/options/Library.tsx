@@ -31,7 +31,7 @@ const PLATFORMS: Array<{ key: Platform | 'all'; label: string }> = [
 type Sort = 'newest' | 'most-useful' | 'most-used' | 'longest-unseen'
 const SORTS: Array<{ key: Sort; label: string }> = [
   { key: 'newest', label: 'Newest first' },
-  { key: 'most-useful', label: 'Most useful' },
+  { key: 'most-useful', label: 'Handy lately' },
   { key: 'most-used', label: 'Reused most' },
   { key: 'longest-unseen', label: "Haven't used in a while" },
 ]
@@ -86,6 +86,16 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
   }, [])
 
   const minorCount = useMemo(() => prompts.filter((p) => p.minor).length, [prompts])
+  // Only show the platform row when the library actually spans more than one
+  // site — otherwise six equal pills are pure chrome for a single-site user.
+  const multiPlatform = useMemo(() => new Set(prompts.map((p) => p.platform)).size > 1, [prompts])
+  const filterActiveCount =
+    (platform !== 'all' ? 1 : 0) +
+    (favoritesOnly ? 1 : 0) +
+    (sort !== 'newest' ? 1 : 0) +
+    activeTags.length +
+    (selecting ? 1 : 0) +
+    (showMinor ? 1 : 0)
   // Headline count reflects the current scope: with minors hidden, don't count
   // them (the "filtered (N)" chip surfaces them separately) so the number always
   // matches what the user sees.
@@ -318,182 +328,194 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search your prompts"
           placeholder="Find a prompt…"
-          className="dj-input pr-12"
+          className="dj-input pr-14"
         />
         <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">
-          ⌘K
+          {typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+            ? '⌘K'
+            : 'Ctrl+K'}
         </kbd>
       </div>
 
-      {/* Filtering, sorting, and favoriting only make sense once there's
-          something to filter, sort, or favorite — showing this whole row on
-          an empty library is pure clutter for a first-time visitor. */}
+      {/* Power chrome lives behind one disclosure — search + list stay the
+          default path for everyday reuse. */}
       {prompts.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by platform">
-              {PLATFORMS.map((p) => (
-                <button
-                  key={p.key}
-                  role="tab"
-                  aria-selected={platform === p.key}
-                  onClick={() => setPlatform(p.key)}
-                  className={`dj-pill ${platform === p.key ? 'dj-pill-active' : ''}`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
+        <details
+          className="group rounded-card border border-line bg-surface open:shadow-card"
+          {...(selecting ? { open: true } : {})}
+        >
+          <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-ink-soft marker:content-none [&::-webkit-details-marker]:hidden">
+            <span className="inline-flex items-center gap-2">
+              <span className="text-ink">Filter &amp; sort</span>
+              {filterActiveCount > 0 ? (
+                <span className="dj-meta">
+                  {filterActiveCount} active
+                </span>
+              ) : (
+                <span className="dj-meta">Optional</span>
+              )}
+            </span>
+          </summary>
+          <div className="flex flex-col gap-3 border-t border-line px-3 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {multiPlatform && (
+                  <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by platform">
+                    {PLATFORMS.map((p) => (
+                      <button
+                        key={p.key}
+                        role="tab"
+                        aria-selected={platform === p.key}
+                        onClick={() => setPlatform(p.key)}
+                        className={`dj-pill ${platform === p.key ? 'dj-pill-active' : ''}`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-            {/* favorites = pinned only. A switch, not a filter pill: the platform
-                tabs are single-select (radio-like), so an identical-looking pill
-                hid that this is an independent on/off toggle. The divider + track
-                make its state unmistakable. */}
-            <span className="mx-0.5 h-4 w-px bg-line" aria-hidden />
-            <button
-              role="switch"
-              aria-checked={favoritesOnly}
-              aria-label="Show favorites only"
-              onClick={() => setFavoritesOnly((v) => !v)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-line px-2 py-1 text-xs font-medium text-ink-soft transition-colors hover:bg-sunk focus:outline-none focus:ring-2 focus:ring-accent"
-            >
-              <span
-                className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
-                  favoritesOnly ? 'bg-accent' : 'bg-line'
-                }`}
-              >
-                <span
-                  className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
-                    favoritesOnly ? 'translate-x-[14px]' : 'translate-x-0.5'
-                  }`}
-                />
-              </span>
-              <PinIcon filled={favoritesOnly} />
-              <span className={favoritesOnly ? 'text-ink' : undefined}>Favorites</span>
-            </button>
-          </div>
-          <div className="relative">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as Sort)}
-              aria-label="Sort prompts"
-              className="dj-input w-auto appearance-none py-1 pr-7 text-xs"
-            >
-              {SORTS.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-            <svg
-              aria-hidden
-              viewBox="0 0 20 20"
-              className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint"
-            >
-              <path
-                d="M5.5 8l4.5 4.5L14.5 8"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-        </div>
-      )}
-
-      {allTags.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-1.5" aria-label="Filter by tag">
-            {allTags.map((t) => {
-              const active = activeTags.includes(t)
-              return (
+                {multiPlatform && <span className="mx-0.5 h-4 w-px bg-line" aria-hidden />}
                 <button
-                  key={t}
-                  aria-pressed={active}
-                  onClick={() => onTagClick(t)}
-                  className={`dj-tag ${active ? 'dj-tag-active' : ''}`}
+                  role="switch"
+                  aria-checked={favoritesOnly}
+                  aria-label="Show favorites only"
+                  onClick={() => setFavoritesOnly((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-line px-2 py-1 text-xs font-medium text-ink-soft transition-colors hover:bg-sunk focus:outline-none focus:ring-2 focus:ring-accent"
                 >
-                  {t}
-                </button>
-              )
-            })}
-            {activeTags.length > 0 && (
-              <button
-                onClick={() => setActiveTags([])}
-                className="dj-btn dj-btn-ghost px-2 py-0.5 text-[11px]"
-              >
-                Clear tags
-              </button>
-            )}
-          </div>
-          {/* AND semantics: picking a second tag narrows the list rather than
-              widening it. Say so once, right where the surprise would land. */}
-          {activeTags.length > 0 && (
-            <p className="dj-meta">Showing prompts with every tag you&apos;ve picked.</p>
-          )}
-        </div>
-      )}
-
-      {prompts.length > 0 && (
-        <div className="flex items-center justify-between gap-2">
-          {selecting ? (
-            <>
-              <span className="dj-meta">{checkedIds.size} selected</span>
-              <div className="flex gap-2">
-                <button onClick={exitSelecting} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-                  Cancel
-                </button>
-                <button
-                  onClick={onBulkDelete}
-                  disabled={checkedIds.size === 0}
-                  className="dj-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
-                >
-                  Delete selected
+                  <span
+                    className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+                      favoritesOnly ? 'bg-accent' : 'bg-line'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
+                        favoritesOnly ? 'translate-x-[14px]' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </span>
+                  <PinIcon filled={favoritesOnly} />
+                  <span className={favoritesOnly ? 'text-ink' : undefined}>Favorites</span>
                 </button>
               </div>
-            </>
-          ) : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setSelecting(true)}
-                className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
-              >
+              <div className="relative">
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as Sort)}
+                  aria-label="Sort prompts"
+                  className="dj-input w-auto appearance-none py-1 pr-7 text-xs"
+                >
+                  {SORTS.map((s) => (
+                    <option key={s.key} value={s.key}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
                 <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
+                  aria-hidden
+                  viewBox="0 0 20 20"
+                  className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint"
                 >
-                  <rect x="2" y="2" width="5" height="5" rx="1" />
-                  <rect x="9" y="2" width="5" height="5" rx="1" />
-                  <path d="M2.5 11.5h5M11 9.5l1 1.5 2.5-3" />
+                  <path
+                    d="M5.5 8l4.5 4.5L14.5 8"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
-                Select several
-              </button>
-              {/* Legacy soft-capture rows only — new throwaways are never stored.
-                Hidden when there are none, or when the filter is off entirely. */}
-              {!keepMinor && minorCount > 0 && (
-                <button
-                  onClick={() => setShowMinor((v) => !v)}
-                  aria-pressed={showMinor}
-                  title="Short one-offs Deja used to hide instead of skipping — keep or delete them"
-                  className={`dj-btn dj-btn-ghost px-2 py-1 text-xs ${
-                    showMinor ? 'text-ink' : 'text-ink-faint'
-                  }`}
-                >
-                  {showMinor ? 'Hide short ones' : `Short ones (${minorCount})`}
-                </button>
+              </div>
+            </div>
+
+            {allTags.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <div className="flex flex-wrap items-center gap-1.5" aria-label="Filter by tag">
+                  {allTags.map((t) => {
+                    const active = activeTags.includes(t)
+                    return (
+                      <button
+                        key={t}
+                        aria-pressed={active}
+                        onClick={() => onTagClick(t)}
+                        className={`dj-tag ${active ? 'dj-tag-active' : ''}`}
+                      >
+                        {t}
+                      </button>
+                    )
+                  })}
+                  {activeTags.length > 0 && (
+                    <button
+                      onClick={() => setActiveTags([])}
+                      className="dj-btn dj-btn-ghost px-2 py-0.5 text-[11px]"
+                    >
+                      Clear tags
+                    </button>
+                  )}
+                </div>
+                {activeTags.length > 0 && (
+                  <p className="dj-meta">Showing prompts with every tag you&apos;ve picked.</p>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2">
+              {selecting ? (
+                <>
+                  <span className="dj-meta">{checkedIds.size} selected</span>
+                  <div className="flex gap-2">
+                    <button onClick={exitSelecting} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
+                      Cancel
+                    </button>
+                    <button
+                      onClick={onBulkDelete}
+                      disabled={checkedIds.size === 0}
+                      className="dj-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
+                    >
+                      Delete selected
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSelecting(true)}
+                    className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect x="2" y="2" width="5" height="5" rx="1" />
+                      <rect x="9" y="2" width="5" height="5" rx="1" />
+                      <path d="M2.5 11.5h5M11 9.5l1 1.5 2.5-3" />
+                    </svg>
+                    Select several
+                  </button>
+                  {!keepMinor && minorCount > 0 && (
+                    <button
+                      onClick={() => setShowMinor((v) => !v)}
+                      aria-pressed={showMinor}
+                      title="Short one-offs Deja used to hide instead of skipping — keep or delete them"
+                      className={`dj-btn dj-btn-ghost px-2 py-1 text-xs ${
+                        showMinor ? 'text-ink' : 'text-ink-faint'
+                      }`}
+                    >
+                      {showMinor ? 'Hide short ones' : `Short ones (${minorCount})`}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        </details>
       )}
 
       {undoId != null && (

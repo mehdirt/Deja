@@ -39,7 +39,7 @@ export function Privacy() {
             before anything is saved. On by default. The real values are never written down, not
             even in a backup.
           </li>
-          <li>Lets you search, copy, tag, pin, back up, and delete any of it.</li>
+          <li>Lets you search, copy, tag, favorite, back up, and delete any of it.</li>
         </ul>
       </section>
 
@@ -62,7 +62,7 @@ export function Privacy() {
             window.
           </li>
           <li>Tell it to never save from a particular site, in settings.</li>
-          <li>Delete everything, permanently, in one click.</li>
+          <li>Delete everything permanently — after a confirmation in Settings.</li>
         </ul>
       </section>
 

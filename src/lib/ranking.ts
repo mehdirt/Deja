@@ -1,6 +1,6 @@
 import type { Prompt } from './types'
 
-// "Most useful" ranking — weights how often a prompt has been reused against
+// "Handy lately" ranking — weights how often a prompt has been reused against
 // how recently it was last used, so a prompt you lean on often and recently
 // floats to the top. Pure and exported so it can be unit-tested without a DB.
 //
