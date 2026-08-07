@@ -22,6 +22,7 @@ import type { Platform, SimilarMatch, SimilarResponse } from '@/lib/types'
 import { isCapturableField } from '@/lib/sensitive'
 import { readPrefs, onPrefsChange } from '@/lib/prefs'
 import { shouldCapture } from './captureGate'
+import { readText, editableFromEvent } from './editable'
 
 // Quiet by default — the host page's console must stay clean (Principle 5:
 // fail silent to them). Flip to true only when debugging locally.
@@ -50,15 +51,6 @@ const LEAD_PHRASES = [
 
 function randomLead(): string {
   return LEAD_PHRASES[Math.floor(Math.random() * LEAD_PHRASES.length)]
-}
-
-// Read only what we're allowed to read. Like capture, resurface must never
-// touch an <input> (so a password field's value is unreachable) — it only ever
-// reads the textarea/contenteditable composer. Inputs are gated out upstream
-// by isCapturableField, but we also refuse to read .value here as a backstop.
-function readText(el: HTMLElement): string {
-  if (el instanceof HTMLTextAreaElement) return el.value
-  return el.innerText
 }
 
 // Replace the composer's contents with the remembered prompt (insert-mode path).
@@ -94,23 +86,6 @@ function replaceComposerText(el: HTMLElement, text: string): boolean {
   }
 }
 
-// The editable the user is actually typing in, resolved from the event path —
-// the same approach capture.ts uses. This is what makes resurface react
-// wherever capture does: trusting the page selector alone is fragile, because a
-// site's composer node can differ from what the selector resolves to (or drift
-// over time), and then the old "is the typed element the selector element?"
-// check would silently bail and never query. composedPath() also pierces Shadow
-// DOM. Returns null if the event isn't in a capturable (textarea/contenteditable,
-// non-sensitive) field, so password/OTP fields are still never read.
-function editableFromEvent(e: Event): HTMLElement | null {
-  const path = (e.composedPath?.() ?? []) as Element[]
-  for (const node of path) {
-    if (isCapturableField(node)) return node
-  }
-  const target = e.target as Element | null
-  const closest = target?.closest?.('textarea, [contenteditable="true"]') ?? null
-  return isCapturableField(closest) ? closest : null
-}
 
 // ── Shadow-DOM tooltip ──────────────────────────────────────────────────────
 

@@ -1,15 +1,11 @@
 import type { CaptureResponse, CapturedPromptMessage, Platform } from '@/lib/types'
 import { writeHealth } from '@/lib/health'
 import { isBlocked } from '@/lib/blocklist'
-import {
-  isCapturableField,
-  withinComposer,
-  looksLikeAuthPath,
-  safeCaptureUrl,
-} from '@/lib/sensitive'
+import { isCapturableField, withinComposer, looksLikeAuthPath, safeCaptureUrl } from '@/lib/sensitive'
 import { getBlocklist } from './blocklist'
 import { shouldCapture } from './captureGate'
 import { showSavedToast, showInfoToast } from './toast'
+import { readText, editableFromEvent } from './editable'
 
 // Quiet by default — the host page's console must stay clean, and capture
 // activity (even just lengths) shouldn't be narrated on chatgpt.com et al.
@@ -52,6 +48,11 @@ export function sendCapture(text: string, platform: Platform): void {
       .then((resp: CaptureResponse | undefined) => {
         if (!resp?.ok) {
           log('background did not store prompt:', resp)
+          // A DOM-selector probe finding the composer isn't the whole health
+          // picture — the message pipeline itself can fail (worker error,
+          // storage rejection). Surface that too, the same way the DOM probe
+          // failure does, so capture-health isn't blind to this failure mode.
+          void writeHealth(platform, false)
           return
         }
         // Successfully processed a capture (stored, duplicate, or deliberately
@@ -85,31 +86,11 @@ export function sendCapture(text: string, platform: Platform): void {
       })
       .catch((err) => {
         log('sendMessage failed (worker may be asleep):', err)
+        void writeHealth(platform, false)
       })
   } catch (err) {
     log('runtime unavailable (orphaned content script):', err)
   }
-}
-
-function readText(el: HTMLElement): string {
-  if (el instanceof HTMLTextAreaElement) return el.value
-  return el.innerText
-}
-
-// Find the capturable editable the user is actually typing in. composedPath()
-// pierces Shadow DOM and gives us the real target even when the event is
-// retargeted. isCapturableField excludes <input> entirely (so password/email/
-// search fields can never match) and refuses credential/OTP/payment fields.
-function editableFromEvent(e: Event): HTMLElement | null {
-  const path = (e.composedPath?.() ?? []) as Element[]
-  for (const node of path) {
-    if (isCapturableField(node as Element)) return node as HTMLElement
-  }
-  const target = e.target as Element | null
-  // Note: no bare "input" in this selector — inputs are never the composer.
-  const closest = target?.closest?.('textarea, [contenteditable="true"]')
-  if (isCapturableField(closest ?? null)) return closest as HTMLElement
-  return null
 }
 
 export function attachSubmitHook(
