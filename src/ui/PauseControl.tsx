@@ -10,7 +10,7 @@ import { readPrefs, writePrefs, onPrefsChange, PAUSE_FOREVER } from '@/lib/prefs
 
 const HOUR = 3_600_000
 
-function remainingLabel(pauseUntil: number, now: number): string {
+export function remainingLabel(pauseUntil: number, now: number): string {
   if (pauseUntil === PAUSE_FOREVER) return 'until you turn it back on'
   const ms = pauseUntil - now
   if (ms <= 0) return ''
