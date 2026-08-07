@@ -1,4 +1,4 @@
-import { savePrompt, hardDelete, listPrompts, findExistingPrompt, touchUsage } from '@/lib/db'
+import { db, savePrompt, hardDelete, listPrompts, findExistingPrompt, touchUsage } from '@/lib/db'
 import { findSimilar } from '@/lib/similarity'
 import { classifyPrompt } from '@/lib/classify'
 import { redactPii } from '@/lib/pii'
@@ -28,56 +28,76 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           : { text: message.payload.text, total: 0 }
         const text = redaction.text
 
-        // Re-submitting an already-stored prompt (e.g. paste a resurfaced match
-        // and hit Enter) should not create a duplicate row — bump usage instead.
-        // Checked before the throwaway filter so a prompt the user already kept
-        // still accrues usage even if today's filter would skip it as new.
-        const existing = await findExistingPrompt(message.payload.platform, text)
-        if (existing?.id != null) {
-          await touchUsage(existing.id)
-          sendResponse({
-            ok: true,
-            id: existing.id,
-            filtered: false,
-            notice: false,
-            redacted: redaction.total,
-            duplicate: true,
-          })
-          return
-        }
-
-        // If there's an already-saved prompt on this platform whose body is
-        // very similar to what the user just submitted, treat it as the same
-        // prompt and bump its usage instead of creating a near-duplicate row.
-        const pool = await listPrompts({ includeMinor: true })
-        const samePlatform = pool.filter(
-          (p) => p.platform === message.payload.platform && p.id != null,
-        )
-        const fuzzyHits = findSimilar(
-          text,
-          samePlatform,
-          0.75, // 75%+ similarity counts as "already stored"
-          1,
-        )
-        const fuzzy = fuzzyHits[0]
-        if (fuzzy?.item.id != null) {
-          await touchUsage(fuzzy.item.id)
-          sendResponse({
-            ok: true,
-            id: fuzzy.item.id,
-            filtered: false,
-            notice: false,
-            redacted: redaction.total,
-            duplicate: true,
-          })
-          return
-        }
-
         // Selective capture: skip storing throwaways at the user's strength.
         // At 'off' nothing is ever skipped. (Legacy rows may still carry
         // `minor` from the old soft-capture era — library can reveal those.)
+        // Computed up front — it's pure and doesn't touch the DB, so it can't
+        // widen the transaction below; only its result is used, and only in
+        // the branch where no duplicate was found.
         const { minor } = classifyPrompt(text, prefs.filterStrength)
-        if (minor) {
+
+        // The duplicate/near-duplicate check-then-write sequence below reads
+        // the table, decides, then writes — two PROMPT_CAPTURED messages
+        // arriving close together (e.g. a stray double-submit, or two tabs on
+        // the same platform) could otherwise both pass the checks before
+        // either write lands, creating a duplicate row instead of collapsing
+        // to a usage bump. Wrapping it in one Dexie transaction makes
+        // IndexedDB serialize overlapping handlers on the `prompts` table.
+        const outcome = await db.transaction('rw', db.prompts, async () => {
+          // Re-submitting an already-stored prompt (e.g. paste a resurfaced
+          // match and hit Enter) should not create a duplicate row — bump
+          // usage instead. Checked before the throwaway filter so a prompt
+          // the user already kept still accrues usage even if today's filter
+          // would skip it as new.
+          const existing = await findExistingPrompt(message.payload.platform, text)
+          if (existing?.id != null) {
+            await touchUsage(existing.id)
+            return { kind: 'duplicate', id: existing.id } as const
+          }
+
+          // If there's an already-saved prompt on this platform whose body is
+          // very similar to what the user just submitted, treat it as the
+          // same prompt and bump its usage instead of creating a near-duplicate row.
+          const pool = await listPrompts({ includeMinor: true })
+          const samePlatform = pool.filter(
+            (p) => p.platform === message.payload.platform && p.id != null,
+          )
+          const fuzzyHits = findSimilar(
+            text,
+            samePlatform,
+            0.75, // 75%+ similarity counts as "already stored"
+            1,
+          )
+          const fuzzy = fuzzyHits[0]
+          if (fuzzy?.item.id != null) {
+            await touchUsage(fuzzy.item.id)
+            return { kind: 'duplicate', id: fuzzy.item.id } as const
+          }
+
+          if (minor) return { kind: 'minor' } as const
+
+          const id = await savePrompt({
+            text,
+            platform: message.payload.platform,
+            url: message.payload.url,
+            createdAt: Date.now(),
+          })
+          return { kind: 'saved', id } as const
+        })
+
+        if (outcome.kind === 'duplicate') {
+          sendResponse({
+            ok: true,
+            id: outcome.id,
+            filtered: false,
+            notice: false,
+            redacted: redaction.total,
+            duplicate: true,
+          })
+          return
+        }
+
+        if (outcome.kind === 'minor') {
           let notice = false
           if (!prefs.minorNoticeSeen) {
             notice = true
@@ -92,15 +112,9 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           return
         }
 
-        const id = await savePrompt({
-          text,
-          platform: message.payload.platform,
-          url: message.payload.url,
-          createdAt: Date.now(),
-        })
         sendResponse({
           ok: true,
-          id,
+          id: outcome.id,
           filtered: false,
           notice: false,
           redacted: redaction.total,
@@ -167,7 +181,9 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
     // tab contents). The query is read off the URL by the options app.
     const q = message.query ? `?q=${encodeURIComponent(message.query)}` : ''
     try {
-      void chrome.tabs.create({ url: chrome.runtime.getURL(`src/options/index.html${q}`) })
+      chrome.tabs
+        .create({ url: chrome.runtime.getURL(`src/options/index.html${q}`) })
+        .catch(() => {})
       sendResponse({ ok: true })
     } catch (err) {
       sendResponse({ ok: false, error: String(err) })
@@ -199,9 +215,9 @@ try {
   chrome.runtime.onInstalled.addListener((details) => {
     if (details.reason !== 'install') return
     try {
-      void chrome.tabs.create({
-        url: chrome.runtime.getURL('src/options/index.html?welcome=1'),
-      })
+      chrome.tabs
+        .create({ url: chrome.runtime.getURL('src/options/index.html?welcome=1') })
+        .catch(() => {})
     } catch {
       /* tabs unavailable — skip; the extension still works */
     }
@@ -221,8 +237,8 @@ const PAUSE_ALARM = 'deja:pause-expiry'
 function paintBadge(prefs: Prefs): void {
   try {
     const paused = isPaused(prefs)
-    void chrome.action.setBadgeText({ text: paused ? '||' : '' })
-    if (paused) void chrome.action.setBadgeBackgroundColor({ color: '#c98a2b' })
+    chrome.action.setBadgeText({ text: paused ? '||' : '' }).catch(() => {})
+    if (paused) chrome.action.setBadgeBackgroundColor({ color: '#c98a2b' }).catch(() => {})
   } catch {
     /* action API unavailable — ignore */
   }
@@ -234,7 +250,7 @@ async function syncPauseAlarm(prefs: Prefs): Promise<void> {
   try {
     await chrome.alarms.clear(PAUSE_ALARM)
     if (prefs.pauseUntil > Date.now() && prefs.pauseUntil !== PAUSE_FOREVER) {
-      chrome.alarms.create(PAUSE_ALARM, { when: prefs.pauseUntil })
+      await chrome.alarms.create(PAUSE_ALARM, { when: prefs.pauseUntil })
     }
   } catch {
     /* alarms unavailable — badge will still self-correct on the next prefs change */
