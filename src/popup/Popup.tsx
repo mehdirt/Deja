@@ -31,8 +31,12 @@ export function Popup() {
   }, [deferredQuery, prompts, index])
 
   const onCopy = async (p: Prompt, text?: string) => {
-    await navigator.clipboard.writeText(text ?? p.text)
-    if (p.id) await touchUsage(p.id)
+    try {
+      await navigator.clipboard.writeText(text ?? p.text)
+      if (p.id) await touchUsage(p.id)
+    } catch {
+      /* clipboard write can reject without document focus in a popup — no-op */
+    }
   }
 
   const openLibrary = () => chrome.runtime.openOptionsPage()

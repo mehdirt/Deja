@@ -163,8 +163,12 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
   // `text` is the filled-in version when the prompt had blanks; usage still
   // counts against the original, since that's the prompt being reused.
   const onCopy = useCallback(async (p: Prompt, text?: string) => {
-    await navigator.clipboard.writeText(text ?? p.text)
-    if (p.id) await touchUsage(p.id)
+    try {
+      await navigator.clipboard.writeText(text ?? p.text)
+      if (p.id) await touchUsage(p.id)
+    } catch {
+      /* clipboard write can reject without document focus — no-op */
+    }
   }, [])
 
   const onDelete = useCallback(
