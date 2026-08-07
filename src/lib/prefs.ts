@@ -137,13 +137,28 @@ export async function readPrefs(): Promise<Prefs> {
 // overwriting) means a caller that only knows about one setting — e.g. the
 // settings UI saving `resurfaceClick`, or the background stamping
 // `minorNoticeSeen` — can never clobber another preference it didn't pass.
-export async function writePrefs(patch: Partial<Prefs>): Promise<void> {
-  try {
-    const current = await readPrefs()
-    await chrome.storage.local.set({ [KEY]: coerce({ ...current, ...patch }) })
-  } catch {
-    /* storage unavailable — never throw into the host page */
-  }
+//
+// Each call does its own read-then-write, so two writePrefs() calls fired
+// back-to-back in the SAME context (e.g. two rapid Settings toggles before
+// the first await resolves) can race and drop one update. Chaining onto a
+// module-scope promise serializes calls within this context. It does NOT
+// serialize across contexts (popup vs. options vs. background each load
+// their own instance of this module) — that race is smaller in practice
+// (different tabs rarely toggle the same setting at the same instant) and
+// closing it fully would need a single mediating writer or a CAS primitive
+// chrome.storage.local doesn't offer.
+let writeChain: Promise<void> = Promise.resolve()
+
+export function writePrefs(patch: Partial<Prefs>): Promise<void> {
+  writeChain = writeChain.catch(() => {}).then(async () => {
+    try {
+      const current = await readPrefs()
+      await chrome.storage.local.set({ [KEY]: coerce({ ...current, ...patch }) })
+    } catch {
+      /* storage unavailable — never throw into the host page */
+    }
+  })
+  return writeChain
 }
 
 /** Subscribe to preference changes so an open settings view / content script

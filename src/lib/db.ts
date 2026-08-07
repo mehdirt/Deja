@@ -107,11 +107,15 @@ export async function hardDelete(id: number): Promise<void> {
   await db.prompts.delete(id)
 }
 
+// Atomic increment via modify() (not get-then-update) so two near-simultaneous
+// bumps of the same row — e.g. a fuzzy-duplicate capture racing a Library click
+// — both land instead of one clobbering the other.
 export async function touchUsage(id: number): Promise<void> {
   const now = Date.now()
-  const p = await db.prompts.get(id)
-  if (!p) return
-  await db.prompts.update(id, { usageCount: (p.usageCount ?? 0) + 1, lastUsedAt: now })
+  await db.prompts.where('id').equals(id).modify((p) => {
+    p.usageCount = (p.usageCount ?? 0) + 1
+    p.lastUsedAt = now
+  })
 }
 
 // Tags ---------------------------------------------------------------
