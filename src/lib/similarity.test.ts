@@ -44,6 +44,32 @@ describe('similarity (resurface score)', () => {
   })
 })
 
+describe('vocabulary normalization', () => {
+  it('scores a plural/singular rewording higher than raw trigrams would', () => {
+    const a = 'organise the photos for the trip'
+    const b = 'organize the photo for the trip'
+    // Both edits (organise→organize, photos→photo) are exactly what
+    // normalizeTerm() folds for exact search; resurface should get the same
+    // credit for them instead of scoring on raw character trigrams alone.
+    expect(similarity(a, b)).toBeGreaterThan(0.8)
+  })
+
+  it('still returns 1 for identical strings after normalization', () => {
+    expect(similarity('summarise the reports', 'summarise the reports')).toBeCloseTo(1)
+  })
+
+  it('does not fold verb endings (-ing/-ed are left alone, unlike plurals)', () => {
+    // normalizeTerm() only strips plurals; "editing"/"edited" must NOT collapse
+    // to "edit", since that would blur a real semantic difference. Confirms the
+    // word-level fold in similarity.ts inherits that restraint from search.ts
+    // rather than reimplementing (and potentially loosening) it.
+    const editing = similarity('start editing the document', 'start edit the document')
+    const edited = similarity('start edited the document', 'start edit the document')
+    expect(editing).toBeLessThan(1)
+    expect(edited).toBeLessThan(1)
+  })
+})
+
 describe('IDF weighting', () => {
   it('down-weighting the shared trigrams lowers the score', () => {
     const a = 'the cat sat'

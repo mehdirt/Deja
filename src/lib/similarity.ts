@@ -1,6 +1,8 @@
 // Trigram-based similarity for the "you've been here before" feature.
 // Cheap, local, zero-dependency. Upgrade to embeddings in a later version.
 
+import { normalizeTerm } from './search'
+
 // ── Tuning knobs ─────────────────────────────────────────────────────────────
 // These are PROVISIONAL. The mechanisms below (IDF weighting, length-aware
 // threshold) are the real work; the exact numbers should be tuned from watching
@@ -17,8 +19,19 @@ const SHORT_QUERY_PENALTY = 0.15 // most we add to the threshold for the shortes
 // while damping the scale shift, so the threshold keeps roughly its prior meaning.
 const IDF_STRENGTH = 0.5
 
+// Fold each word to its normalizeTerm() canonical form — the same folding
+// search.ts uses for exact search: plurals and British/American spellings
+// unified ("organise the photos" → "organize the photo"). Punctuation and
+// spacing are left untouched; only word tokens are replaced. Without this,
+// vocabulary drift that Library search already treats as a full match was
+// invisible to resurface's fuzzy scorer, on the one feature whose entire job
+// is catching a prompt re-asked in different words.
+function normalizeWords(s: string): string {
+  return s.replace(/[\p{L}\p{N}]+/gu, (w) => normalizeTerm(w))
+}
+
 function trigramSet(s: string): Set<string> {
-  const t = ` ${s.toLowerCase().replace(/\s+/g, ' ').trim()} `
+  const t = ` ${normalizeWords(s).toLowerCase().replace(/\s+/g, ' ').trim()} `
   const grams = new Set<string>()
   for (let i = 0; i <= t.length - 3; i++) grams.add(t.slice(i, i + 3))
   return grams
