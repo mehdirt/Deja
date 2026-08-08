@@ -25,11 +25,14 @@ export function LogoMark({ size = 24 }: { size?: number }) {
 }
 
 export function Logo({ size = 24, withWordmark = true, className = '' }: Props) {
+  // Wordmark reads a touch larger than the mark — same relationship as the
+  // landing page (mark + ~20px Literata name).
+  const wordPx = Math.round(size * 0.72)
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
       <LogoMark size={size} />
       {withWordmark && (
-        <span className="dj-wordmark text-[1.05em]">
+        <span className="dj-wordmark leading-none" style={{ fontSize: wordPx }}>
           de<span className="ja">ja</span>
         </span>
       )}

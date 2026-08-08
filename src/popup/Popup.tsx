@@ -41,7 +41,7 @@ export function Popup() {
   return (
     <div className="flex max-h-[560px] min-h-[400px] flex-col">
       <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-line bg-bg/90 px-3.5 py-3 backdrop-blur">
-        <Logo size={26} />
+        <Logo size={22} />
         <button onClick={openLibrary} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
           All prompts →
         </button>

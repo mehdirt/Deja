@@ -37,7 +37,7 @@ export function App() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 pb-10 pt-5">
       <header className="flex items-center justify-between gap-4 pb-1">
-        <Logo size={34} />
+        <Logo size={28} />
         <nav className="flex items-center gap-1 sm:gap-0" aria-label="Sections">
           {NAV.map((n) => (
             <button
