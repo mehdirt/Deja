@@ -43,7 +43,7 @@ Fonts are **bundled, not fetched** — the `.woff2` files live in `src/assets/fo
 
 - **Sans** (`font-sans`, Figtree Variable → system-ui): everything a person reads or clicks. Prompt bodies, headings, buttons, labels, search boxes, timestamps.
 - **Brand** (`font-brand`, Literata → Georgia): the lowercase `deja` wordmark only. Soft reading serif — ink on paper, remembered words, a little déjà vu. Keeps the name warm and personal instead of dressing it as code.
-- **Mono** (`font-mono`, JetBrains Mono Variable → ui-monospace): only for things that are literally code or keys — `⌘K` hints, `[email]` placeholders, hostnames, and pattern rules. **Don't reach for it otherwise.** Monospace reads as "code" to a non-technical person, and most of what Deja stores is ordinary prose.
+- **Mono** (`font-mono`, JetBrains Mono Variable → ui-monospace): only for things that are literally code — `[email]` placeholders, hostnames, and pattern rules. **Don't reach for it otherwise.** Monospace reads as "code" to a non-technical person, and most of what Deja stores is ordinary prose.
 
 Two primitives carry most of the type:
 
@@ -55,10 +55,13 @@ Scale: `text-xs` 12 · `text-sm` 13–14 · `text-base` 15 · `text-lg` 18 · `t
 
 ## Shape & depth
 
-- Radius: `rounded-card` (10px) for cards, `rounded-btn` (8px) for buttons/inputs, `rounded-full` for pills.
-- Borders: `1px` `border-line`, always visible against `surface` (including dark mode).
-- Shadow: `shadow-card` (resting), `shadow-pop` (overlays/toast). Keep depth subtle.
-- Motion: `animate-fade-in` (140ms). Respect `prefers-reduced-motion`.
+- Radius: `rounded-card` (**16px**, shared with the landing page) for cards/panels, `rounded-btn` (**11px**) for buttons/inputs, `rounded-full` for pills.
+- Borders: `1px` `border-line`, always visible against `surface` (including dark mode). Soft accent mix on card hover (same as site flow-steps).
+- Shadow: `shadow-card` (resting), `shadow-pop` (overlays), `shadow-cta` (primary actions — indigo glow, like the site CTA).
+- Atmosphere: a faint indigo radial wash (`--dj-glow`) behind options/popup chrome — same gesture as `site/index.html`.
+- Motion: view enter (`dj-enter`), capped list stagger (`dj-stagger` / `dj-stagger-auto`), disclosure open, button press scale, card hover lift (fine pointer only), copy check pop. Timing uses `cubic-bezier(0.16, 1, 0.3, 1)`. Respect `prefers-reduced-motion`.
+
+Keep the extension and the marketing site on one visual system: same tokens, radii, type faces, and card language. Extension density stays higher (Operate mode); the site can breathe more (Persuade).
 
 ## Component primitives
 

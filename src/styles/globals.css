@@ -73,7 +73,7 @@
   --dj-sunk: #f1ede4; /* inset wells, hover */
   --dj-text: #1c1b19; /* ink */
   --dj-text-soft: #6b6862; /* secondary */
-  --dj-text-faint: #736f67; /* tertiary / meta — darkened to clear WCAG AA (4.5:1) on --dj-bg; was #9a968d at ~2.8:1 */
+  --dj-text-faint: #736f67; /* tertiary / meta — AA on --dj-bg (site marketing allows lighter) */
   --dj-accent: #5b54f0; /* indigo */
   --dj-accent-soft: #ecebfe; /* accent fills */
   --dj-accent-hover: #4a43e0;
@@ -81,6 +81,8 @@
   --dj-danger: #c0392b;
   --dj-ok: #2f9e63; /* capture healthy */
   --dj-warn: #935f16; /* paused — clears WCAG AA (4.5:1) on --dj-bg */
+  /* Soft top wash — same vocabulary as site/index.html --glow */
+  --dj-glow: rgba(91, 84, 240, 0.1);
 
   --dj-font-sans: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --dj-font-mono:
@@ -103,18 +105,49 @@
     --dj-danger: #e06c5d;
     --dj-ok: #56c98a;
     --dj-warn: #cf9550; /* paused — clears WCAG AA on dark --dj-bg */
+    --dj-glow: rgba(137, 131, 245, 0.14);
   }
 }
 
 html,
 body {
   @apply bg-bg text-ink font-sans antialiased;
+  line-height: 1.6;
+}
+
+/* Soft indigo wash behind the options/popup chrome — matches the landing page. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 420px;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(58% 50% at 50% -4%, var(--dj-glow), transparent 72%);
+}
+
+#root {
+  position: relative;
+  z-index: 1;
 }
 
 /* Component primitives ------------------------------------------------ */
 @layer components {
   .dj-card {
     @apply rounded-card border border-line bg-surface shadow-card;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .dj-card:hover {
+      border-color: color-mix(in srgb, var(--dj-accent) 22%, var(--dj-line));
+      transform: translateY(-1px);
+      box-shadow:
+        0 1px 2px rgba(28, 27, 25, 0.04),
+        0 8px 20px rgba(28, 27, 25, 0.08);
+    }
   }
 
   /* The prompt text itself. Sans, generously spaced: this is something a
@@ -126,6 +159,7 @@ body {
   /* Lowercase `deja` wordmark — Literata only. Never use font-mono for this. */
   .dj-wordmark {
     @apply font-brand font-semibold tracking-tight text-ink;
+    letter-spacing: -0.02em;
   }
   .dj-wordmark .ja {
     @apply text-accent;
@@ -144,31 +178,58 @@ body {
   }
 
   .dj-input {
-    @apply w-full rounded-btn border border-line bg-surface px-3 py-2 text-sm text-ink;
+    @apply w-full rounded-btn border border-line bg-surface px-3.5 py-2.5 text-sm text-ink;
     @apply placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease;
   }
 
   .dj-btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-btn px-3 py-1.5 text-sm font-medium;
-    @apply border border-line text-ink transition-colors hover:bg-sunk;
-    /* focus-visible (not focus): show the ring for keyboard users, not on every
-       mouse click — quieter, and the calm aesthetic depends on it. */
+    @apply inline-flex items-center justify-center gap-1.5 rounded-btn px-3.5 py-2 text-sm font-medium;
+    @apply border border-line text-ink;
     @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease,
+      box-shadow 0.15s ease,
+      transform 0.12s ease;
+  }
+  .dj-btn:hover {
+    @apply bg-sunk;
+  }
+  .dj-btn:active:not(:disabled) {
+    transform: scale(0.98);
   }
 
   .dj-btn-primary {
-    @apply border-transparent bg-accent text-white hover:bg-accent-hover;
+    @apply border-transparent bg-accent text-white shadow-cta hover:bg-accent-hover;
+  }
+  .dj-btn-primary:hover {
+    @apply bg-accent-hover;
   }
 
   .dj-btn-ghost {
-    @apply border-transparent text-ink-soft hover:bg-sunk hover:text-ink;
+    @apply border-transparent text-ink-soft shadow-none hover:bg-sunk hover:text-ink;
   }
 
   /* tab / filter pill */
   .dj-pill {
     @apply rounded-full border border-line px-2.5 py-1 text-xs font-medium text-ink-soft;
-    @apply transition-colors hover:bg-sunk;
     @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease,
+      transform 0.12s ease;
+  }
+  .dj-pill:hover {
+    @apply bg-sunk;
+  }
+  .dj-pill:active {
+    transform: scale(0.97);
   }
   .dj-pill-active {
     @apply border-accent bg-accent text-white hover:bg-accent;
@@ -186,6 +247,211 @@ body {
      the × remove button is a sibling and stays fully visible/clickable. */
   .dj-tag-label {
     @apply block max-w-[12rem] overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+
+  /* Quiet metadata pills — timestamps, reuse counts. */
+  .dj-meta-chip {
+    @apply inline-flex items-center gap-1 rounded-full bg-sunk px-2 py-0.5;
+    @apply text-[11px] text-ink-soft;
+    font-variant-numeric: tabular-nums;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  /* Search field with leading icon + optional clear. */
+  .dj-search {
+    @apply relative;
+  }
+  .dj-search-icon {
+    @apply pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint;
+  }
+  .dj-search-input {
+    @apply w-full rounded-btn border border-line bg-sunk py-2.5 pl-9 pr-9 text-sm text-ink shadow-none;
+    @apply placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent focus:bg-surface;
+  }
+  .dj-search-input::-webkit-search-cancel-button {
+    @apply appearance-none;
+  }
+  .dj-search-clear {
+    @apply absolute right-2 top-1/2 -translate-y-1/2 rounded-btn p-1.5 text-ink-faint;
+    @apply transition-colors hover:bg-surface hover:text-ink;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent;
+  }
+
+  /* Library filter/sort disclosure. */
+  .dj-filter {
+    @apply overflow-hidden rounded-card border border-line bg-surface shadow-card;
+  }
+  .dj-filter-summary {
+    @apply flex cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5;
+    @apply marker:content-none [&::-webkit-details-marker]:hidden;
+    @apply transition-colors hover:bg-sunk;
+  }
+  .dj-filter-body {
+    @apply flex flex-col gap-4 border-t border-line bg-sunk px-3.5 py-3.5;
+  }
+  .dj-filter-label {
+    @apply mb-1.5 text-[11px] font-medium text-ink-faint;
+  }
+
+  /* Settings / Privacy panels — raised notebook cards (site flow-step radius). */
+  .dj-panel {
+    @apply rounded-card border border-line bg-surface shadow-card;
+    padding: 20px 22px 22px;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .dj-panel:hover {
+      border-color: color-mix(in srgb, var(--dj-accent) 18%, var(--dj-line));
+      transform: translateY(-1px);
+    }
+  }
+  .dj-panel-tight {
+    @apply rounded-card border border-line bg-surface shadow-card;
+  }
+  .dj-choice {
+    @apply flex w-full flex-col items-start gap-1 rounded-btn border border-line bg-surface px-3.5 py-3 text-left;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      transform 0.12s ease;
+  }
+  .dj-choice:hover {
+    @apply bg-sunk;
+  }
+  .dj-choice:active {
+    transform: scale(0.99);
+  }
+  .dj-choice-active {
+    @apply border-accent bg-accent-soft;
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--dj-accent) 8%, transparent);
+  }
+  .dj-choice-active .dj-choice-label {
+    @apply text-accent;
+  }
+  .dj-row {
+    @apply flex items-center justify-between gap-3 px-3.5 py-3.5;
+  }
+  .dj-page-title {
+    @apply text-[22px] font-semibold text-ink;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+  }
+  .dj-page-lead {
+    @apply text-[14.5px] leading-relaxed text-ink-soft;
+  }
+  .dj-section-title {
+    @apply text-lg font-semibold text-ink;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+
+  /* View / list entrances — Operate-mode motion: quick, explanatory, quiet. */
+  .dj-enter {
+    animation: dj-rise 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .dj-enter-fast {
+    animation: dj-rise 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .dj-pop-in {
+    animation: dj-pop 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .dj-stagger > * {
+    animation: dj-rise 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(min(var(--i, 0), 7) * 40ms);
+  }
+  /* Sibling stagger without per-item --i (Settings / Privacy / Welcome). */
+  .dj-stagger-auto > * {
+    animation: dj-rise 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .dj-stagger-auto > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .dj-stagger-auto > *:nth-child(2) {
+    animation-delay: 40ms;
+  }
+  .dj-stagger-auto > *:nth-child(3) {
+    animation-delay: 80ms;
+  }
+  .dj-stagger-auto > *:nth-child(4) {
+    animation-delay: 120ms;
+  }
+  .dj-stagger-auto > *:nth-child(5) {
+    animation-delay: 160ms;
+  }
+  .dj-stagger-auto > *:nth-child(6) {
+    animation-delay: 200ms;
+  }
+  .dj-stagger-auto > *:nth-child(7) {
+    animation-delay: 240ms;
+  }
+  .dj-stagger-auto > *:nth-child(n + 8) {
+    animation-delay: 280ms;
+  }
+  details[open] > .dj-filter-body {
+    animation: dj-rise 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Soft pulse for the library capture-health badge light. */
+  .dj-glow-ok {
+    background: var(--dj-ok);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--dj-ok) 55%, transparent);
+    animation: dj-glow-pulse-ok 2.4s ease-out infinite;
+  }
+  .dj-glow-danger {
+    background: var(--dj-danger);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--dj-danger) 55%, transparent);
+    animation: dj-glow-pulse-danger 2.4s ease-out infinite;
+  }
+}
+
+@keyframes dj-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dj-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.84);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dj-glow-pulse-ok {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--dj-ok) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 6px 4px color-mix(in srgb, var(--dj-ok) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--dj-ok) 0%, transparent);
+  }
+}
+
+@keyframes dj-glow-pulse-danger {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--dj-danger) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 6px 4px color-mix(in srgb, var(--dj-danger) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--dj-danger) 0%, transparent);
   }
 }
 
