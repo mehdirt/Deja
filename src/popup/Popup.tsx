@@ -39,15 +39,15 @@ export function Popup() {
   const openLibrary = () => chrome.runtime.openOptionsPage()
 
   return (
-    <div className="flex max-h-[560px] min-h-[400px] flex-col">
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-line bg-bg/90 px-3.5 py-3 backdrop-blur">
+    <div className="flex max-h-[560px] min-h-[400px] w-full min-w-0 flex-col overflow-hidden">
+      <header className="z-10 flex shrink-0 items-center justify-between gap-2 border-b border-line bg-bg/90 px-3.5 py-3 backdrop-blur">
         <Logo size={22} />
         <button onClick={openLibrary} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
           All prompts →
         </button>
       </header>
 
-      <div className="flex flex-col gap-2.5 px-3.5 pt-3.5">
+      <div className="flex shrink-0 flex-col gap-2.5 border-b border-line px-3.5 pb-3.5 pt-3.5">
         <PauseControl />
         <div className="dj-search">
           <SearchIcon size={14} className="dj-search-icon" />
@@ -73,7 +73,7 @@ export function Popup() {
         </div>
       </div>
 
-      <div className="dj-stagger flex flex-1 flex-col gap-2 overflow-auto p-3.5">
+      <div className="dj-stagger flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden p-3.5">
         {loading ? (
           <SkeletonList count={3} />
         ) : loadError && prompts.length === 0 ? (

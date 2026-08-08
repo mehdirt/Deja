@@ -1,11 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dj-popup">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Deja</title>
   </head>
-  <body class="w-[360px] min-h-[400px]">
+  <!--
+    Width + overflow are pinned in globals.css (.dj-popup). A document-level
+    scrollbar was widening the Chrome popup past 360px and leaving an empty
+    strip on the right — scroll stays inside the list, not on html/body.
+  -->
+  <body class="dj-popup">
     <div id="root"></div>
     <script type="module" src="./main.tsx"></script>
   </body>

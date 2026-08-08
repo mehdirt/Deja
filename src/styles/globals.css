@@ -131,6 +131,21 @@ body::before {
   z-index: 1;
 }
 
+/* Toolbar popup: fixed width, no document scrollbar. Inner list scrolls. */
+html.dj-popup,
+html.dj-popup body {
+  width: 360px;
+  max-width: 360px;
+  min-height: 400px;
+  margin: 0;
+  overflow: hidden;
+}
+html.dj-popup #root {
+  width: 100%;
+  max-width: 360px;
+  overflow-x: hidden;
+}
+
 /* Component primitives ------------------------------------------------ */
 @layer components {
   .dj-card {
