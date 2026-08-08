@@ -36,23 +36,60 @@ export interface Placeholder {
   token: string
 }
 
+/** Blank out fenced + inline code (same length) so brace scans skip them. */
+function maskCodeSpans(text: string): string {
+  // Fences first — including a truncated open fence at the end of a card.
+  let out = text.replace(/```[\w+-]*\r?\n[\s\S]*?(?:```|$)/g, (m) => ' '.repeat(m.length))
+  out = out.replace(/`[^`\n]+`/g, (m) => ' '.repeat(m.length))
+  return out
+}
+
+/** Unfenced snippets (Python f-strings, def/return…) still look like blanks. */
+function lineLooksLikeCode(line: string): boolean {
+  const t = line.trimStart()
+  if (
+    /^(def|class|return|import|from|print|const|let|var|function|export|async|await|if|for|while)\b/.test(
+      t,
+    )
+  ) {
+    return true
+  }
+  // f"…{name}…" / f'…{name}…'
+  if (/\bf['"]/.test(line)) return true
+  return false
+}
+
+function lineAt(text: string, index: number): string {
+  const start = text.lastIndexOf('\n', index - 1) + 1
+  const end = text.indexOf('\n', index)
+  return text.slice(start, end === -1 ? text.length : end)
+}
+
 /** Every distinct blank in a prompt, in the order it first appears. A blank
  *  repeated in the prompt is one field and fills every occurrence. */
 export function findPlaceholders(text: string): Placeholder[] {
   const seen = new Map<string, Placeholder>()
+  const scan = maskCodeSpans(text)
 
-  for (const m of text.matchAll(BRACE)) {
+  for (const m of scan.matchAll(BRACE)) {
+    if (m.index == null) continue
+    if (lineLooksLikeCode(lineAt(text, m.index))) continue
     const name = m[1].trim()
     if (!name) continue
+    // Token from the original string (mask only changes code spans to spaces).
+    const token = text.slice(m.index, m.index + m[0].length)
     const key = `{${name.toLowerCase()}}`
-    if (!seen.has(key)) seen.set(key, { name, token: m[0] })
+    if (!seen.has(key)) seen.set(key, { name, token })
   }
 
-  for (const m of text.matchAll(BRACKET)) {
+  for (const m of scan.matchAll(BRACKET)) {
+    if (m.index == null) continue
+    if (lineLooksLikeCode(lineAt(text, m.index))) continue
     const name = m[1]
     if (!PII_PLACEHOLDERS.has(name)) continue
+    const token = text.slice(m.index, m.index + m[0].length)
     const key = `[${name}]`
-    if (!seen.has(key)) seen.set(key, { name, token: m[0] })
+    if (!seen.has(key)) seen.set(key, { name, token })
   }
 
   return [...seen.values()]

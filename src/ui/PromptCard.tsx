@@ -210,7 +210,7 @@ export function PromptCard({
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-0.5 pt-1">
+      <div className="flex flex-wrap items-center justify-end gap-x-1 gap-y-1.5 pt-1">
         <span className="mr-auto flex flex-wrap items-center gap-1.5">
           <span className="dj-meta-chip">
             <ClockIcon size={11} className="text-ink-faint" />
@@ -228,7 +228,7 @@ export function PromptCard({
             onClick={() => onKeepMinor(prompt)}
             aria-label="Keep this prompt in your library"
             title="Keep this in your library"
-            className="dj-btn dj-btn-ghost px-2 py-1 text-xs hover:text-accent"
+            className="dj-btn dj-btn-ghost px-2 py-1.5 text-xs hover:text-accent"
           >
             Keep
           </button>
@@ -275,9 +275,10 @@ export function PromptCard({
         </button>
         {fillable && !filling && (
           <button
+            type="button"
             onClick={() => setFilling(true)}
             title="This prompt has blanks in it — fill them in before copying"
-            className="dj-btn dj-btn-primary px-2 py-1 text-xs"
+            className="dj-btn dj-btn-primary ml-1 shrink-0 px-2.5 py-1.5 text-xs leading-none"
           >
             Fill in &amp; copy
           </button>

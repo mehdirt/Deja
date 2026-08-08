@@ -23,6 +23,43 @@ describe('findPlaceholders', () => {
     expect(findPlaceholders('why does .btn { color: red; } not work')).toEqual([])
   })
 
+  it('ignores braces inside fenced or inline code', () => {
+    const fenced = [
+      'Explain this:',
+      '',
+      '```python',
+      'def greet(name):',
+      '    return f"Hello, {name}!"',
+      '',
+      'print(greet("World"))',
+      '```',
+    ].join('\n')
+    expect(findPlaceholders(fenced)).toEqual([])
+    expect(findPlaceholders('Use `f"Hello, {name}!"` as an example')).toEqual([])
+  })
+
+  it('ignores unfenced f-strings and def/return lines', () => {
+    const bare = [
+      'def greet(name):',
+      '    return f"Hello, {name}!"',
+      '',
+      'print(greet("World"))',
+    ].join('\n')
+    expect(findPlaceholders(bare)).toEqual([])
+  })
+
+  it('still finds prose blanks next to a code fence', () => {
+    const mixed = [
+      'Rewrite this for {audience}:',
+      '',
+      '```js',
+      'console.log(`hi ${name}`)',
+      'const x = {name}',
+      '```',
+    ].join('\n')
+    expect(findPlaceholders(mixed)).toEqual([{ name: 'audience', token: '{audience}' }])
+  })
+
   it('deduplicates a blank used more than once, keeping first-seen order', () => {
     const found = findPlaceholders('a {x} then {y} then {x} again')
     expect(found.map((p) => p.name)).toEqual(['x', 'y'])
