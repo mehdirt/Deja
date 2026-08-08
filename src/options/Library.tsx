@@ -17,8 +17,8 @@ import { usefulnessScore } from '@/lib/ranking'
 import { PromptCard } from '@/ui/PromptCard'
 import { SkeletonList } from '@/ui/Skeleton'
 import { ErrorRetry } from '@/ui/ErrorRetry'
-import { PinIcon } from '@/ui/PinIcon'
-import { CaptureStatus } from '@/ui/CaptureStatus'
+import { FavoriteIcon, ChevronIcon, SearchIcon, CloseIcon, LockIcon } from '@/ui/ActionIcons'
+import { CaptureHealthBadge } from '@/ui/CaptureHealthBadge'
 import { StarterPrompts } from '@/ui/StarterPrompts'
 import { useAsyncList } from '@/ui/useAsyncList'
 import { PLATFORM_LABEL, type Platform, type Prompt } from '@/lib/types'
@@ -57,7 +57,6 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const deferredQuery = useDeferredValue(query)
   const [platform, setPlatform] = useState<Platform | 'all'>('all')
   const [sort, setSort] = useState<Sort>('newest')
-  const [selected, setSelected] = useState(0)
   const [undoId, setUndoId] = useState<number | null>(null)
   // Tag filter: AND semantics. A prompt must carry EVERY active tag to show.
   // AND is the more useful default — as you click tags you narrow toward the
@@ -74,8 +73,6 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set())
   const [undoBatch, setUndoBatch] = useState<number[] | null>(null)
 
-  const searchRef = useRef<HTMLInputElement>(null)
-  const selectedRef = useRef<HTMLDivElement>(null)
   const undoTimer = useRef<number | undefined>(undefined)
 
   useEffect(() => {
@@ -146,19 +143,8 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
     else if (sort === 'longest-unseen')
       list.sort((a, b) => (a.lastUsedAt ?? 0) - (b.lastUsedAt ?? 0))
     // 'newest' keeps listPrompts() order (already createdAt desc); search keeps relevance order
-    // Pinned prompts always float to the top within the library, regardless of
-    // sort. sort() is stable, so the chosen order is preserved within each group.
-    list.sort((a, b) => Number(b.pinned ?? false) - Number(a.pinned ?? false))
     return list
   }, [deferredQuery, filtered, index, sort])
-
-  useEffect(() => {
-    setSelected((s) => Math.min(s, Math.max(0, visible.length - 1)))
-  }, [visible.length])
-
-  useEffect(() => {
-    selectedRef.current?.scrollIntoView({ block: 'nearest' })
-  }, [selected])
 
   // `text` is the filled-in version when the prompt had blanks; usage still
   // counts against the original, since that's the prompt being reused.
@@ -265,175 +251,147 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
     reload()
   }, [undoBatch, reload])
 
-  // Keyboard shortcuts for people who want them. Everything here is also
-  // reachable by mouse — nothing is keyboard-only.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const active = document.activeElement
-      const inSearch = active === searchRef.current
-      // Don't hijack action keys while a control (button/input/select) is focused —
-      // it would double-fire alongside that control's own handler.
-      const onControl = !!active && /^(BUTTON|INPUT|SELECT|TEXTAREA)$/.test(active.tagName)
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        searchRef.current?.focus()
-        return
-      }
-      if (e.key === '/' && !inSearch) {
-        e.preventDefault()
-        searchRef.current?.focus()
-        return
-      }
-      if (e.key === 'Escape') {
-        if (selecting) exitSelecting()
-        if (query) setQuery('')
-        searchRef.current?.blur()
-        return
-      }
-      // In bulk-select mode the per-row checkbox is the delete path; don't let
-      // the single-item arrow/Enter/Backspace shortcuts compete with it.
-      if (selecting) return
-      if (!visible.length) return
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setSelected((s) => Math.min(s + 1, visible.length - 1))
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setSelected((s) => Math.max(s - 1, 0))
-      } else if (e.key === 'Enter' && !onControl) {
-        e.preventDefault()
-        void onCopy(visible[selected])
-      } else if ((e.key === 'Backspace' || e.key === 'Delete') && !onControl) {
-        e.preventDefault()
-        void onDelete(visible[selected])
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [visible, selected, query, onCopy, onDelete, selecting, exitSelecting])
-
   useEffect(() => () => window.clearTimeout(undoTimer.current), [])
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex items-center justify-between gap-2">
-        <p className="dj-meta">
-          {shownCount} {shownCount === 1 ? 'prompt' : 'prompts'} · safe on this device
-        </p>
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-ink">
+            <span className="tabular-nums">{shownCount}</span>{' '}
+            {shownCount === 1 ? 'prompt' : 'prompts'}
+          </p>
+          <p className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-ink-soft">
+            <LockIcon size={11} className="shrink-0 text-ink-faint" />
+            Safe on this device
+          </p>
+        </div>
+        <CaptureHealthBadge onOpenSettings={onOpenSettings} />
       </header>
 
-      <CaptureStatus onOpenSettings={onOpenSettings} />
-
-      <div className="relative">
+      <div className="dj-search">
+        <SearchIcon size={15} className="dj-search-icon" />
         <input
-          ref={searchRef}
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search your prompts"
           placeholder="Find a prompt…"
-          className="dj-input pr-14"
+          className="dj-search-input"
         />
-        <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">
-          {typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
-            ? '⌘K'
-            : 'Ctrl+K'}
-        </kbd>
+        {query.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setQuery('')}
+            aria-label="Clear search"
+            className="dj-search-clear"
+          >
+            <CloseIcon size={13} />
+          </button>
+        )}
       </div>
 
       {/* Power chrome lives behind one disclosure — search + list stay the
           default path for everyday reuse. */}
       {prompts.length > 0 && (
         <details
-          className="group rounded-card border border-line bg-surface open:shadow-card"
+          className="dj-filter group"
           {...(selecting ? { open: true } : {})}
         >
-          <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-ink-soft marker:content-none [&::-webkit-details-marker]:hidden">
-            <span className="inline-flex items-center gap-2">
-              <span className="text-ink">Filter &amp; sort</span>
+          <summary className="dj-filter-summary">
+            <span className="inline-flex min-w-0 items-center gap-2">
+              <span className="text-sm font-medium text-ink">Filter &amp; sort</span>
               {filterActiveCount > 0 ? (
-                <span className="dj-meta">
+                <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
                   {filterActiveCount} active
                 </span>
               ) : (
                 <span className="dj-meta">Optional</span>
               )}
             </span>
+            <ChevronIcon
+              size={14}
+              className="shrink-0 text-ink-faint transition-transform group-open:rotate-180"
+            />
           </summary>
-          <div className="flex flex-col gap-3 border-t border-line px-3 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2">
+          <div className="dj-filter-body">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 flex-1 flex-col gap-3">
                 {multiPlatform && (
-                  <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by platform">
-                    {PLATFORMS.map((p) => (
-                      <button
-                        key={p.key}
-                        role="tab"
-                        aria-selected={platform === p.key}
-                        onClick={() => setPlatform(p.key)}
-                        className={`dj-pill ${platform === p.key ? 'dj-pill-active' : ''}`}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
+                  <div>
+                    <p className="dj-filter-label">From</p>
+                    <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by platform">
+                      {PLATFORMS.map((p) => (
+                        <button
+                          key={p.key}
+                          role="tab"
+                          aria-selected={platform === p.key}
+                          onClick={() => setPlatform(p.key)}
+                          className={`dj-pill ${platform === p.key ? 'dj-pill-active' : ''}`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                {multiPlatform && <span className="mx-0.5 h-4 w-px bg-line" aria-hidden />}
-                <button
-                  role="switch"
-                  aria-checked={favoritesOnly}
-                  aria-label="Show favorites only"
-                  onClick={() => setFavoritesOnly((v) => !v)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-line px-2 py-1 text-xs font-medium text-ink-soft transition-colors hover:bg-sunk focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                  <span
-                    className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
-                      favoritesOnly ? 'bg-accent' : 'bg-line'
+                <div>
+                  <p className="dj-filter-label">Show</p>
+                  <button
+                    role="switch"
+                    aria-checked={favoritesOnly}
+                    aria-label="Show favorites only"
+                    onClick={() => setFavoritesOnly((v) => !v)}
+                    className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent ${
+                      favoritesOnly
+                        ? 'border-accent bg-accent-soft text-accent'
+                        : 'border-line text-ink-soft hover:bg-surface'
                     }`}
                   >
                     <span
-                      className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
-                        favoritesOnly ? 'translate-x-[14px]' : 'translate-x-0.5'
+                      className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+                        favoritesOnly ? 'bg-accent' : 'bg-line'
                       }`}
-                    />
-                  </span>
-                  <PinIcon filled={favoritesOnly} />
-                  <span className={favoritesOnly ? 'text-ink' : undefined}>Favorites</span>
-                </button>
+                    >
+                      <span
+                        className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
+                          favoritesOnly ? 'translate-x-[14px]' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </span>
+                    <FavoriteIcon filled={favoritesOnly} size={12} />
+                    Favorites only
+                  </button>
+                </div>
               </div>
-              <div className="relative">
-                <select
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as Sort)}
-                  aria-label="Sort prompts"
-                  className="dj-input w-auto appearance-none py-1 pr-7 text-xs"
-                >
-                  {SORTS.map((s) => (
-                    <option key={s.key} value={s.key}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-                <svg
-                  aria-hidden
-                  viewBox="0 0 20 20"
-                  className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint"
-                >
-                  <path
-                    d="M5.5 8l4.5 4.5L14.5 8"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+
+              <div className="sm:w-48">
+                <p className="dj-filter-label">Sort by</p>
+                <div className="relative">
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as Sort)}
+                    aria-label="Sort prompts"
+                    className="dj-input w-full appearance-none py-1.5 pr-8 text-xs"
+                  >
+                    {SORTS.map((s) => (
+                      <option key={s.key} value={s.key}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronIcon
+                    size={12}
+                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
                   />
-                </svg>
+                </div>
               </div>
             </div>
 
             {allTags.length > 0 && (
-              <div className="flex flex-col gap-1">
+              <div>
+                <p className="dj-filter-label">Tags</p>
                 <div className="flex flex-wrap items-center gap-1.5" aria-label="Filter by tag">
                   {allTags.map((t) => {
                     const active = activeTags.includes(t)
@@ -458,12 +416,14 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
                   )}
                 </div>
                 {activeTags.length > 0 && (
-                  <p className="dj-meta">Showing prompts with every tag you&apos;ve picked.</p>
+                  <p className="dj-meta mt-1.5">
+                    Showing prompts with every tag you&apos;ve picked.
+                  </p>
                 )}
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 border-t border-line pt-3">
               {selecting ? (
                 <>
                   <span className="dj-meta">{checkedIds.size} selected</span>
@@ -523,7 +483,7 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
       )}
 
       {undoId != null && (
-        <div className="flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
+        <div className="dj-enter-fast flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
           <span className="text-ink-soft">Prompt deleted — you can undo if that was a slip.</span>
           <button onClick={onUndoDelete} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
             Undo
@@ -532,7 +492,7 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
       )}
 
       {undoBatch != null && (
-        <div className="flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
+        <div className="dj-enter-fast flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
           <span className="text-ink-soft">
             {undoBatch.length} {undoBatch.length === 1 ? 'prompt' : 'prompts'} deleted.
           </span>
@@ -542,7 +502,7 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div className="dj-stagger flex flex-col gap-3">
         {loading ? (
           <SkeletonList count={4} />
         ) : loadError && prompts.length === 0 ? (
@@ -569,23 +529,22 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
           </div>
         ) : (
           visible.map((p, i) => (
-            <PromptCard
-              key={p.id}
-              ref={i === selected ? selectedRef : undefined}
-              prompt={p}
-              selected={i === selected}
-              onCopy={onCopy}
-              onDelete={onDelete}
-              onTogglePin={onTogglePin}
-              onAddTag={onAddTag}
-              onRemoveTag={onRemoveTag}
-              onTagClick={onTagClick}
-              onKeepMinor={onKeepMinor}
-              activeTags={activeTags}
-              selectable={selecting}
-              checked={p.id != null && checkedIds.has(p.id)}
-              onToggleCheck={onToggleCheck}
-            />
+            <div key={p.id} style={{ ['--i' as string]: Math.min(i, 7) }}>
+              <PromptCard
+                prompt={p}
+                onCopy={onCopy}
+                onDelete={onDelete}
+                onTogglePin={onTogglePin}
+                onAddTag={onAddTag}
+                onRemoveTag={onRemoveTag}
+                onTagClick={onTagClick}
+                onKeepMinor={onKeepMinor}
+                activeTags={activeTags}
+                selectable={selecting}
+                checked={p.id != null && checkedIds.has(p.id)}
+                onToggleCheck={onToggleCheck}
+              />
+            </div>
           ))
         )}
       </div>

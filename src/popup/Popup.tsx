@@ -6,6 +6,7 @@ import { SkeletonList } from '@/ui/Skeleton'
 import { ErrorRetry } from '@/ui/ErrorRetry'
 import { Logo } from '@/ui/Logo'
 import { PauseControl } from '@/ui/PauseControl'
+import { SearchIcon, CloseIcon } from '@/ui/ActionIcons'
 import { useAsyncList } from '@/ui/useAsyncList'
 import type { Prompt } from '@/lib/types'
 
@@ -17,13 +18,9 @@ export function Popup() {
   const index = useMemo(() => buildIndex(prompts), [prompts])
   const visible: Prompt[] = useMemo(() => {
     if (!deferredQuery.trim()) {
-      // Pinned prompts sort to the top of the recent list, then by recency.
-      // prompts is already createdAt desc, so a stable pinned-first sort keeps
-      // recency order within each group. Treat undefined `pinned` as false.
-      const ordered = [...prompts].sort(
-        (a, b) => Number(b.pinned ?? false) - Number(a.pinned ?? false),
-      )
-      return ordered.slice(0, 5)
+      // Recent by createdAt (listPrompts already desc). Favorites stay in place —
+      // they only filter out when Favorites is on in the full library.
+      return prompts.slice(0, 5)
     }
     const hits = searchPrompts(index, deferredQuery, 10)
     const byId = new Map(prompts.map((p) => [p.id!, p]))
@@ -43,27 +40,40 @@ export function Popup() {
 
   return (
     <div className="flex max-h-[560px] min-h-[400px] flex-col">
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-line bg-bg/95 px-3 py-2.5 backdrop-blur">
-        <Logo size={20} />
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-line bg-bg/90 px-3.5 py-3 backdrop-blur">
+        <Logo size={26} />
         <button onClick={openLibrary} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
           All prompts →
         </button>
       </header>
 
-      <div className="flex flex-col gap-2.5 px-3 pt-3">
+      <div className="flex flex-col gap-2.5 px-3.5 pt-3.5">
         <PauseControl />
-        <input
-          type="search"
-          autoFocus
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search your prompts"
-          placeholder="Find a prompt…"
-          className="dj-input"
-        />
+        <div className="dj-search">
+          <SearchIcon size={14} className="dj-search-icon" />
+          <input
+            type="search"
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search your prompts"
+            placeholder="Find a prompt…"
+            className="dj-search-input"
+          />
+          {query.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="Clear search"
+              className="dj-search-clear"
+            >
+              <CloseIcon size={12} />
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 overflow-auto p-3">
+      <div className="dj-stagger flex flex-1 flex-col gap-2 overflow-auto p-3.5">
         {loading ? (
           <SkeletonList count={3} />
         ) : loadError && prompts.length === 0 ? (
@@ -83,7 +93,11 @@ export function Popup() {
             )}
           </div>
         ) : (
-          visible.map((p) => <PromptCard key={p.id} prompt={p} onCopy={onCopy} compact />)
+          visible.map((p, i) => (
+            <div key={p.id} style={{ ['--i' as string]: Math.min(i, 7) }}>
+              <PromptCard prompt={p} onCopy={onCopy} compact />
+            </div>
+          ))
         )}
       </div>
     </div>

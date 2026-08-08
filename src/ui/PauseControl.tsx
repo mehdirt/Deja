@@ -149,7 +149,7 @@ export function PauseControl() {
           ref={menuRef}
           role="menu"
           onKeyDown={onMenuKeyDown}
-          className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-btn border border-line bg-surface shadow-pop"
+          className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-btn border border-line bg-surface shadow-pop animate-fade-in"
         >
           <button
             role="menuitem"
