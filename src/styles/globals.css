@@ -171,6 +171,65 @@ html.dj-popup #root {
     @apply whitespace-pre-wrap break-words text-[15px] leading-[1.6] text-ink;
   }
 
+  /* Markdown prompt body (Library cards). Prose stays sans; code uses mono. */
+  .dj-md {
+    @apply break-words text-[15px] leading-[1.6] text-ink;
+  }
+  .dj-md > :first-child {
+    margin-top: 0;
+  }
+  .dj-md > :last-child {
+    margin-bottom: 0;
+  }
+  .dj-md p {
+    @apply my-2;
+  }
+  .dj-md h1,
+  .dj-md h2,
+  .dj-md h3 {
+    @apply mb-1.5 mt-3 font-semibold text-ink;
+  }
+  .dj-md h1 {
+    @apply text-lg;
+  }
+  .dj-md h2 {
+    @apply text-base;
+  }
+  .dj-md h3 {
+    @apply text-sm;
+  }
+  .dj-md ul {
+    @apply my-2 list-disc space-y-1 pl-5;
+  }
+  .dj-md ol {
+    @apply my-2 list-decimal space-y-1 pl-5;
+  }
+  .dj-md blockquote {
+    @apply my-2 border-l-2 border-line pl-3 text-ink-soft;
+  }
+  .dj-md hr {
+    @apply my-3 border-0 border-t border-line;
+  }
+  .dj-md a {
+    @apply text-accent underline underline-offset-2;
+  }
+  .dj-md-code {
+    @apply rounded-[4px] bg-sunk px-1 py-0.5 font-mono text-[13px] text-ink;
+  }
+  .dj-md-fence {
+    @apply my-2 overflow-hidden rounded-btn border border-line bg-sunk;
+  }
+  .dj-md-lang {
+    @apply border-b border-line px-2.5 py-1 font-mono text-[11px] text-ink-faint;
+  }
+  .dj-md-pre {
+    @apply m-0 max-h-64 overflow-auto px-2.5 py-2;
+  }
+  .dj-md-pre-code {
+    @apply font-mono text-[12.5px] leading-[1.5] text-ink;
+    white-space: pre;
+  }
+
   /* Lowercase `deja` wordmark — Literata only. Never use font-mono for this. */
   .dj-wordmark {
     @apply font-brand font-semibold tracking-tight text-ink;

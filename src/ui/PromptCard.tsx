@@ -2,8 +2,10 @@ import { useState } from 'react'
 import type { Prompt } from '@/lib/types'
 import { PLATFORM_COLOR, PLATFORM_LABEL } from '@/lib/types'
 import { conversationUrl, relativeTime, truncate } from '@/lib/format'
+import { looksLikeMarkdown } from '@/lib/promptFormat'
 import { isTemplate } from '@/lib/template'
 import { CheckIcon, ClockIcon, CopyIcon, FavoriteIcon, ReuseIcon, TrashIcon } from '@/ui/ActionIcons'
+import { PromptMarkdown } from '@/ui/PromptMarkdown'
 import { TemplateFill } from '@/ui/TemplateFill'
 
 interface Props {
@@ -65,6 +67,10 @@ export function PromptCard({
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1200)
   }
+
+  const body = truncate(prompt.text, compact ? 160 : 600)
+  // Popup stays plain; Library renders markdown when the body looks structured.
+  const asMarkdown = !compact && looksLikeMarkdown(body)
 
   const commitTag = () => {
     const t = draft.trim()
@@ -131,7 +137,7 @@ export function PromptCard({
         </span>
       </div>
 
-      <p className="dj-prompt">{truncate(prompt.text, compact ? 160 : 600)}</p>
+      {asMarkdown ? <PromptMarkdown text={body} /> : <p className="dj-prompt">{body}</p>}
 
       {filling && (
         <TemplateFill

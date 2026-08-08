@@ -43,11 +43,12 @@ Fonts are **bundled, not fetched** — the `.woff2` files live in `src/assets/fo
 
 - **Sans** (`font-sans`, Figtree Variable → system-ui): everything a person reads or clicks. Prompt bodies, headings, buttons, labels, search boxes, timestamps.
 - **Brand** (`font-brand`, Literata → Georgia): the lowercase `deja` wordmark only. Soft reading serif — ink on paper, remembered words, a little déjà vu. Keeps the name warm and personal instead of dressing it as code.
-- **Mono** (`font-mono`, JetBrains Mono Variable → ui-monospace): only for things that are literally code — `[email]` placeholders, hostnames, and pattern rules. **Don't reach for it otherwise.** Monospace reads as "code" to a non-technical person, and most of what Deja stores is ordinary prose.
+- **Mono** (`font-mono`, JetBrains Mono Variable → ui-monospace): only for things that are literally code — `[email]` placeholders, hostnames, pattern rules, and **rendered code fences / inline code in Library cards**. **Don't reach for it otherwise.** Monospace reads as "code" to a non-technical person, and most of what Deja stores is ordinary prose.
 
 Two primitives carry most of the type:
 
-- `.dj-prompt` — the prompt text itself. Sans, 15px, generous leading; this is something a person reads.
+- `.dj-prompt` — the prompt text itself (plain path). Sans, 15px, generous leading; this is something a person reads.
+- `.dj-md` — Library-only markdown view of a prompt when it looks structured (lists, headings, fences…). Prose stays sans; fences use sunk mono blocks with an optional language label — no syntax highlighter.
 - `.dj-wordmark` — the lowercase `deja` brand name. Literata semibold; `de` in ink, `.ja` in accent.
 - `.dj-meta` — timestamps, counts, quiet status lines. Small, faint, and `tabular-nums` so numbers don't jitter as they change.
 
@@ -67,7 +68,7 @@ Keep the extension and the marketing site on one visual system: same tokens, rad
 
 Defined in `globals.css` `@layer components` — compose these instead of re-styling:
 
-`.dj-card` · `.dj-chip` · `.dj-input` · `.dj-btn` / `.dj-btn-primary` / `.dj-btn-ghost` · `.dj-pill` / `.dj-pill-active` · `.dj-tag` / `.dj-tag-active` / `.dj-tag-label` · `.dj-prompt` · `.dj-wordmark` · `.dj-meta`
+`.dj-card` · `.dj-chip` · `.dj-input` · `.dj-btn` / `.dj-btn-primary` / `.dj-btn-ghost` · `.dj-pill` / `.dj-pill-active` · `.dj-tag` / `.dj-tag-active` / `.dj-tag-label` · `.dj-prompt` · `.dj-md` · `.dj-wordmark` · `.dj-meta`
 
 The in-page overlays (the save toast and the resurface tooltip) live in a Shadow DOM on the host site and can't use any of this — they re-declare the palette inline. They also deliberately use the **system UI font**, not Figtree: an overlay sitting on chatgpt.com should read as part of that page, not as a foreign widget.
 
