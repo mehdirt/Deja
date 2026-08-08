@@ -19,7 +19,7 @@ import { readHealth, onHealthChange, type CaptureHealth } from '@/lib/health'
 import { redactPii, PII_LABEL } from '@/lib/pii'
 import { buildMarkdown } from '@/lib/markdown'
 import { feedbackHref } from '@/lib/feedback'
-import { ChevronIcon } from '@/ui/ActionIcons'
+import { BugIcon, ChevronIcon, IdeaIcon } from '@/ui/ActionIcons'
 import {
   PLATFORM_LABEL,
   PII_KINDS,
@@ -903,6 +903,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
             rel="noopener noreferrer"
             className="dj-btn px-3 py-1.5 text-sm"
           >
+            <BugIcon size={14} />
             Something&apos;s broken
           </a>
           <a
@@ -911,6 +912,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
             rel="noopener noreferrer"
             className="dj-btn dj-btn-ghost px-3 py-1.5 text-sm"
           >
+            <IdeaIcon size={14} />
             I have an idea
           </a>
         </div>

@@ -208,3 +208,46 @@ export function CloseIcon({ size = 14, className = '' }: Omit<Props, 'filled'>) 
     </svg>
   )
 }
+
+/** Broken / problem feedback. */
+export function BugIcon({ size = 14, className = '' }: Omit<Props, 'filled'>) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M8 5.5V3.25M5.5 8H3.25M12.75 8H10.5M4.5 4.5l1.25 1.25M11.5 4.5 10.25 5.75M4.5 11.5l1.25-1.25M11.5 11.5l-1.25-1.25" />
+      <rect x="5.25" y="5.5" width="5.5" height="7" rx="2.5" />
+      <path d="M5.25 8.5h5.5" />
+    </svg>
+  )
+}
+
+/** Idea / suggestion feedback. */
+export function IdeaIcon({ size = 14, className = '' }: Omit<Props, 'filled'>) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M8 2.75a3.75 3.75 0 0 0-2.2 6.8c.4.3.7.8.7 1.3v.4h3v-.4c0-.5.3-1 .7-1.3A3.75 3.75 0 0 0 8 2.75Z" />
+      <path d="M6.75 13.25h2.5M7.25 11.25h1.5" />
+    </svg>
+  )
+}
