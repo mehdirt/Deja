@@ -2,6 +2,22 @@
 
 Append-only log of decisions and context from nontrivial work sessions. Read before starting nontrivial work; append an entry after.
 
+## 2026-08-08
+
+Subtle Operate-mode motion across the extension: view enter on nav, capped list stagger, filter/More-options open, card/panel hover lift, button press, copy check pop, pause menu fade. Reduced-motion still collapses animations.
+
+Synced extension chrome with the landing page: 16px cards / 11px controls, indigo page glow, CTA shadow on primary buttons, larger section titles, site-like nav, Welcome steps styled like “how it works” flow cards, popup search matches Library.
+
+Settings + Privacy UI polish: sections in raised panels; suggestion/save-strength as choice cards with hints; site rows with status chips + larger switches; More options matches Library filter disclosure; Privacy gets lock intro + check/never lists + platform rows. Favorites no longer float to the top of Library/popup — only appear when Favorites filter is on.
+
+Library header gets a compact capture-health badge (glowing green “Saving On” / red “Not Saving”) instead of the old per-site strip; click opens Settings. Paused or any broken platform → Not Saving.
+
+Prompt card actions are icon-only: heart Favorite, trash Delete, copy (check after success). Filter & sort Favorites toggle uses the same heart (not pin). `PinIcon` replaced by `ActionIcons.tsx`.
+
+Removed product keyboard shortcuts everywhere: Library ⌘K/`/`/arrows/Enter/Backspace/Esc handler + search `<kbd>` hint, chrome.commands global open binding, PromptCard keyboard-selection highlight. Docs/store/landing copy updated (toolbar icon only). Kept host Enter capture, form Enter-to-commit, PauseControl ARIA menu keys, and resurface Escape-to-dismiss.
+
+Capture health lives only in Settings (“Where Deja works”) now — removed Library’s “Saving on” strip and deleted `CaptureStatus.tsx` so My prompts stays search + list. Settings status copy aligned (“Saving” / “Not yet” / “Needs attention”), broken sites get a danger callout + aria-labels; per-site toggles unchanged. Filter & sort disclosure kept (owner preferred the tucked Library chrome).
+
 ## 2026-08-07
 
 Whole-codebase `ce-code-review` (9 reviewers: correctness/testing/maintainability/project-standards/security/reliability/adversarial/agent-native/learnings, run against the diff from the repo's root commit to HEAD since there was no PR/branch to scope against). Security and project-standards came back clean. Fixed everything else that was self-contained and mechanical: `touchUsage`'s get-then-update race (now Dexie `modify()`), `writePrefs`' read-modify-write race on `chrome.storage.local` (now serialized through a module-scope promise chain — same-context only; cross-context is a known, smaller remaining gap), the `PROMPT_CAPTURED` handler's duplicate/near-duplicate check-then-write TOCTOU (now one `db.transaction('rw', db.prompts, ...)`), `readText`/`editableFromEvent` duplicated verbatim between `capture.ts` and `resurface.ts` (extracted to `src/content/shared/editable.ts`), capture-health only reflecting DOM-selector drift and not message-pipeline failures (now also writes unhealthy on `!resp.ok` and on a rejected `sendMessage`), and several fire-and-forget `chrome.*`/clipboard promises that a sync `try/catch` couldn't actually catch. Added the test files the testing reviewer found missing: `captureGate.test.ts`, `prefs.test.ts`, `health.test.ts`, `capture.test.ts` (debounce/dedup), and exported+tested `PauseControl`'s `remainingLabel`. Deliberately left as reported-not-applied: `Settings.tsx`'s 877-line/20-`useState` shape and its and `Library.tsx`'s missing error handling on destructive Dexie actions — both need UI-copy judgment against the `DESIGN.md` voice table, not a mechanical fix.
