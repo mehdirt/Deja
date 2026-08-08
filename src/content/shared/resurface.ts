@@ -149,37 +149,37 @@ function createTooltip(onDismiss: () => void): Tooltip {
     // Colors are hardcoded to mirror the --dj-* tokens in src/styles/globals.css
     // (shadow DOM + :host{all:initial} blocks variable inheritance). If the
     // palette there changes, update these to match. Meta uses the AA-safe
-    // faint tokens (#736f67 / dark #8f8a80), not the old under-contrast greys.
+    // faint tokens (#655f56 / dark #8f8a80), not the old under-contrast greys.
     style.textContent = `
       :host{all:initial}
       .dj-rs{position:fixed;left:0;top:0;max-width:min(440px,calc(100vw - 16px));pointer-events:auto;
         display:flex;align-items:flex-start;gap:10px;text-align:left;
-        background:#faf8f3;color:#1c1b19;border:1px solid #e7e2d8;
+        background:#faf8f3;color:#1c1b19;border:1px solid #d0caba;
         border-radius:10px;padding:8px 10px;box-shadow:0 8px 28px rgba(0,0,0,.18);
         font:13px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
         animation:dj-rs-in .14s ease-out;transition:opacity .1s ease}
-      .dj-rs:hover{background:#f1ede4}
+      .dj-rs:hover{background:#ebe6db}
       .dj-rs-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;
         background:none;border:none;padding:0;margin:0;cursor:pointer;text-align:left;
         color:inherit;font:inherit;border-radius:6px}
       .dj-rs-main:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
       .dj-rs-lead{display:flex;align-items:center;gap:6px;color:#5b54f0;font-weight:600;white-space:nowrap}
       .dj-rs-dot{width:6px;height:6px;border-radius:50%;background:#5b54f0;flex:none}
-      .dj-rs-preview{color:#6b6862;font-size:12px;white-space:nowrap;overflow:hidden;
+      .dj-rs-preview{color:#534f49;font-size:12px;white-space:nowrap;overflow:hidden;
         text-overflow:ellipsis;max-width:min(400px,calc(100vw - 80px))}
-      .dj-rs-meta{color:#736f67;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      .dj-rs-meta{color:#655f56;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
         max-width:min(400px,calc(100vw - 80px))}
       .dj-rs-meta:empty{display:none}
       .dj-rs-ctl{display:flex;align-items:center;gap:4px;flex:none;align-self:flex-start}
-      .dj-rs-count{color:#736f67;font-weight:600;font-size:10px;line-height:1;white-space:nowrap;
+      .dj-rs-count{color:#655f56;font-weight:600;font-size:10px;line-height:1;white-space:nowrap;
         font-variant-numeric:tabular-nums}
       .dj-rs-all{flex:none;background:none;border:none;cursor:pointer;white-space:nowrap;
         color:#5b54f0;font-family:inherit;font-weight:600;font-size:11px;line-height:1;padding:2px 5px;border-radius:6px}
       .dj-rs-all:hover{background:#ecebfe}
       .dj-rs-next,.dj-rs-x{flex:none;background:none;border:none;cursor:pointer;
-        color:#736f67;font-family:inherit;font-weight:600;font-size:14px;line-height:1;
+        color:#655f56;font-family:inherit;font-weight:600;font-size:14px;line-height:1;
         padding:2px 4px;border-radius:6px}
-      .dj-rs-next:hover,.dj-rs-x:hover{background:#e7e2d8;color:#1c1b19}
+      .dj-rs-next:hover,.dj-rs-x:hover{background:#d0caba;color:#1c1b19}
       .dj-rs-all:focus-visible,.dj-rs-next:focus-visible,.dj-rs-x:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
       @keyframes dj-rs-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
       @media (prefers-reduced-motion: reduce){.dj-rs{animation:none}}

@@ -22,13 +22,13 @@ Reference via Tailwind classes (`bg-bg`, `text-ink`, `text-ink-soft`, `bg-surfac
 | --- | --- | --- | --- |
 | `--dj-bg` | `#faf8f3` | `#16151a` | page background (warm paper) |
 | `--dj-surface` | `#ffffff` | `#201f27` | raised cards |
-| `--dj-sunk` | `#f1ede4` | `#1b1a21` | wells, hover, skeletons |
+| `--dj-sunk` | `#ebe6db` | `#1b1a21` | wells, hover, skeletons |
 | `--dj-text` | `#1c1b19` | `#f3f1ea` | primary ink |
-| `--dj-text-soft` | `#6b6862` | `#a8a49b` | secondary |
-| `--dj-text-faint` | `#9a968d` | `#6e6a62` | meta / tertiary |
+| `--dj-text-soft` | `#534f49` | `#a8a49b` | secondary |
+| `--dj-text-faint` | `#655f56` | `#8f8a80` | meta / tertiary |
 | `--dj-accent` | `#5b54f0` | `#8983f5` | primary action, focus, brand |
 | `--dj-accent-soft` | `#ecebfe` | `#272534` | accent fills (chips) |
-| `--dj-line` | `#e7e2d8` | `#2e2c36` | hairline borders (always distinct from surface) |
+| `--dj-line` | `#d0caba` | `#2e2c36` | hairline borders (always distinct from surface) |
 | `--dj-danger` | `#c0392b` | `#e06c5d` | destructive only |
 
 Dark mode is driven by `prefers-color-scheme` — one set of variables, no class toggling.

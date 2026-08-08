@@ -4,6 +4,8 @@ Append-only log of decisions and context from nontrivial work sessions. Read bef
 
 ## 2026-08-08
 
+Kept warm cream paper; sharpened structure after A/B (Current / Cool / Structure / Hybrid). Winner **Structure**: deeper sunk `#ebe6db`, stronger line `#d0caba`, darker soft/faint ink for secondary + meta on cream. Trial switcher removed. Landing `site/` tokens synced.
+
 Subtle Operate-mode motion across the extension: view enter on nav, capped list stagger, filter/More-options open, card/panel hover lift, button press, copy check pop, pause menu fade. Reduced-motion still collapses animations.
 
 Synced extension chrome with the landing page: 16px cards / 11px controls, indigo page glow, CTA shadow on primary buttons, larger section titles, site-like nav, Welcome steps styled like “how it works” flow cards, popup search matches Library.

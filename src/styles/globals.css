@@ -70,14 +70,14 @@
 :root {
   --dj-bg: #faf8f3; /* warm paper */
   --dj-surface: #ffffff; /* raised cards */
-  --dj-sunk: #f1ede4; /* inset wells, hover */
+  --dj-sunk: #ebe6db; /* inset wells, hover — deeper than paper so edges read */
   --dj-text: #1c1b19; /* ink */
-  --dj-text-soft: #6b6862; /* secondary */
-  --dj-text-faint: #736f67; /* tertiary / meta — AA on --dj-bg (site marketing allows lighter) */
+  --dj-text-soft: #534f49; /* secondary — darkened for cream contrast */
+  --dj-text-faint: #655f56; /* tertiary / meta — AA on --dj-bg */
   --dj-accent: #5b54f0; /* indigo */
   --dj-accent-soft: #ecebfe; /* accent fills */
   --dj-accent-hover: #4a43e0;
-  --dj-line: #e7e2d8; /* hairline borders */
+  --dj-line: #d0caba; /* hairline borders — stronger on cream */
   --dj-danger: #c0392b;
   --dj-ok: #2f9e63; /* capture healthy */
   --dj-warn: #935f16; /* paused — clears WCAG AA (4.5:1) on --dj-bg */
