@@ -35,42 +35,52 @@ export function App() {
   const [priorView, setPriorView] = useState<Exclude<View, 'welcome'>>('library')
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-5 p-6">
-      <header className="flex items-center justify-between border-b border-line pb-3">
-        <Logo size={26} />
-        <nav className="flex items-center gap-1 text-xs font-medium" aria-label="Sections">
-          {NAV.map((n, i) => (
-            <span key={n.key} className="inline-flex items-center">
-              {i > 0 && (
-                <span className="px-1 text-ink-faint" aria-hidden>
-                  ·
-                </span>
-              )}
-              <button
-                onClick={() => setView(n.key)}
-                aria-current={view === n.key ? 'page' : undefined}
-                className={`rounded-btn px-2 py-1 transition-colors hover:bg-sunk ${
-                  view === n.key ? 'text-accent' : 'text-ink-soft'
-                }`}
-              >
-                {n.label}
-              </button>
-            </span>
+    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 pb-10 pt-5">
+      <header className="flex items-center justify-between gap-4 pb-1">
+        <Logo size={34} />
+        <nav className="flex items-center gap-1 sm:gap-0" aria-label="Sections">
+          {NAV.map((n) => (
+            <button
+              key={n.key}
+              onClick={() => setView(n.key)}
+              aria-current={view === n.key ? 'page' : undefined}
+              className={`rounded-btn px-2.5 py-1.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:ml-3 sm:px-0 sm:py-0 ${
+                view === n.key
+                  ? 'text-accent sm:underline sm:decoration-accent/40 sm:underline-offset-[6px]'
+                  : 'text-ink-soft hover:bg-sunk hover:text-ink sm:hover:bg-transparent sm:hover:underline sm:hover:decoration-line sm:hover:underline-offset-[6px]'
+              }`}
+            >
+              {n.label}
+            </button>
           ))}
         </nav>
       </header>
 
-      {view === 'welcome' && <Welcome onDone={() => setView(priorView)} />}
-      {view === 'library' && <Library onOpenSettings={() => setView('settings')} />}
-      {view === 'settings' && (
-        <Settings
-          onShowWelcome={() => {
-            setPriorView('settings')
-            setView('welcome')
-          }}
-        />
+      {view === 'welcome' && (
+        <div key="welcome" className="dj-enter">
+          <Welcome onDone={() => setView(priorView)} />
+        </div>
       )}
-      {view === 'privacy' && <Privacy />}
+      {view === 'library' && (
+        <div key="library" className="dj-enter">
+          <Library onOpenSettings={() => setView('settings')} />
+        </div>
+      )}
+      {view === 'settings' && (
+        <div key="settings" className="dj-enter">
+          <Settings
+            onShowWelcome={() => {
+              setPriorView('settings')
+              setView('welcome')
+            }}
+          />
+        </div>
+      )}
+      {view === 'privacy' && (
+        <div key="privacy" className="dj-enter">
+          <Privacy />
+        </div>
+      )}
     </div>
   )
 }

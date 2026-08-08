@@ -24,7 +24,7 @@ const STEPS: Array<{ title: string; body: string }> = [
 
 export function Welcome({ onDone }: { onDone: () => void }) {
   return (
-    <div className="flex flex-col gap-10 py-4">
+    <div className="dj-enter flex flex-col gap-10 py-4">
       <header className="flex flex-col items-center gap-4 text-center">
         <Logo size={48} />
         <div className="flex flex-col gap-3">
@@ -46,19 +46,37 @@ export function Welcome({ onDone }: { onDone: () => void }) {
       </header>
 
       <div className="flex flex-col gap-3">
-        <p className="text-sm font-semibold text-ink">Here&apos;s how it feels in practice</p>
-        <ol className="flex flex-col gap-3">
+        <p className="text-sm font-semibold tracking-tight text-ink">
+          Here&apos;s how it feels in practice
+        </p>
+        <ol className="dj-stagger-auto flex flex-col gap-3">
           {STEPS.map((s, i) => (
-            <li key={s.title} className="dj-card flex items-start gap-4 p-4">
+            <li
+              key={s.title}
+              className="dj-card flex items-start gap-4 p-5"
+              style={
+                i === 0
+                  ? {
+                      background:
+                        'linear-gradient(180deg, color-mix(in srgb, var(--dj-accent-soft) 70%, var(--dj-surface)), var(--dj-surface) 72%)',
+                      borderColor: 'color-mix(in srgb, var(--dj-accent) 22%, var(--dj-line))',
+                    }
+                  : undefined
+              }
+            >
               <span
-                className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full bg-accent-soft text-sm font-semibold text-accent"
+                className={`mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-full text-sm font-semibold tabular-nums ${
+                  i === 0
+                    ? 'bg-accent text-white'
+                    : 'border border-line bg-sunk text-ink-soft'
+                }`}
                 aria-hidden
               >
                 {i + 1}
               </span>
-              <div className="flex flex-col gap-1">
-                <h2 className="text-[15px] font-semibold text-ink">{s.title}</h2>
-                <p className="text-sm leading-relaxed text-ink-soft">{s.body}</p>
+              <div className="flex flex-col gap-1.5">
+                <h2 className="text-[17px] font-semibold tracking-tight text-ink">{s.title}</h2>
+                <p className="text-[14.5px] leading-relaxed text-ink-soft">{s.body}</p>
               </div>
             </li>
           ))}

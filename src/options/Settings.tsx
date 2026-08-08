@@ -19,6 +19,7 @@ import { readHealth, onHealthChange, type CaptureHealth } from '@/lib/health'
 import { redactPii, PII_LABEL } from '@/lib/pii'
 import { buildMarkdown } from '@/lib/markdown'
 import { feedbackHref } from '@/lib/feedback'
+import { ChevronIcon } from '@/ui/ActionIcons'
 import {
   PLATFORM_LABEL,
   PII_KINDS,
@@ -70,14 +71,14 @@ const STRENGTHS: Array<{ key: FilterStrength; label: string; hint: string }> = [
 
 function siteDot(health: CaptureHealth, p: Platform): string {
   const h = health[p]
-  if (!h) return 'bg-ink-faint/40'
+  if (!h) return 'bg-ink-faint'
   return h.ok ? 'bg-ok' : 'bg-danger'
 }
 
 function siteStatus(health: CaptureHealth, p: Platform): string {
   const h = health[p]
-  if (!h) return 'Not visited yet'
-  return h.ok ? 'Working' : 'Needs attention'
+  if (!h) return 'Not yet'
+  return h.ok ? 'Saving' : 'Needs attention'
 }
 
 function siteTitle(health: CaptureHealth, p: Platform): string {
@@ -86,7 +87,15 @@ function siteTitle(health: CaptureHealth, p: Platform): string {
   if (!h) return `Deja hasn't seen ${label} yet — open it once and it'll gently start saving`
   return h.ok
     ? `Deja is quietly saving your prompts on ${label}`
-    : `Deja can't find the message box on ${label} — the site may have changed`
+    : `Deja can't find the message box on ${label} — the site may have changed, so prompts there might not be saved.`
+}
+
+function siteStatusClass(health: CaptureHealth, p: Platform, enabled: boolean): string {
+  if (!enabled) return 'dj-meta-chip'
+  const h = health[p]
+  if (h && !h.ok) return 'dj-meta-chip text-danger'
+  if (!h) return 'dj-meta-chip text-ink-faint'
+  return 'dj-meta-chip'
 }
 
 // A small reusable on/off switch matching the library's favorites toggle.
@@ -105,16 +114,16 @@ function Switch({
       aria-checked={checked}
       aria-label={label}
       onClick={onChange}
-      className="inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full"
+      className="inline-flex items-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
       <span
-        className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
           checked ? 'bg-accent' : 'bg-line'
         }`}
       >
         <span
-          className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
-            checked ? 'translate-x-[14px]' : 'translate-x-0.5'
+          className={`inline-block h-3.5 w-3.5 rounded-full bg-surface shadow-sm transition-transform ${
+            checked ? 'translate-x-[18px]' : 'translate-x-0.5'
           }`}
         />
       </span>
@@ -126,16 +135,19 @@ function Section({
   title,
   description,
   children,
+  bare,
 }: {
   title: string
   description?: React.ReactNode
   children: React.ReactNode
+  /** Skip the raised panel — used inside the More options drawer. */
+  bare?: boolean
 }) {
   return (
-    <section className="flex flex-col gap-3">
+    <section className={bare ? 'flex flex-col gap-3' : 'dj-panel flex flex-col gap-4'}>
       <div className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-ink">{title}</h2>
-        {description && <p className="text-sm leading-relaxed text-ink-soft">{description}</p>}
+        <h2 className="dj-section-title">{title}</h2>
+        {description && <p className="dj-page-lead">{description}</p>}
       </div>
       {children}
     </section>
@@ -399,33 +411,38 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
     : 'capture not working'
 
   return (
-    <div className="flex flex-col gap-9">
-      <button
-        onClick={onShowWelcome}
-        className="dj-meta w-fit underline-offset-2 hover:text-accent hover:underline"
-      >
-        Show me how this works again
-      </button>
+    <div className="dj-stagger-auto flex flex-col gap-5">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="dj-page-title">Settings</h1>
+          <p className="dj-page-lead mt-1">Everyday choices first — extras stay tucked away.</p>
+        </div>
+        <button
+          onClick={onShowWelcome}
+          className="dj-btn dj-btn-ghost px-2.5 py-1.5 text-xs"
+        >
+          Show me how this works again
+        </button>
+      </header>
 
       {/* Suggestions — the everyday preference, opens the page */}
       <Section
         title="Suggestions while you type"
         description="When you start typing something you've asked before, Deja quietly offers your earlier version. Choose what happens when you click it."
       >
-        <div className="flex flex-wrap gap-2">
+        <div className="grid gap-2 sm:grid-cols-2">
           {RESURFACE_OPTIONS.map((o) => (
             <button
               key={o.key}
               onClick={() => setResurface(o.key)}
               aria-pressed={resurfaceClick === o.key}
-              title={o.hint}
-              className={`dj-pill ${resurfaceClick === o.key ? 'dj-pill-active' : ''}`}
+              className={`dj-choice ${resurfaceClick === o.key ? 'dj-choice-active' : ''}`}
             >
-              {o.label}
+              <span className="dj-choice-label text-sm font-medium text-ink">{o.label}</span>
+              <span className="text-[12px] leading-snug text-ink-soft">{o.hint}</span>
             </button>
           ))}
         </div>
-        <p className="dj-meta">{RESURFACE_OPTIONS.find((o) => o.key === resurfaceClick)?.hint}</p>
       </Section>
 
       {/* What gets saved — selective-capture strength */}
@@ -433,44 +450,63 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
         title="What Deja saves"
         description="Not every message is worth keeping. Deja can gently skip short throwaways so your library stays worth browsing — change this anytime."
       >
-        <div className="flex flex-wrap gap-2">
+        <div className="grid gap-2">
           {STRENGTHS.map((o) => (
             <button
               key={o.key}
               onClick={() => setFilter(o.key)}
               aria-pressed={strength === o.key}
-              title={o.hint}
-              className={`dj-pill ${strength === o.key ? 'dj-pill-active' : ''}`}
+              className={`dj-choice ${strength === o.key ? 'dj-choice-active' : ''}`}
             >
-              {o.label}
+              <span className="dj-choice-label text-sm font-medium text-ink">{o.label}</span>
+              <span className="text-[12px] leading-snug text-ink-soft">{o.hint}</span>
             </button>
           ))}
         </div>
-        <p className="dj-meta">{STRENGTHS.find((o) => o.key === strength)?.hint}</p>
       </Section>
 
-      {/* Where it works — per-site switches folded into the health view */}
+      {/* Where it works — per-site switches + capture-health (sole home for this) */}
       <Section
         title="Where Deja works"
-        description="Turn Deja off for any site you'd rather it left alone, no hard feelings. The dot shows whether it can currently find that site's message box."
+        description="Turn Deja off for any site you'd rather it left alone, no hard feelings. The colored dot shows whether it can find that site's message box right now."
       >
-        <div className="flex flex-col divide-y divide-line rounded-btn border border-line">
-          {PLATFORMS.map((p) => (
-            <div key={p} className="flex items-center justify-between gap-3 px-3 py-2.5">
-              <span className="inline-flex items-center gap-2" title={siteTitle(health, p)}>
-                <span className={`h-1.5 w-1.5 rounded-full ${siteDot(health, p)}`} aria-hidden />
-                <span className={`text-sm ${sites[p] ? 'text-ink' : 'text-ink-faint'}`}>
-                  {PLATFORM_LABEL[p]}
+        {brokenSites.length > 0 && (
+          <p className="rounded-btn border border-danger bg-sunk px-3 py-2 text-sm text-danger">
+            Deja may not be saving on {brokenSites.join(', ')} right now — the site may have
+            changed. Use the link below if you want to tell us.
+          </p>
+        )}
+        <div className="dj-panel-tight flex flex-col divide-y divide-line overflow-hidden">
+          {PLATFORMS.map((p) => {
+            const title = siteTitle(health, p)
+            return (
+              <div key={p} className="dj-row">
+                <span
+                  className="inline-flex min-w-0 flex-wrap items-center gap-2"
+                  title={title}
+                  aria-label={title}
+                >
+                  <span
+                    className={`h-2 w-2 shrink-0 rounded-full ${
+                      sites[p] && health[p]?.ok === false ? 'dj-glow-danger' : siteDot(health, p)
+                    }`}
+                    aria-hidden
+                  />
+                  <span className={`text-sm font-medium ${sites[p] ? 'text-ink' : 'text-ink-faint'}`}>
+                    {PLATFORM_LABEL[p]}
+                  </span>
+                  <span className={siteStatusClass(health, p, sites[p])}>
+                    {sites[p] ? siteStatus(health, p) : 'Turned off'}
+                  </span>
                 </span>
-                <span className="dj-meta">{sites[p] ? siteStatus(health, p) : 'Turned off'}</span>
-              </span>
-              <Switch
-                checked={sites[p]}
-                onChange={() => toggleSite(p)}
-                label={`Save prompts on ${PLATFORM_LABEL[p]}`}
-              />
-            </div>
-          ))}
+                <Switch
+                  checked={sites[p]}
+                  onChange={() => toggleSite(p)}
+                  label={`Save prompts on ${PLATFORM_LABEL[p]}`}
+                />
+              </div>
+            )
+          })}
         </div>
         <p className="dj-meta">
           To take a break everywhere at once, use the pause button in the toolbar popup.
@@ -497,13 +533,18 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
           </>
         }
       >
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={redactPiiOn}
-            onChange={() => setRedact(!redactPiiOn)}
-            label="Hide personal info before saving"
-          />
-          <span className="text-sm text-ink-soft">{redactPiiOn ? 'On' : 'Off'}</span>
+        <div className="dj-panel-tight">
+          <div className="dj-row">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-ink">Hide before saving</p>
+              <p className="dj-meta mt-0.5">{redactPiiOn ? 'On — details become placeholders' : 'Off'}</p>
+            </div>
+            <Switch
+              checked={redactPiiOn}
+              onChange={() => setRedact(!redactPiiOn)}
+              label="Hide personal info before saving"
+            />
+          </div>
         </div>
       </Section>
 
@@ -533,12 +574,10 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
           prompts back.
         </p>
 
-        <div className="mt-2 flex items-center gap-3">
+        <div className="mt-1 flex flex-wrap items-center gap-3 border-t border-line pt-4">
           <button
             onClick={onClearAll}
             onBlur={() => setConfirmClear(false)}
-            // aria-live so screen-reader / keyboard users hear the armed state
-            // when the label swaps to its destructive confirmation.
             aria-live="polite"
             className={`dj-btn px-3 py-1.5 text-sm ${
               confirmClear ? 'border-danger text-danger' : 'hover:text-danger'
@@ -559,22 +598,24 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
       </Section>
 
       {/* Everything precise and technical, in one drawer */}
-      <details className="group rounded-card border border-line bg-surface">
-        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-ink marker:hidden">
-          <span className="inline-flex items-center gap-2">
-            <span className="text-ink-faint transition-transform group-open:rotate-90" aria-hidden>
-              ›
+      <details className="dj-filter group">
+        <summary className="dj-filter-summary">
+          <span className="min-w-0">
+            <span className="block text-sm font-medium text-ink">More options</span>
+            <span className="dj-meta mt-0.5 block">
+              Exactly which details to hide, restoring a backup, and erasing prompts for good.
             </span>
-            More options
           </span>
-          <span className="ml-6 block text-xs font-normal text-ink-faint">
-            Exactly which details to hide, restoring a backup, and erasing prompts for good.
-          </span>
+          <ChevronIcon
+            size={14}
+            className="shrink-0 text-ink-faint transition-transform group-open:rotate-180"
+          />
         </summary>
 
-        <div className="flex flex-col gap-9 border-t border-line px-4 py-6">
+        <div className="dj-filter-body gap-5">
           {/* Personal-info detail */}
           <Section
+            bare
             title="Which details to hide"
             description="Only applies while “Hide personal info” is on."
           >
@@ -642,6 +683,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
 
           {/* Blocklist */}
           <Section
+            bare
             title="Never save from…"
             description="Skip a whole site, or add a rule so anything matching it is never saved — handy if you paste secrets into a chat. None of this leaves your machine."
           >
@@ -658,7 +700,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
                   placeholder="claude.ai"
                   className="dj-input text-sm"
                 />
-                <button onClick={addDomain} className="dj-btn px-3 py-1 text-xs">
+                <button onClick={addDomain} className="dj-btn shrink-0 px-3 py-1 text-xs">
                   Never save
                 </button>
               </div>
@@ -699,7 +741,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
                   placeholder="sk-[a-zA-Z0-9]{20,}"
                   className="dj-input font-mono text-sm"
                 />
-                <button onClick={addPattern} className="dj-btn px-3 py-1 text-xs">
+                <button onClick={addPattern} className="dj-btn shrink-0 px-3 py-1 text-xs">
                   Add
                 </button>
               </div>
@@ -789,6 +831,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
 
           {/* Restore a backup */}
           <Section
+            bare
             title="Restore from a backup"
             description="Bring back a backup you downloaded earlier, on this computer or another one. Prompts you already have are skipped."
           >
@@ -813,6 +856,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
 
           {/* Purge deleted */}
           <Section
+            bare
             title="Erase deleted prompts for good"
             description="Deleting a prompt hides it but keeps the text around so you can undo. If something sensitive was saved, delete it in your library, then erase it here."
           >
