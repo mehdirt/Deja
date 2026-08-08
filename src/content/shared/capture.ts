@@ -71,10 +71,20 @@ export function sendCapture(text: string, platform: Platform): void {
         }
         const savedId = resp.id
         if (savedId == null) return
-        const note =
-          resp.redacted > 0
-            ? `${resp.redacted} personal ${resp.redacted === 1 ? 'detail' : 'details'} hidden`
-            : undefined
+        const bits: string[] = []
+        if (resp.redacted > 0) {
+          bits.push(
+            `${resp.redacted} personal ${resp.redacted === 1 ? 'detail' : 'details'} hidden`,
+          )
+        }
+        if (resp.trimmed && resp.trimmed > 0) {
+          bits.push(
+            resp.trimmed === 1
+              ? 'removed 1 rarely used prompt to stay under your limit'
+              : `removed ${resp.trimmed} rarely used prompts to stay under your limit`,
+          )
+        }
+        const note = bits.length ? bits.join(' · ') : undefined
         showSavedToast(() => {
           if (!chrome.runtime?.id) return
           try {

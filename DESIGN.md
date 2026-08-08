@@ -92,12 +92,12 @@ Warm, cozy, and plain — like a kind friend showing you around, not a product p
 | capture | save |
 | blocklist / blocked patterns | never save from… |
 | export JSON / import | download a backup / restore from a backup |
-| purge deleted | erase deleted prompts for good |
 | PII redaction | hide personal info |
 | filter strength | what Deja saves |
 | minor prompt | short one-off |
 | capture health | whether Deja is working on a site |
-| soft-delete | delete (it's undoable — just say so) |
+| soft-delete | delete (short Undo, then gone for real) |
+| library cap / LRU / eviction | keep at most… |
 
 Technical words are allowed where they're unavoidable and correct — a regular expression really is a regular expression — but they belong under **More options**, with a plain-language note next to them.
 

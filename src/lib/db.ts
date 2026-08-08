@@ -255,15 +255,43 @@ export async function importPrompts(rows: unknown): Promise<ImportResult> {
   return { imported: toAdd.length, skipped }
 }
 
-// Purge deleted -------------------------------------------------------
-// Permanently remove every soft-deleted row. Surgical counterpart to
-// clearAllData: a user can soft-delete a specific prompt in the library and
-// then erase it for good here — without wiping everything. This matters when
-// the thing to erase is a secret that must not linger in IndexedDB, since the
-// normal delete path is a tombstone (deletedAt) that keeps the text on disk.
-// Returns how many rows were purged. Pure hard-delete; never soft.
-export async function purgeDeleted(): Promise<number> {
-  return db.prompts.filter((p) => p.deletedAt != null).delete()
+// Delete finalize -----------------------------------------------------
+// Soft-delete is only for a short Undo window in the library. After that the
+// row must leave the disk — forever-tombstones with no trash UI are a privacy
+// footgun. Library clears on its own timer; this sweep catches the case where
+// the options page closed mid-window.
+export const DELETE_UNDO_MS = 6_000
+/** Safety margin past the Undo toast — used by background/options sweeps. */
+export const DELETE_GRACE_MS = 60_000
+
+export async function bulkHardDelete(ids: number[]): Promise<void> {
+  if (!ids.length) return
+  await db.prompts.where('id').anyOf(ids).delete()
+}
+
+/** Erase a row only if it is still soft-deleted (Undo was not used). */
+export async function finalizeSoftDelete(id: number): Promise<void> {
+  const p = await db.prompts.get(id)
+  if (p && p.deletedAt != null) await db.prompts.delete(id)
+}
+
+/** Erase many rows only where each is still soft-deleted. */
+export async function finalizeSoftDeletes(ids: number[]): Promise<void> {
+  if (!ids.length) return
+  await db.transaction('rw', db.prompts, async () => {
+    for (const id of ids) {
+      const p = await db.prompts.get(id)
+      if (p && p.deletedAt != null) await db.prompts.delete(id)
+    }
+  })
+}
+
+/** Hard-delete soft-deleted rows older than `graceMs`. Returns how many. */
+export async function purgeExpiredDeleted(graceMs = DELETE_GRACE_MS): Promise<number> {
+  const cutoff = Date.now() - graceMs
+  return db.prompts
+    .filter((p) => typeof p.deletedAt === 'number' && (p.deletedAt as number) <= cutoff)
+    .delete()
 }
 
 // Clear all ------------------------------------------------------------

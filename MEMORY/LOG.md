@@ -4,6 +4,8 @@ Append-only log of decisions and context from nontrivial work sessions. Read bef
 
 ## 2026-08-08
 
+Soft library size cap (`libraryCap`, default **5000**; choices Off / 2k / 5k / 10k). “Keep at most…” hard-deletes least-used (oldest on ties); favorites never touched. Manual delete: soft for ~6s Undo, then hard-delete; background/options sweep clears leftover tombstones after 60s. Removed “Erase deleted prompts for good” — users had no trash UI and wouldn’t find a second erase step.
+
 Kept warm cream paper; sharpened structure after A/B (Current / Cool / Structure / Hybrid). Winner **Structure**: deeper sunk `#ebe6db`, stronger line `#d0caba`, darker soft/faint ink for secondary + meta on cream. Trial switcher removed. Landing `site/` tokens synced.
 
 Subtle Operate-mode motion across the extension: view enter on nav, capped list stagger, filter/More-options open, card/panel hover lift, button press, copy check pop, pause menu fade. Reduced-motion still collapses animations.

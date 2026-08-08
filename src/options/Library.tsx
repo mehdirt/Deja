@@ -9,6 +9,10 @@ import {
   removeTag,
   bulkSoftDelete,
   bulkRestore,
+  finalizeSoftDelete,
+  finalizeSoftDeletes,
+  purgeExpiredDeleted,
+  DELETE_UNDO_MS,
   setMinor,
 } from '@/lib/db'
 import { readPrefs, onPrefsChange } from '@/lib/prefs'
@@ -160,18 +164,27 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const onDelete = useCallback(
     async (p: Prompt) => {
       if (!p.id) return
-      await softDelete(p.id)
-      setUndoBatch(null)
-      setUndoId(p.id)
+      const id = p.id
+      // A new delete ends the previous Undo window — finalize those rows now.
       window.clearTimeout(undoTimer.current)
-      undoTimer.current = window.setTimeout(() => setUndoId(null), 6000)
+      if (undoId != null) void finalizeSoftDelete(undoId)
+      if (undoBatch) void finalizeSoftDeletes(undoBatch)
+      await softDelete(id)
+      setUndoBatch(null)
+      setUndoId(id)
+      // After Undo expires, erase for real — no forever tombstone.
+      undoTimer.current = window.setTimeout(() => {
+        void finalizeSoftDelete(id)
+        setUndoId((cur) => (cur === id ? null : cur))
+      }, DELETE_UNDO_MS)
       reload()
     },
-    [reload],
+    [reload, undoId, undoBatch],
   )
 
   const onUndoDelete = useCallback(async () => {
     if (undoId == null) return
+    window.clearTimeout(undoTimer.current)
     await restore(undoId)
     setUndoId(null)
     reload()
@@ -235,23 +248,36 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const onBulkDelete = useCallback(async () => {
     const ids = [...checkedIds]
     if (!ids.length) return
+    window.clearTimeout(undoTimer.current)
+    if (undoId != null) void finalizeSoftDelete(undoId)
+    if (undoBatch) void finalizeSoftDeletes(undoBatch)
     await bulkSoftDelete(ids)
     setUndoId(null)
     setUndoBatch(ids)
-    window.clearTimeout(undoTimer.current)
-    undoTimer.current = window.setTimeout(() => setUndoBatch(null), 6000)
+    undoTimer.current = window.setTimeout(() => {
+      void finalizeSoftDeletes(ids)
+      setUndoBatch((cur) =>
+        cur && cur.length === ids.length && cur.every((id, i) => id === ids[i]) ? null : cur,
+      )
+    }, DELETE_UNDO_MS)
     exitSelecting()
     reload()
-  }, [checkedIds, reload, exitSelecting])
+  }, [checkedIds, reload, exitSelecting, undoId, undoBatch])
 
   const onUndoBatch = useCallback(async () => {
     if (!undoBatch) return
+    window.clearTimeout(undoTimer.current)
     await bulkRestore(undoBatch)
     setUndoBatch(null)
     reload()
   }, [undoBatch, reload])
 
   useEffect(() => () => window.clearTimeout(undoTimer.current), [])
+
+  // Catch tombstones left behind if the page closed mid-Undo window.
+  useEffect(() => {
+    void purgeExpiredDeleted()
+  }, [])
 
   return (
     <div className="flex flex-col gap-5">

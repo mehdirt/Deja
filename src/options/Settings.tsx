@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   clearAllData,
-  purgeDeleted,
   listPrompts,
   bulkUpdateText,
   exportAll,
   importPrompts,
+  purgeExpiredDeleted,
 } from '@/lib/db'
 import {
   readBlocklist,
@@ -15,6 +15,11 @@ import {
   type Blocklist,
 } from '@/lib/blocklist'
 import { readPrefs, writePrefs, onPrefsChange, type ResurfaceClick, type Prefs } from '@/lib/prefs'
+import {
+  LIBRARY_CAP_CHOICES,
+  LIBRARY_CAP_DEFAULT,
+  trimLibraryToCap,
+} from '@/lib/libraryCap'
 import { readHealth, onHealthChange, type CaptureHealth } from '@/lib/health'
 import { redactPii, PII_LABEL } from '@/lib/pii'
 import { buildMarkdown } from '@/lib/markdown'
@@ -165,8 +170,6 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   const [patternError, setPatternError] = useState<string | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
   const [cleared, setCleared] = useState(false)
-  const [confirmPurge, setConfirmPurge] = useState(false)
-  const [purged, setPurged] = useState<number | null>(null)
   const [resurfaceClick, setResurfaceClick] = useState<ResurfaceClick>('insert')
   const [strength, setStrength] = useState<FilterStrength>('balanced')
   const [sites, setSites] = useState<Record<Platform, boolean>>(
@@ -190,6 +193,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   } | null>(null)
   const [importMsg, setImportMsg] = useState<string | null>(null)
   const [promptCount, setPromptCount] = useState(0)
+  const [libraryCap, setLibraryCap] = useState(LIBRARY_CAP_DEFAULT)
 
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -208,12 +212,17 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   }, [cleared, importMsg])
 
   useEffect(() => {
+    void purgeExpiredDeleted()
+  }, [])
+
+  useEffect(() => {
     const apply = (p: Prefs) => {
       setResurfaceClick(p.resurfaceClick)
       setStrength(p.filterStrength)
       setSites(p.sites)
       setRedactPiiOn(p.redactPii)
       setPiiKinds(p.piiKinds)
+      setLibraryCap(p.libraryCap)
     }
     void readPrefs().then(apply)
     return onPrefsChange(apply)
@@ -227,6 +236,18 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   const setFilter = async (next: FilterStrength) => {
     setStrength(next)
     await writePrefs({ filterStrength: next })
+  }
+
+  const setCap = async (next: number) => {
+    setLibraryCap(next)
+    await writePrefs({ libraryCap: next })
+    // Applying a tighter limit should trim right away, not wait for the next save.
+    if (next > 0) {
+      const n = await trimLibraryToCap(next)
+      if (n > 0) {
+        void listPrompts({ includeMinor: true }).then((all) => setPromptCount(all.length))
+      }
+    }
   }
 
   const toggleSite = async (p: Platform) => {
@@ -348,17 +369,6 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
     window.setTimeout(() => setCleared(false), 4000)
   }
 
-  const onPurgeDeleted = async () => {
-    if (!confirmPurge) {
-      setConfirmPurge(true)
-      return
-    }
-    setConfirmPurge(false)
-    const n = await purgeDeleted()
-    setPurged(n)
-    window.setTimeout(() => setPurged(null), 5000)
-  }
-
   function download(content: string, type: string, ext: string) {
     const blob = new Blob([content], { type })
     const url = URL.createObjectURL(blob)
@@ -397,7 +407,17 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
         return
       }
       const res = await importPrompts(parsed)
-      setImportMsg(`Added ${res.imported}. Skipped ${res.skipped} you already had.`)
+      let trimNote = ''
+      if (libraryCap > 0 && res.imported > 0) {
+        const trimmed = await trimLibraryToCap(libraryCap)
+        if (trimmed > 0) {
+          trimNote =
+            trimmed === 1
+              ? ' Removed 1 rarely used prompt to stay under your limit.'
+              : ` Removed ${trimmed} rarely used prompts to stay under your limit.`
+        }
+      }
+      setImportMsg(`Added ${res.imported}. Skipped ${res.skipped} you already had.${trimNote}`)
     } catch {
       setImportMsg("Couldn't read that file. It should be a backup from Deja.")
     }
@@ -603,7 +623,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
           <span className="min-w-0">
             <span className="block text-sm font-medium text-ink">More options</span>
             <span className="dj-meta mt-0.5 block">
-              Exactly which details to hide, restoring a backup, and erasing prompts for good.
+              Exactly which details to hide, a prompt limit, and restoring a backup.
             </span>
           </span>
           <ChevronIcon
@@ -829,6 +849,35 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
             )}
           </Section>
 
+          {/* Optional size ceiling — off by default */}
+          <Section
+            bare
+            title="Keep at most…"
+            description="Ceiling on how many prompts stay saved. Past that number, Deja permanently removes the ones you use least (oldest first when tied). Favorites stay. Default is 5,000 — high enough that most people never notice."
+          >
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Maximum prompts to keep">
+              {LIBRARY_CAP_CHOICES.map((n) => {
+                const on = libraryCap === n
+                const label = n === 0 ? 'No limit' : n.toLocaleString()
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => void setCap(n)}
+                    className={`dj-pill ${on ? 'dj-pill-active' : ''}`}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+            <p className="dj-meta">
+              {promptCount.toLocaleString()} saved now
+              {libraryCap > 0 ? ` · ceiling ${libraryCap.toLocaleString()}` : ' · no ceiling'}.
+            </p>
+          </Section>
+
           {/* Restore a backup */}
           <Section
             bare
@@ -854,40 +903,6 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
             </div>
           </Section>
 
-          {/* Purge deleted */}
-          <Section
-            bare
-            title="Erase deleted prompts for good"
-            description="Deleting a prompt hides it but keeps the text around so you can undo. If something sensitive was saved, delete it in your library, then erase it here."
-          >
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={onPurgeDeleted}
-                onBlur={() => setConfirmPurge(false)}
-                aria-live="polite"
-                className={`dj-btn px-3 py-1.5 text-sm ${
-                  confirmPurge ? 'border-danger text-danger' : 'hover:text-danger'
-                }`}
-              >
-                {confirmPurge ? 'Sure? This erases them for good' : 'Erase deleted prompts'}
-              </button>
-              {confirmPurge && (
-                <button
-                  onClick={() => setConfirmPurge(false)}
-                  className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
-                >
-                  Cancel
-                </button>
-              )}
-              {purged != null && (
-                <span className="dj-meta">
-                  {purged === 0
-                    ? 'There was nothing to erase.'
-                    : `Erased ${purged} deleted prompt${purged === 1 ? '' : 's'}.`}
-                </span>
-              )}
-            </div>
-          </Section>
         </div>
       </details>
 

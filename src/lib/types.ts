@@ -74,6 +74,8 @@ export type CaptureResponse =
       notice: boolean
       redacted: number
       duplicate?: boolean
+      /** How many least-used prompts were soft-deleted to stay under libraryCap. */
+      trimmed?: number
     }
   | { ok: false; error: string }
 

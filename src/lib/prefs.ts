@@ -11,6 +11,7 @@
 //   - 'copy'   → copy the prior prompt to the clipboard (opt-out; non-destructive)
 //   - 'insert' → clear the composer and type the remembered prompt in (default;
 //                the content script writes to the host page only on this click)
+import { LIBRARY_CAP_DEFAULT, coerceLibraryCap } from './libraryCap'
 import {
   PLATFORM_LABEL,
   PII_KINDS,
@@ -53,6 +54,10 @@ export interface Prefs {
   // stored. On by default. `piiKinds` toggles individual categories.
   redactPii: boolean
   piiKinds: Record<PiiKind, boolean>
+  // Soft size cap on live prompts. 0 = no limit; default 5000. When over,
+  // least-used (then oldest) are removed; favorites are never touched.
+  // See libraryCap.ts.
+  libraryCap: number
 }
 
 function allSitesEnabled(): Record<Platform, boolean> {
@@ -72,6 +77,7 @@ export const DEFAULT_PREFS: Prefs = {
   sites: allSitesEnabled(),
   redactPii: true,
   piiKinds: allPiiEnabled(),
+  libraryCap: LIBRARY_CAP_DEFAULT,
 }
 
 const KEY = 'prefs'
@@ -116,6 +122,7 @@ function coerce(raw: unknown): Prefs {
     sites: coerceSites(obj.sites),
     redactPii: obj.redactPii !== false,
     piiKinds: coercePiiKinds(obj.piiKinds),
+    libraryCap: coerceLibraryCap(obj.libraryCap),
   }
 }
 

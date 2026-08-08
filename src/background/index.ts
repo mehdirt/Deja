@@ -1,6 +1,15 @@
-import { db, savePrompt, hardDelete, listPrompts, findExistingPrompt, touchUsage } from '@/lib/db'
+import {
+  db,
+  savePrompt,
+  hardDelete,
+  listPrompts,
+  findExistingPrompt,
+  touchUsage,
+  purgeExpiredDeleted,
+} from '@/lib/db'
 import { findSimilar } from '@/lib/similarity'
 import { classifyPrompt } from '@/lib/classify'
+import { trimLibraryToCap } from '@/lib/libraryCap'
 import { redactPii } from '@/lib/pii'
 import {
   readPrefs,
@@ -112,12 +121,24 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           return
         }
 
+        // Soft size cap after a new row — least-used / oldest tucked away.
+        // Runs outside the save transaction; favorites are never touched.
+        let trimmed = 0
+        if (prefs.libraryCap > 0) {
+          try {
+            trimmed = await trimLibraryToCap(prefs.libraryCap)
+          } catch {
+            /* cap is best-effort — never fail the capture itself */
+          }
+        }
+
         sendResponse({
           ok: true,
           id: outcome.id,
           filtered: false,
           notice: false,
           redacted: redaction.total,
+          trimmed,
         })
       } catch (err) {
         sendResponse({ ok: false, error: String(err) })
@@ -287,3 +308,7 @@ try {
 
 // Paint on every worker wake (MV3 workers are short-lived and start fresh).
 void refreshPauseState()
+
+// Soft-deletes only last for a short Undo window. Sweep leftovers on wake so a
+// closed options page can't leave forever-tombstones on disk.
+void purgeExpiredDeleted().catch(() => {})

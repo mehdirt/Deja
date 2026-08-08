@@ -84,11 +84,11 @@ Site DOMs change often, so each platform uses an **ordered list of selector fall
 - Fuzzy search (MiniSearch) in both the popup and the full library page.
 - Platform filter, manual **tags** with multi‑tag filtering, a **favorites** filter, and **bulk select / delete**.
 - Sorts: newest · most useful (usage × recency) · most used · longest unseen.
-- Copy‑to‑clipboard with usage tracking; **soft‑delete with undo**.
+- Copy‑to‑clipboard with usage tracking; **delete with a short Undo, then gone for good**.
 
 ### Yours to keep
 - **Export / import JSON** (round‑trips), plus **Markdown export**.
-- Settings: clear all data, purge soft‑deleted rows, and the blocklist above.
+- Settings: clear all data, optional “keep at most” library ceiling, and the blocklist above.
 - An in‑extension **privacy page** stating exactly what is and isn't collected.
 
 ---
