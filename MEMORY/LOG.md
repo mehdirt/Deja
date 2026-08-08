@@ -4,7 +4,7 @@ Append-only log of decisions and context from nontrivial work sessions. Read bef
 
 ## 2026-08-08
 
-Popup width pin (360px, no document scrollbar) kept after whitespace fix. Subtle hairline under popup search tools. Library: search + Filter & sort clustered with hairline before the list (no heavy panel).
+Popup width pin (360px, no document scrollbar) kept after whitespace fix. Subtle hairline under popup search tools. Library find-tools: search + Filter fuse as one **surface** well (not sunk — large sunk on cream read muddy post-Structure); open tray uses sunk; focus = accent border only. Settings More-options filter stays raised.
 
 Soft library size cap (`libraryCap`, default **5000**; choices Off / 2k / 5k / 10k). “Keep at most…” hard-deletes least-used (oldest on ties); favorites never touched. Manual delete: soft for ~6s Undo, then hard-delete; background/options sweep clears leftover tombstones after 60s. Removed “Erase deleted prompts for good” — users had no trash UI and wouldn’t find a second erase step.
 

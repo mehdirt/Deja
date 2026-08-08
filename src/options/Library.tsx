@@ -295,215 +295,222 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
         <CaptureHealthBadge onOpenSettings={onOpenSettings} />
       </header>
 
-      {/* Find tools — search + filter clustered; hairline separates from the list. */}
-      <div className="flex flex-col gap-2.5 border-b border-line pb-5">
-        <div className="dj-search">
-          <SearchIcon size={15} className="dj-search-icon" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search your prompts"
-            placeholder="Find a prompt…"
-            className="dj-search-input"
-          />
-          {query.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setQuery('')}
-              aria-label="Clear search"
-              className="dj-search-clear"
-            >
-              <CloseIcon size={13} />
-            </button>
-          )}
-        </div>
-
-        {prompts.length > 0 && (
-          <details className="dj-filter group" {...(selecting ? { open: true } : {})}>
-          <summary className="dj-filter-summary">
-            <span className="inline-flex min-w-0 items-center gap-2">
-              <span className="text-sm font-medium text-ink">Filter &amp; sort</span>
-              {filterActiveCount > 0 ? (
-                <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
-                  {filterActiveCount} active
-                </span>
-              ) : (
-                <span className="dj-meta">Optional</span>
-              )}
-            </span>
-            <ChevronIcon
-              size={14}
-              className="shrink-0 text-ink-faint transition-transform group-open:rotate-180"
+      {/* Find tools — search + filter as one stuck well; hairline before list. */}
+      <div className="dj-find-tools">
+        <div className="dj-find-tools-well">
+          <div className="dj-search">
+            <SearchIcon size={15} className="dj-search-icon" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search your prompts"
+              placeholder="Find a prompt…"
+              className="dj-search-input"
             />
-          </summary>
-          <div className="dj-filter-body">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex min-w-0 flex-1 flex-col gap-3">
-                {multiPlatform && (
-                  <div>
-                    <p className="dj-filter-label">From</p>
-                    <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by platform">
-                      {PLATFORMS.map((p) => (
-                        <button
-                          key={p.key}
-                          role="tab"
-                          aria-selected={platform === p.key}
-                          onClick={() => setPlatform(p.key)}
-                          className={`dj-pill ${platform === p.key ? 'dj-pill-active' : ''}`}
+            {query.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+                className="dj-search-clear"
+              >
+                <CloseIcon size={13} />
+              </button>
+            )}
+          </div>
+
+          {prompts.length > 0 && (
+            <details className="dj-filter group" {...(selecting ? { open: true } : {})}>
+              <summary className="dj-filter-summary">
+                <span className="inline-flex min-w-0 items-center gap-2">
+                  <span className="text-sm font-medium">Filter &amp; sort</span>
+                  {filterActiveCount > 0 && (
+                    <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
+                      {filterActiveCount} active
+                    </span>
+                  )}
+                </span>
+                <ChevronIcon
+                  size={14}
+                  className="shrink-0 text-ink-faint transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <div className="dj-filter-body">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex min-w-0 flex-1 flex-col gap-3">
+                    {multiPlatform && (
+                      <div>
+                        <p className="dj-filter-label">From</p>
+                        <div
+                          className="flex flex-wrap gap-1.5"
+                          role="tablist"
+                          aria-label="Filter by platform"
                         >
-                          {p.label}
-                        </button>
-                      ))}
+                          {PLATFORMS.map((p) => (
+                            <button
+                              key={p.key}
+                              role="tab"
+                              aria-selected={platform === p.key}
+                              onClick={() => setPlatform(p.key)}
+                              className={`dj-pill ${platform === p.key ? 'dj-pill-active' : ''}`}
+                            >
+                              {p.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="dj-filter-label">Show</p>
+                      <button
+                        role="switch"
+                        aria-checked={favoritesOnly}
+                        aria-label="Show favorites only"
+                        onClick={() => setFavoritesOnly((v) => !v)}
+                        className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent ${
+                          favoritesOnly
+                            ? 'border-accent bg-accent-soft text-accent'
+                            : 'border-line bg-bg text-ink-soft hover:bg-sunk'
+                        }`}
+                      >
+                        <span
+                          className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
+                            favoritesOnly ? 'bg-accent' : 'bg-line'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
+                              favoritesOnly ? 'translate-x-[14px]' : 'translate-x-0.5'
+                            }`}
+                          />
+                        </span>
+                        <FavoriteIcon filled={favoritesOnly} size={12} />
+                        Favorites only
+                      </button>
                     </div>
                   </div>
-                )}
 
-                <div>
-                  <p className="dj-filter-label">Show</p>
-                  <button
-                    role="switch"
-                    aria-checked={favoritesOnly}
-                    aria-label="Show favorites only"
-                    onClick={() => setFavoritesOnly((v) => !v)}
-                    className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent ${
-                      favoritesOnly
-                        ? 'border-accent bg-accent-soft text-accent'
-                        : 'border-line text-ink-soft hover:bg-surface'
-                    }`}
-                  >
-                    <span
-                      className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${
-                        favoritesOnly ? 'bg-accent' : 'bg-line'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-3 w-3 rounded-full bg-surface shadow-sm transition-transform ${
-                          favoritesOnly ? 'translate-x-[14px]' : 'translate-x-0.5'
-                        }`}
-                      />
-                    </span>
-                    <FavoriteIcon filled={favoritesOnly} size={12} />
-                    Favorites only
-                  </button>
-                </div>
-              </div>
-
-              <div className="sm:w-48">
-                <p className="dj-filter-label">Sort by</p>
-                <div className="relative">
-                  <select
-                    value={sort}
-                    onChange={(e) => setSort(e.target.value as Sort)}
-                    aria-label="Sort prompts"
-                    className="dj-input w-full appearance-none py-1.5 pr-8 text-xs"
-                  >
-                    {SORTS.map((s) => (
-                      <option key={s.key} value={s.key}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronIcon
-                    size={12}
-                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {allTags.length > 0 && (
-              <div>
-                <p className="dj-filter-label">Tags</p>
-                <div className="flex flex-wrap items-center gap-1.5" aria-label="Filter by tag">
-                  {allTags.map((t) => {
-                    const active = activeTags.includes(t)
-                    return (
-                      <button
-                        key={t}
-                        aria-pressed={active}
-                        onClick={() => onTagClick(t)}
-                        className={`dj-tag ${active ? 'dj-tag-active' : ''}`}
+                  <div className="sm:w-48">
+                    <p className="dj-filter-label">Sort by</p>
+                    <div className="relative">
+                      <select
+                        value={sort}
+                        onChange={(e) => setSort(e.target.value as Sort)}
+                        aria-label="Sort prompts"
+                        className="dj-input w-full appearance-none py-1.5 pr-8 text-xs"
                       >
-                        {t}
-                      </button>
-                    )
-                  })}
-                  {activeTags.length > 0 && (
-                    <button
-                      onClick={() => setActiveTags([])}
-                      className="dj-btn dj-btn-ghost px-2 py-0.5 text-[11px]"
-                    >
-                      Clear tags
-                    </button>
-                  )}
-                </div>
-                {activeTags.length > 0 && (
-                  <p className="dj-meta mt-1.5">
-                    Showing prompts with every tag you&apos;ve picked.
-                  </p>
-                )}
-              </div>
-            )}
-
-            <div className="flex items-center justify-between gap-2 border-t border-line pt-3">
-              {selecting ? (
-                <>
-                  <span className="dj-meta">{checkedIds.size} selected</span>
-                  <div className="flex gap-2">
-                    <button onClick={exitSelecting} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-                      Cancel
-                    </button>
-                    <button
-                      onClick={onBulkDelete}
-                      disabled={checkedIds.size === 0}
-                      className="dj-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
-                    >
-                      Delete selected
-                    </button>
+                        {SORTS.map((s) => (
+                          <option key={s.key} value={s.key}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronIcon
+                        size={12}
+                        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
+                      />
+                    </div>
                   </div>
-                </>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setSelecting(true)}
-                    className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
-                  >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <rect x="2" y="2" width="5" height="5" rx="1" />
-                      <rect x="9" y="2" width="5" height="5" rx="1" />
-                      <path d="M2.5 11.5h5M11 9.5l1 1.5 2.5-3" />
-                    </svg>
-                    Select several
-                  </button>
-                  {!keepMinor && minorCount > 0 && (
-                    <button
-                      onClick={() => setShowMinor((v) => !v)}
-                      aria-pressed={showMinor}
-                      title="Short one-offs Deja used to hide instead of skipping — keep or delete them"
-                      className={`dj-btn dj-btn-ghost px-2 py-1 text-xs ${
-                        showMinor ? 'text-ink' : 'text-ink-faint'
-                      }`}
-                    >
-                      {showMinor ? 'Hide short ones' : `Short ones (${minorCount})`}
-                    </button>
+                </div>
+
+                {allTags.length > 0 && (
+                  <div>
+                    <p className="dj-filter-label">Tags</p>
+                    <div className="flex flex-wrap items-center gap-1.5" aria-label="Filter by tag">
+                      {allTags.map((t) => {
+                        const active = activeTags.includes(t)
+                        return (
+                          <button
+                            key={t}
+                            aria-pressed={active}
+                            onClick={() => onTagClick(t)}
+                            className={`dj-tag ${active ? 'dj-tag-active' : ''}`}
+                          >
+                            {t}
+                          </button>
+                        )
+                      })}
+                      {activeTags.length > 0 && (
+                        <button
+                          onClick={() => setActiveTags([])}
+                          className="dj-btn dj-btn-ghost px-2 py-0.5 text-[11px]"
+                        >
+                          Clear tags
+                        </button>
+                      )}
+                    </div>
+                    {activeTags.length > 0 && (
+                      <p className="dj-meta mt-1.5">
+                        Showing prompts with every tag you&apos;ve picked.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between gap-2 border-t border-line pt-3">
+                  {selecting ? (
+                    <>
+                      <span className="dj-meta">{checkedIds.size} selected</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={exitSelecting}
+                          className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={onBulkDelete}
+                          disabled={checkedIds.size === 0}
+                          className="dj-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
+                        >
+                          Delete selected
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSelecting(true)}
+                        className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <rect x="2" y="2" width="5" height="5" rx="1" />
+                          <rect x="9" y="2" width="5" height="5" rx="1" />
+                          <path d="M2.5 11.5h5M11 9.5l1 1.5 2.5-3" />
+                        </svg>
+                        Select several
+                      </button>
+                      {!keepMinor && minorCount > 0 && (
+                        <button
+                          onClick={() => setShowMinor((v) => !v)}
+                          aria-pressed={showMinor}
+                          title="Short one-offs Deja used to hide instead of skipping — keep or delete them"
+                          className={`dj-btn dj-btn-ghost px-2 py-1 text-xs ${
+                            showMinor ? 'text-ink' : 'text-ink-faint'
+                          }`}
+                        >
+                          {showMinor ? 'Hide short ones' : `Short ones (${minorCount})`}
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          </div>
-        </details>
-        )}
+              </div>
+            </details>
+          )}
+        </div>
       </div>
 
       {undoId != null && (
