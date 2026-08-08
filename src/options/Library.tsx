@@ -295,35 +295,32 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
         <CaptureHealthBadge onOpenSettings={onOpenSettings} />
       </header>
 
-      <div className="dj-search">
-        <SearchIcon size={15} className="dj-search-icon" />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search your prompts"
-          placeholder="Find a prompt…"
-          className="dj-search-input"
-        />
-        {query.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setQuery('')}
-            aria-label="Clear search"
-            className="dj-search-clear"
-          >
-            <CloseIcon size={13} />
-          </button>
-        )}
-      </div>
+      {/* Find tools — search + filter clustered; hairline separates from the list. */}
+      <div className="flex flex-col gap-2.5 border-b border-line pb-5">
+        <div className="dj-search">
+          <SearchIcon size={15} className="dj-search-icon" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search your prompts"
+            placeholder="Find a prompt…"
+            className="dj-search-input"
+          />
+          {query.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="Clear search"
+              className="dj-search-clear"
+            >
+              <CloseIcon size={13} />
+            </button>
+          )}
+        </div>
 
-      {/* Power chrome lives behind one disclosure — search + list stay the
-          default path for everyday reuse. */}
-      {prompts.length > 0 && (
-        <details
-          className="dj-filter group"
-          {...(selecting ? { open: true } : {})}
-        >
+        {prompts.length > 0 && (
+          <details className="dj-filter group" {...(selecting ? { open: true } : {})}>
           <summary className="dj-filter-summary">
             <span className="inline-flex min-w-0 items-center gap-2">
               <span className="text-sm font-medium text-ink">Filter &amp; sort</span>
@@ -506,7 +503,8 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
             </div>
           </div>
         </details>
-      )}
+        )}
+      </div>
 
       {undoId != null && (
         <div className="dj-enter-fast flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
