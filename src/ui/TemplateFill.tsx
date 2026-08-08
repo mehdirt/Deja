@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { fillTemplate, findPlaceholders } from '@/lib/template'
+import { CopyIcon } from '@/ui/ActionIcons'
 
 interface Props {
   text: string
@@ -54,7 +55,11 @@ export function TemplateFill({ text, onFilled, onCancel }: Props) {
         <button type="button" onClick={onCancel} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
           Cancel
         </button>
-        <button type="submit" className="dj-btn dj-btn-primary px-3 py-1 text-xs">
+        <button
+          type="submit"
+          className="dj-btn dj-btn-primary inline-flex items-center gap-1.5 px-3 py-1 text-xs"
+        >
+          <CopyIcon size={12} />
           Copy
         </button>
       </div>

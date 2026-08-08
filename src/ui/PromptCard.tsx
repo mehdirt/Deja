@@ -1,9 +1,9 @@
-import { forwardRef, useState } from 'react'
+import { useState } from 'react'
 import type { Prompt } from '@/lib/types'
 import { PLATFORM_COLOR, PLATFORM_LABEL } from '@/lib/types'
 import { conversationUrl, relativeTime, truncate } from '@/lib/format'
 import { isTemplate } from '@/lib/template'
-import { PinIcon } from '@/ui/PinIcon'
+import { CheckIcon, ClockIcon, CopyIcon, FavoriteIcon, ReuseIcon, TrashIcon } from '@/ui/ActionIcons'
 import { TemplateFill } from '@/ui/TemplateFill'
 
 interface Props {
@@ -26,28 +26,23 @@ interface Props {
   checked?: boolean
   onToggleCheck?: (p: Prompt) => void
   compact?: boolean
-  selected?: boolean
 }
 
-export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
-  {
-    prompt,
-    onCopy,
-    onDelete,
-    onTogglePin,
-    onAddTag,
-    onRemoveTag,
-    onTagClick,
-    onKeepMinor,
-    activeTags = [],
-    selectable,
-    checked,
-    onToggleCheck,
-    compact,
-    selected,
-  },
-  ref,
-) {
+export function PromptCard({
+  prompt,
+  onCopy,
+  onDelete,
+  onTogglePin,
+  onAddTag,
+  onRemoveTag,
+  onTagClick,
+  onKeepMinor,
+  activeTags = [],
+  selectable,
+  checked,
+  onToggleCheck,
+  compact,
+}: Props) {
   const [copied, setCopied] = useState(false)
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState('')
@@ -80,10 +75,9 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
 
   return (
     <div
-      ref={ref}
-      className={`dj-card flex flex-col gap-2 p-4 transition-shadow ${
-        selected ? 'ring-2 ring-accent' : ''
-      } ${checked ? 'ring-2 ring-accent/60' : ''} ${minor ? 'opacity-70' : ''}`}
+      className={`dj-card flex flex-col gap-2 p-4 ${
+        checked ? 'ring-2 ring-accent/60' : ''
+      } ${minor ? 'opacity-70' : ''}`}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2">
@@ -121,10 +115,19 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             </span>
           )}
         </span>
-        <span className="dj-meta flex items-center gap-2">
-          {pinned && <PinIcon filled className="text-accent" />}
-          {relativeTime(prompt.createdAt)}
-          {prompt.usageCount > 0 && ` · reused ${prompt.usageCount}×`}
+        <span className="flex shrink-0 items-center gap-2">
+          {pinned && <FavoriteIcon filled className="text-accent" size={12} />}
+          {!compact && chatUrl && (
+            <a
+              href={chatUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open the conversation where you sent this"
+              className="dj-btn dj-btn-ghost px-2 py-0.5 text-xs"
+            >
+              Open chat ↗
+            </a>
+          )}
         </span>
       </div>
 
@@ -201,20 +204,19 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-1 pt-1">
-        {/* Only shown when the captured URL points at a real conversation —
-            see conversationUrl(). */}
-        {!compact && chatUrl && (
-          <a
-            href={chatUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open the conversation where you sent this"
-            className="dj-btn dj-btn-ghost mr-auto px-2 py-1 text-xs"
-          >
-            Open chat ↗
-          </a>
-        )}
+      <div className="flex items-center justify-end gap-0.5 pt-1">
+        <span className="mr-auto flex flex-wrap items-center gap-1.5">
+          <span className="dj-meta-chip">
+            <ClockIcon size={11} className="text-ink-faint" />
+            {relativeTime(prompt.createdAt)}
+          </span>
+          {prompt.usageCount > 0 && (
+            <span className="dj-meta-chip">
+              <ReuseIcon size={11} className="text-ink-faint" />
+              Reused {prompt.usageCount}×
+            </span>
+          )}
+        </span>
         {minor && onKeepMinor && (
           <button
             onClick={() => onKeepMinor(prompt)}
@@ -230,27 +232,40 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
             onClick={() => onTogglePin(prompt)}
             aria-label={pinned ? 'Remove from favorites' : 'Add to favorites'}
             aria-pressed={pinned}
-            className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
+            title={pinned ? 'Remove from favorites' : 'Add to favorites'}
+            className={`dj-btn dj-btn-ghost p-1.5 ${pinned ? 'text-accent' : ''}`}
           >
-            {pinned ? 'Unfavorite' : 'Favorite'}
+            <FavoriteIcon filled={pinned} />
           </button>
         )}
         {onDelete && (
           <button
             onClick={() => onDelete(prompt)}
             aria-label="Delete prompt"
-            className="dj-btn dj-btn-ghost px-2 py-1 text-xs hover:text-danger"
+            title="Delete"
+            className="dj-btn dj-btn-ghost p-1.5 hover:text-danger"
           >
-            Delete
+            <TrashIcon />
           </button>
         )}
         <button
           onClick={() => handleCopy()}
-          aria-label="Copy prompt to clipboard"
+          aria-label={
+            copied ? 'Copied' : fillable ? 'Copy as is' : 'Copy prompt to clipboard'
+          }
           aria-live="polite"
-          className={`dj-btn min-w-[76px] px-2 py-1 text-xs ${fillable ? '' : 'dj-btn-primary'}`}
+          title={copied ? 'Copied' : fillable ? 'Copy as is' : 'Copy'}
+          className={`dj-btn p-1.5 ${fillable ? '' : 'dj-btn-primary'}`}
         >
-          {copied ? 'Copied ✓' : fillable ? 'Copy as is' : 'Copy'}
+          {copied ? (
+            <span key="ok" className="dj-pop-in inline-flex">
+              <CheckIcon />
+            </span>
+          ) : (
+            <span key="copy" className="inline-flex">
+              <CopyIcon />
+            </span>
+          )}
         </button>
         {fillable && !filling && (
           <button
@@ -264,4 +279,4 @@ export const PromptCard = forwardRef<HTMLDivElement, Props>(function PromptCard(
       </div>
     </div>
   )
-})
+}
