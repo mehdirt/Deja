@@ -20,18 +20,18 @@ Reference via Tailwind classes (`bg-bg`, `text-ink`, `text-ink-soft`, `bg-surfac
 
 | Token | Light | Dark | Use |
 | --- | --- | --- | --- |
-| `--dj-bg` | `#faf8f3` | `#16151a` | page background (warm paper) |
-| `--dj-surface` | `#ffffff` | `#201f27` | raised cards |
-| `--dj-sunk` | `#ebe6db` | `#1b1a21` | wells, hover, skeletons |
+| `--dj-bg` | `#faf8f3` | `#12111a` | page background (warm paper / night notebook) |
+| `--dj-surface` | `#ffffff` | `#1e1d28` | raised cards |
+| `--dj-sunk` | `#ebe6db` | `#0c0b12` | wells, hover, skeletons — darker than bg in both modes |
 | `--dj-text` | `#1c1b19` | `#f3f1ea` | primary ink |
-| `--dj-text-soft` | `#534f49` | `#a8a49b` | secondary |
-| `--dj-text-faint` | `#655f56` | `#8f8a80` | meta / tertiary |
+| `--dj-text-soft` | `#534f49` | `#b9b4a8` | secondary |
+| `--dj-text-faint` | `#655f56` | `#9a9488` | meta / tertiary |
 | `--dj-accent` | `#5b54f0` | `#8983f5` | primary action, focus, brand |
-| `--dj-accent-soft` | `#ecebfe` | `#272534` | accent fills (chips) |
-| `--dj-line` | `#d0caba` | `#2e2c36` | hairline borders (always distinct from surface) |
+| `--dj-accent-soft` | `#ecebfe` | `#2a2740` | accent fills (chips) |
+| `--dj-line` | `#d0caba` | `#3f3c4a` | hairline borders (always distinct from surface) |
 | `--dj-danger` | `#c0392b` | `#e06c5d` | destructive only |
 
-Dark mode is driven by `prefers-color-scheme` — one set of variables, no class toggling.
+Dark mode is driven by `prefers-color-scheme` — one set of variables, no class toggling. Dark Structure matches light: sunk sits below the page, lines read clearly, secondary ink steps down cleanly.
 
 Per-platform accent dots (chips only, subtle): ChatGPT `#ffffff` (white — its current brand mark; rendered with a hairline ring so it shows on the light surface), Claude `#d97757`, Gemini `#4285f4`, DeepSeek `#4d6bfe`, Grok `#71767b` — see `PLATFORM_COLOR` in `src/lib/types.ts`.
 

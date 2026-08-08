@@ -20,14 +20,14 @@ function ensureHost(): ShadowRoot {
   style.textContent = `
     .dj-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
     .dj-toast{pointer-events:auto;display:flex;align-items:center;gap:12px;
-      background:#201f27;color:#f3f1ea;font:13px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;
+      background:#1e1d28;color:#f3f1ea;font:13px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;
       padding:10px 12px;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);
-      border:1px solid #2e2c36;animation:dj-in .14s ease-out}
+      border:1px solid #3f3c4a;animation:dj-in .14s ease-out}
     .dj-dot{width:7px;height:7px;border-radius:50%;background:#8983f5;flex:none}
     .dj-msg{white-space:nowrap}
     .dj-undo{pointer-events:auto;background:none;border:none;color:#9c97f7;
       font:600 13px system-ui,-apple-system,'Segoe UI',sans-serif;cursor:pointer;padding:2px 4px;border-radius:6px}
-    .dj-undo:hover{background:#272534}
+    .dj-undo:hover{background:#2a2740}
     .dj-undo:focus-visible{outline:2px solid #8983f5;outline-offset:1px}
     @keyframes dj-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
     ${reduce}

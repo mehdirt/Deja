@@ -92,16 +92,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --dj-bg: #16151a;
-    --dj-surface: #201f27;
-    --dj-sunk: #1b1a21;
+    /* Structure dark: sunk below bg (true inset), stronger line, clearer secondary. */
+    --dj-bg: #12111a;
+    --dj-surface: #1e1d28;
+    --dj-sunk: #0c0b12;
     --dj-text: #f3f1ea;
-    --dj-text-soft: #a8a49b;
-    --dj-text-faint: #8f8a80; /* lightened to clear WCAG AA on dark --dj-bg; was #6e6a62 at ~3.4:1 */
+    --dj-text-soft: #b9b4a8;
+    --dj-text-faint: #9a9488; /* AA on --dj-bg */
     --dj-accent: #8983f5;
-    --dj-accent-soft: #272534;
+    --dj-accent-soft: #2a2740;
     --dj-accent-hover: #9c97f7;
-    --dj-line: #2e2c36;
+    --dj-line: #3f3c4a;
     --dj-danger: #e06c5d;
     --dj-ok: #56c98a;
     --dj-warn: #cf9550; /* paused — clears WCAG AA on dark --dj-bg */

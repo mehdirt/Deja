@@ -4,6 +4,8 @@ Append-only log of decisions and context from nontrivial work sessions. Read bef
 
 ## 2026-08-08
 
+Dark Structure pass (mirror light): sunk `#0c0b12` below bg `#12111a`, surface `#1e1d28`, stronger line `#3f3c4a`, clearer soft/faint ink. Synced `globals.css`, site landing/privacy, resurface + toast overlays.
+
 Library cards render markdown when `looksLikeMarkdown` says so (`react-markdown` + `rehype-sanitize`; no syntax highlighter). Storage stays raw strings; popup / templates / starters stay plain. Copy, search, and export unchanged.
 
 Template blanks ignore fenced/inline code and code-looking lines (f-strings, `def`/`return`, …) so `{name}` in snippets no longer opens “Fill in & copy”. Fill-in CTA stays in the card action row; height/padding aligned with icon buttons.

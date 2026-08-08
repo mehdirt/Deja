@@ -149,7 +149,7 @@ function createTooltip(onDismiss: () => void): Tooltip {
     // Colors are hardcoded to mirror the --dj-* tokens in src/styles/globals.css
     // (shadow DOM + :host{all:initial} blocks variable inheritance). If the
     // palette there changes, update these to match. Meta uses the AA-safe
-    // faint tokens (#655f56 / dark #8f8a80), not the old under-contrast greys.
+    // faint tokens (#655f56 / dark #9a9488), not the old under-contrast greys.
     style.textContent = `
       :host{all:initial}
       .dj-rs{position:fixed;left:0;top:0;max-width:min(440px,calc(100vw - 16px));pointer-events:auto;
@@ -184,16 +184,16 @@ function createTooltip(onDismiss: () => void): Tooltip {
       @keyframes dj-rs-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
       @media (prefers-reduced-motion: reduce){.dj-rs{animation:none}}
       @media (prefers-color-scheme: dark){
-        .dj-rs{background:#201f27;color:#f3f1ea;border-color:#2e2c36;box-shadow:0 8px 28px rgba(0,0,0,.4)}
-        .dj-rs:hover{background:#272534}
+        .dj-rs{background:#1e1d28;color:#f3f1ea;border-color:#3f3c4a;box-shadow:0 8px 28px rgba(0,0,0,.4)}
+        .dj-rs:hover{background:#0c0b12}
         .dj-rs-lead{color:#9c97f7}
         .dj-rs-dot{background:#8983f5}
-        .dj-rs-preview{color:#a8a49b}
-        .dj-rs-meta,.dj-rs-count{color:#8f8a80}
+        .dj-rs-preview{color:#b9b4a8}
+        .dj-rs-meta,.dj-rs-count{color:#9a9488}
         .dj-rs-all{color:#9c97f7}
-        .dj-rs-all:hover{background:#272534}
-        .dj-rs-next,.dj-rs-x{color:#8f8a80}
-        .dj-rs-next:hover,.dj-rs-x:hover{background:#2e2c36;color:#f3f1ea}
+        .dj-rs-all:hover{background:#2a2740}
+        .dj-rs-next,.dj-rs-x{color:#9a9488}
+        .dj-rs-next:hover,.dj-rs-x:hover{background:#3f3c4a;color:#f3f1ea}
       }
     `
     shadow.appendChild(style)
