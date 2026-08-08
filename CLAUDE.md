@@ -35,7 +35,7 @@ Practical consequences, which the code is expected to honor:
 
 - **Warm, cozy, and guiding — not technical.** Everyday users should feel comfortable the whole time, like a kind friend is showing them around. Lead with what happens next in ordinary words; prefer reassurance over precision on the first screen. A welcome greeting (with 🤗) on first install is intentional; light emoji on empty states, tip headings, and starter categories is fine — don't decorate every button or settings control.
 - **Plain language beats precise jargon.** "Never save from…" not "blocklist". "Download a backup" not "export JSON". The full mapping is the voice table in `DESIGN.md` — follow it.
-- **Sentence case, sans-serif.** The lowercase `deja` wordmark uses bundled Literata (`font-brand`). Monospace is reserved for key hints, `[email]` placeholders, hostnames, and pattern rules. Prompt bodies use `.dj-prompt`; metadata uses `.dj-meta`.
+- **Sentence case, sans-serif.** The lowercase `deja` wordmark uses bundled Literata (`font-brand`). Monospace is reserved for `[email]` placeholders, hostnames, and pattern rules. Prompt bodies use `.dj-prompt`; metadata uses `.dj-meta`.
 - **Technical controls stay, but move down.** Regex rules, per-category redaction, file import, and permanent erase all still exist — inside the collapsed *More options* drawer in settings. Don't delete power; don't lead with it.
 - **Fonts are bundled** in `src/assets/fonts/` and declared in `globals.css`. Never reference a family the repo doesn't ship (that bug shipped once already).
 
@@ -68,7 +68,7 @@ Four execution contexts, all in TypeScript, bundled by Vite via `@crxjs/vite-plu
 
 - **Content scripts** (`src/content/<platform>/index.ts`) — one per supported site. Each one's only job is to locate the prompt input element with a site-specific selector and hand it to `attachSubmitHook` from `src/content/shared/capture.ts`. The shared helper watches for Enter keypresses and clicks on send-like buttons, debounces duplicates within 2 s, and `chrome.runtime.sendMessage`s a `PROMPT_CAPTURED` payload. Capture and resurface also consult `src/content/shared/captureGate.ts` — a synchronous, fail-open snapshot of pause / per-site / incognito state so the hot path adds no latency (incognito auto-pause is the one deliberate fail-*closed* case). Resurface dismissal is query-scoped (`src/content/shared/resurface.ts`).
 - **Background service worker** (`src/background/index.ts`) — listens for `PROMPT_CAPTURED`, runs PII redaction → classify → near-dup collapse, then writes to Dexie. The service worker is the *only* writer to the DB from outside the UI.
-- **Popup** (`src/popup/`) — small React app: pause control, search box + recent/pinned. Opens the options page for the full library.
+- **Popup** (`src/popup/`) — small React app: pause control, search box + recent. Opens the options page for the full library.
 - **Options page** (`src/options/`) — full-page React app with four views selected by one bit of state (no router): `Library`, `Settings`, `Privacy`, and `Welcome`. The welcome view is the post-install onboarding; the background worker opens `src/options/index.html?welcome=1` once, on `onInstalled` with `reason === 'install'`. It lives here rather than as its own page so there are still only two HTML entry points.
 
 Shared core lives under `src/lib/`:

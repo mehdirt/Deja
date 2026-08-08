@@ -53,10 +53,10 @@ Short, no voiceover needed (captions instead).
 1. (0–8s) A chat site. Type a prompt, hit Enter. Toast: "remembered."
 2. (8–20s) Days later, start a *similar* prompt. The tooltip appears — "you've
    been here before". Step to `2/3`, click (it's copied to the clipboard), then
-   manually paste with ⌘V — Deja never auto-fills. Card: reusing past work in
+   paste it into the chat — Deja never auto-fills. Card: reusing past work in
    seconds.
-3. (20–35s) Open the library (⌘⇧K → "open full library"): search, filter by
-   platform, tag a prompt, pin one.
+3. (20–35s) Open the library from the toolbar popup ("open full library"): search,
+   filter by platform, tag a prompt, pin one.
 4. (35–50s) Settings: show "capture is working ✓" across all five, the blocklist,
    and export. End on the privacy line: "no network calls. nothing leaves your
    machine."

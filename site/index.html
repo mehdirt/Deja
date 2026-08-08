@@ -305,7 +305,6 @@
          its OWN line under the button — inline-flex let it ride up beside the
          button when there was room. */
       .cta-sub { font-size: 13px; color: var(--ink-faint); margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-      .cta-sub .kbd { font-family: var(--mono); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--ink-soft); }
 
       /* The moment, illustrated — animated. On wide screens this sits inside a
          quiet browser chrome so the resurface moment reads as “on the site.” */
@@ -475,7 +474,7 @@
         .composer .plat { padding: 4px 8px; }
         .composer .ctext { font-size: 14px; }
         .tooltip { margin-left: 0; padding: 10px 11px; }
-        .cta-sub .kbd-hint { display: none; }
+        .cta-sub { justify-content: center; }
         .browser { border: none; background: transparent; box-shadow: none; border-radius: 0; }
         .browser-page { padding: 0; }
       }
@@ -917,7 +916,6 @@
         margin-top: 22px;
         justify-content: center;
       }
-      .closing-card .cta-sub .kbd { border-color: rgba(255, 255, 255, 0.32); color: rgba(255, 255, 255, 0.85); }
 
       footer { border-top: 1px solid var(--line); padding: 50px 0 40px; color: var(--ink-faint); font-size: 14px; position: relative; z-index: 1; }
       .footer-grid { display: flex; justify-content: space-between; gap: 48px; flex-wrap: wrap; }
@@ -1052,7 +1050,6 @@
             </div>
             <p class="cta-sub">
               <span>Free</span><span>·</span><span>stays on your computer</span><span>·</span><span>no sign-up</span>
-              <span class="kbd-hint"><span>·</span><span>open with <span class="kbd">⌘⇧K</span></span></span>
             </p>
           </div>
         </div>

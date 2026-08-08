@@ -96,7 +96,7 @@ The one-liner for the world: **your prompts, every AI, one library.**
    writes to IndexedDB (Dexie) with timestamp, platform, and URL.
 5. As the user types a new prompt, the content script asks the worker for similar
    past prompts and shows the "you've been here before" tooltip when one matches.
-6. The user opens the popup (⌘⇧K) or library page to find, copy, tag, or export.
+6. The user opens the popup or library page to find, copy, tag, or export.
 ```
 
 That's the whole flow for v1. No network. No external service. No latency added to the user's prompt submission.

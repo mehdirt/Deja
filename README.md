@@ -17,7 +17,6 @@ The prompts you write are work. Most of them vanish into a scrolled‑away chat 
 - [Features](#features)
 - [Install (load unpacked)](#install-load-unpacked)
 - [Using Deja](#using-deja)
-- [Keyboard shortcuts](#keyboard-shortcuts)
 - [Architecture & how it works](#architecture--how-it-works)
 - [Privacy & security](#privacy--security)
 - [Development](#development)
@@ -51,7 +50,7 @@ Every frequent AI user hits the **prompt graveyard**: you craft a perfect prompt
 | DeepSeek | `chat.deepseek.com` |
 | Grok | `grok.com` |
 
-Site DOMs change often, so each platform uses an **ordered list of selector fallbacks**, and a per‑site **capture‑health** signal flags silent breakage in the library before you'd ever notice missing prompts.
+Site DOMs change often, so each platform uses an **ordered list of selector fallbacks**, and a per‑site **capture‑health** signal under Settings → **Where Deja works** flags silent breakage before you'd ever notice missing prompts.
 
 ---
 
@@ -77,13 +76,13 @@ Site DOMs change often, so each platform uses an **ordered list of selector fall
 
 ### Capture controls — what gets recorded is yours
 - **Pause capture** from the popup: for **1 hour** or **until you resume**, with a live countdown and a toolbar badge. Capture resumes on its own.
-- **Per‑site switches** folded into the capture‑health view — turn capture off on any site.
+- **Per‑site switches** in Settings → **Where Deja works**, next to each site's capture‑health status — turn capture off on any site.
 - **Auto‑pause in incognito** by default.
 - **Blocklist** of **domains** and **regex patterns** that are never captured — with a live **"test a prompt against your rules"** box and a **"preview impact on saved prompts"** dry‑run, so a too‑broad rule is visible before you trust it.
 
 ### A library that organizes itself
 - Fuzzy search (MiniSearch) in both the popup and the full library page.
-- Platform filter, manual **tags** with multi‑tag filtering, **pin** to top, a **favorites** view, and **bulk select / delete**.
+- Platform filter, manual **tags** with multi‑tag filtering, a **favorites** filter, and **bulk select / delete**.
 - Sorts: newest · most useful (usage × recency) · most used · longest unseen.
 - Copy‑to‑clipboard with usage tracking; **soft‑delete with undo**.
 
@@ -109,7 +108,7 @@ Then in Chrome:
 2. Enable **Developer mode** (top‑right)
 3. Click **Load unpacked** and select the `dist/` directory
 
-Send a prompt on any [supported site](#supported-sites), then click the Deja toolbar icon (or press **⌘⇧K** / **Ctrl+Shift+K**) to see it land.
+Send a prompt on any [supported site](#supported-sites), then click the Deja toolbar icon to see it land.
 
 > For live development use `npm run dev` instead of `npm run build` — Vite rebuilds `dist/` on save (reload the extension at `chrome://extensions` to pick up changes).
 >
@@ -121,25 +120,10 @@ Send a prompt on any [supported site](#supported-sites), then click the Deja too
 
 - **Just work.** Prompt on any supported site as you normally do. Each prompt is saved the moment you hit Enter — a brief "remembered · undo" toast confirms it.
 - **Reuse in‑context.** Start typing something you've asked before; when the tooltip appears, click it to copy your earlier version (or step through `1/3` matches with `›`).
-- **Browse the popup.** The toolbar icon opens a search box + recent prompts (pinned first). Hit `library →` for the full page.
+- **Browse the popup.** The toolbar icon opens a search box + recent prompts. Hit `library →` for the full page.
 - **Curate the library.** Search, filter by platform/tag, pin favorites, tag prompts, bulk‑delete, and sort by usefulness. Deleted prompts are undoable.
 - **Control capture.** Use **⏸ pause** in the popup before a private session; switch off a site or set filter strength in **settings**; add blocklist rules for anything secret.
 - **Take your data.** Export JSON or Markdown anytime; import a JSON export back; clear everything from settings.
-
----
-
-## Keyboard shortcuts
-
-| Shortcut | Action |
-| --- | --- |
-| `⌘⇧K` / `Ctrl+Shift+K` | Open Deja (global) |
-| `⌘K` / `Ctrl+K` or `/` | Focus search (library) |
-| `↑` / `↓` | Move selection (library) |
-| `Enter` | Copy selected prompt |
-| `⌫` / `Delete` | Soft‑delete selected |
-| `Esc` | Clear search / dismiss tooltip |
-
-> The global `⌘⇧K` is a *suggested* binding; Chrome occasionally leaves it unassigned to avoid conflicts. Confirm or rebind it at `chrome://extensions/shortcuts`.
 
 ---
 
@@ -171,7 +155,7 @@ Deja runs entirely on the client across **four execution contexts**, all TypeScr
   - `health.ts` — the capture‑health probe.
   They **fail silently and never block the host page.**
 - **Background service worker** — `src/background/index.ts`. The only writer to IndexedDB from outside the UI. Handles `PROMPT_CAPTURED` (redact PII → classify → store), `SIMILAR_QUERY` (score the pool → top matches), `OPEN_LIBRARY`, and `UNDO_CAPTURE`, and paints the pause badge. MV3 workers are short‑lived, so it keeps no state in module scope — everything persists through Dexie / `chrome.storage`.
-- **Popup** — `src/popup/`. Search + recent prompts (pinned first) + pause control.
+- **Popup** — `src/popup/`. Search + recent prompts + pause control.
 - **Options / Library** — `src/options/`. The full library, settings, and privacy page.
 
 **Shared core** lives in `src/lib/` (pure, unit‑tested):

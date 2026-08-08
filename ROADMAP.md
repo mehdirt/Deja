@@ -46,7 +46,6 @@ The point of this phase is to prove the thing works *and* that the magic moment 
 **Library + capture polish (UI/UX is a deliverable, not a coat of paint)**
 - Dismissible toast on save with 5 s **Undo** ("Saved to your library · Undo")
 - Empty state that teaches, not shames ("Send your first prompt on ChatGPT to start your library")
-- Keyboard shortcuts: `⌘K` focus search, `↑/↓` navigate, `Enter` copy, `⌫` delete
 - Loading skeletons (currently flashes empty before list renders)
 - Sort: newest / most-used / longest unseen
 
@@ -81,8 +80,8 @@ The moment exists and we've watched people use it. Now sharpen it from what we l
 Once users have 50+ prompts, flat list isn't enough.
 
 - Manual tags (user-added, no LLM): tag input in the library, multi-tag filter
-- Pin a prompt to the top of the popup
-- "Favorites" view (pinned only)
+- Favorite a prompt (heart) — filterable via Favorites only
+- "Favorites" view (favorites only)
 - Bulk select + bulk delete in the library
 - Smarter sort: a "Most useful" view weighting `usageCount` × recency
 
@@ -234,6 +233,6 @@ Explicitly **not** on the roadmap unless someone shows a clear reason:
 
 ## What "done" looks like for v1
 
-A friend installs the extension. Closes the tab where they did the install. Forgets about it for two weeks. Then one day, mid-prompt on ChatGPT, they hit ⌘⇧K, find an old prompt in three keystrokes, copy it, and ship their work 5 minutes faster than they otherwise would have.
+A friend installs the extension. Closes the tab where they did the install. Forgets about it for two weeks. Then one day, mid-prompt on ChatGPT, they open Deja from the toolbar, find an old prompt in a few seconds, copy it, and ship their work 5 minutes faster than they otherwise would have.
 
 That moment is the whole product. Build until that moment is real, then keep that moment alive forever.

@@ -56,7 +56,7 @@ shipped feature set; reviewers compare the listing against behavior.
 > text you type — never the AI's replies — and never reads password, one-time-code,
 > or payment fields.
 >
-> Open the popup any time with ⌘⇧K (Ctrl+Shift+K).
+> Open Deja any time from the toolbar icon.
 
 ---
 
