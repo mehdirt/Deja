@@ -34,12 +34,19 @@ export interface Placeholder {
   token: string
 }
 
-/** Friendly label for the fill UI — "Email 1", "Phone", "topic". */
+/** Friendly label for the fill UI — "Email 1", "Name 1", "topic". */
 export function blankLabel(name: string): string {
   const m = /^([a-z]{2,12})(?:_(\d{1,3}))?$/i.exec(name)
   if (m && PII_KIND_SET.has(m[1].toLowerCase())) {
     const kind = m[1].toLowerCase() as PiiKind
-    const title = kind.charAt(0).toUpperCase() + kind.slice(1)
+    const title =
+      kind === 'person'
+        ? 'Name'
+        : kind === 'place'
+          ? 'Street'
+          : kind === 'city'
+            ? 'City'
+            : kind.charAt(0).toUpperCase() + kind.slice(1)
     return m[2] ? `${title} ${m[2]}` : title
   }
   return name

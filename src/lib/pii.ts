@@ -14,7 +14,8 @@
 // Detection is high-precision regex + checksums (Presidio-style recognizers),
 // tuned to UNDER-detect rather than mangle good prompts. Same raw value in one
 // prompt (or already in the optional local vault) reuses the same numbered
-// placeholder. Names and street addresses need on-device NER — still deferred.
+// placeholder. Optional on-device NER (see nerPii.ts) adds names / street-like
+// places after the structured pass — never replaces checksums.
 // Pure + unit-tested; runs in the background worker at capture time.
 
 import type { PiiKind } from './types'
@@ -28,6 +29,9 @@ export const PII_LABEL: Record<PiiKind, string> = {
   ssn: 'social-security numbers',
   phone: 'phone numbers',
   ip: 'IP addresses',
+  person: 'names',
+  place: 'street addresses',
+  city: 'cities & countries',
 }
 
 const ALL_ON: Record<PiiKind, boolean> = {
@@ -38,6 +42,9 @@ const ALL_ON: Record<PiiKind, boolean> = {
   ssn: true,
   phone: true,
   ip: true,
+  person: true,
+  place: true,
+  city: true,
 }
 
 const EMAIL_RE = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g
@@ -122,7 +129,7 @@ export interface RedactResult {
   mappings: Record<string, string>
 }
 
-interface Hit {
+export interface Hit {
   start: number
   end: number
   kind: PiiKind
@@ -138,6 +145,9 @@ function emptyCounts(): Record<PiiKind, number> {
     ssn: 0,
     phone: 0,
     ip: 0,
+    person: 0,
+    place: 0,
+    city: 0,
   }
 }
 
@@ -178,6 +188,7 @@ function collectHits(text: string, enabled: Record<PiiKind, boolean>): Hit[] {
   const hits: Hit[] = []
 
   // Order: greedier / more specific first so a card isn't half-eaten as a phone.
+  // person/place have no regex — optional NER adds those hits separately.
   if (enabled.secret) pushRegexHits(text, claimed, hits, 'secret', SECRET_RES)
   if (enabled.email) pushRegexHits(text, claimed, hits, 'email', [EMAIL_RE])
   if (enabled.card) {
@@ -195,7 +206,62 @@ function collectHits(text: string, enabled: Record<PiiKind, boolean>): Hit[] {
   return hits
 }
 
-/** Next free index for a kind given tokens already in use ("[email_3]" → 3). */
+/** Merge extra hits (e.g. NER) that don't overlap existing structured hits. */
+export function mergeHits(base: Hit[], extra: Hit[]): Hit[] {
+  if (extra.length === 0) return base
+  const claimed = new Array<boolean>(
+    Math.max(
+      0,
+      ...base.map((h) => h.end),
+      ...extra.map((h) => h.end),
+    ),
+  ).fill(false)
+  for (const h of base) claimRange(claimed, h.start, h.end)
+  const out = [...base]
+  for (const h of extra) {
+    if (h.end <= h.start) continue
+    if (!rangeFree(claimed, h.start, h.end)) continue
+    claimRange(claimed, h.start, h.end)
+    out.push(h)
+  }
+  out.sort((a, b) => a.start - b.start)
+  return out
+}
+
+/** Apply an already-collected hit list to `input` (structured and/or NER). */
+export function redactFromHits(
+  input: string,
+  hits: Hit[],
+  existingVault: Record<string, string> = {},
+): RedactResult {
+  const counts = emptyCounts()
+  if (!input || hits.length === 0) return { text: input, counts, total: 0, mappings: {} }
+
+  const { tokens, mappings } = assignPlaceholders(hits, existingVault)
+  for (const hit of hits) counts[hit.kind]++
+
+  let out = ''
+  let cursor = 0
+  for (let i = 0; i < hits.length; i++) {
+    const hit = hits[i]
+    out += input.slice(cursor, hit.start)
+    out += tokens[i]
+    cursor = hit.end
+  }
+  out += input.slice(cursor)
+
+  const total = PII_KINDS.reduce((n, k) => n + counts[k], 0)
+  return { text: out, counts, total, mappings }
+}
+
+/** Structured regex hits only (for combining with NER). */
+export function collectStructuredHits(
+  text: string,
+  enabled: Record<PiiKind, boolean> = ALL_ON,
+): Hit[] {
+  return collectHits(text, enabled)
+}
+
 export function nextIndexForKind(kind: PiiKind, usedTokens: Iterable<string>): number {
   const re = new RegExp(`^\\[${kind}_(\\d+)\\]$`)
   let max = 0
@@ -253,35 +319,17 @@ export interface RedactOptions {
 }
 
 /**
- * Redact enabled PII categories from `input`. Order of detection matters for
- * overlapping spans; numbering is stable for repeated values. Pure; never throws.
+ * Redact enabled structured PII from `input`. Does not run NER — use
+ * `redactPiiFull` in the background for names/places.
  */
 export function redactPii(
   input: string,
   enabled: Record<PiiKind, boolean> = ALL_ON,
   options: RedactOptions = {},
 ): RedactResult {
-  const counts = emptyCounts()
-  if (!input) return { text: input, counts, total: 0, mappings: {} }
-
+  if (!input) return { text: input, counts: emptyCounts(), total: 0, mappings: {} }
   const hits = collectHits(input, enabled)
-  if (hits.length === 0) return { text: input, counts, total: 0, mappings: {} }
-
-  const { tokens, mappings } = assignPlaceholders(hits, options.existingVault)
-  for (const hit of hits) counts[hit.kind]++
-
-  let out = ''
-  let cursor = 0
-  for (let i = 0; i < hits.length; i++) {
-    const hit = hits[i]
-    out += input.slice(cursor, hit.start)
-    out += tokens[i]
-    cursor = hit.end
-  }
-  out += input.slice(cursor)
-
-  const total = PII_KINDS.reduce((n, k) => n + counts[k], 0)
-  return { text: out, counts, total, mappings }
+  return redactFromHits(input, hits, options.existingVault)
 }
 
 /** Convenience: does this text contain any (enabled) PII? */

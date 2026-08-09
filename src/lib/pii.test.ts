@@ -6,6 +6,8 @@ import {
   ibanValid,
   assignPlaceholders,
   nextIndexForKind,
+  mergeHits,
+  redactFromHits,
 } from './pii'
 
 describe('redactPii', () => {
@@ -86,9 +88,21 @@ describe('redactPii', () => {
       ssn: true,
       phone: true,
       ip: true,
+      person: false,
+      place: false,
+      city: false,
     })
     expect(r.text).toBe('a@b.com and [phone_1]')
     expect(r.counts.email).toBe(0)
+  })
+
+  it('mergeHits adds non-overlapping NER spans', () => {
+    const base = [{ start: 0, end: 7, kind: 'email' as const, value: 'a@b.com' }]
+    const extra = [{ start: 12, end: 17, kind: 'person' as const, value: 'Sarah' }]
+    const merged = mergeHits(base, extra)
+    expect(merged).toHaveLength(2)
+    const r = redactFromHits('a@b.com ask Sarah', merged)
+    expect(r.text).toBe('[email_1] ask [person_1]')
   })
 
   it('hasPii reflects detection', () => {

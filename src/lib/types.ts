@@ -2,8 +2,41 @@ export type Platform = 'chatgpt' | 'claude' | 'gemini' | 'deepseek' | 'grok'
 
 // Categories of personal info Deja can redact from a prompt before storing it.
 // Kept here so the pure redactor and the storage/prefs layers share one source.
-export type PiiKind = 'secret' | 'email' | 'card' | 'iban' | 'ssn' | 'phone' | 'ip'
-export const PII_KINDS: PiiKind[] = ['secret', 'email', 'card', 'iban', 'ssn', 'phone', 'ip']
+export type PiiKind =
+  | 'secret'
+  | 'email'
+  | 'card'
+  | 'iban'
+  | 'ssn'
+  | 'phone'
+  | 'ip'
+  | 'person'
+  | 'place'
+  | 'city'
+export const PII_KINDS: PiiKind[] = [
+  'secret',
+  'email',
+  'card',
+  'iban',
+  'ssn',
+  'phone',
+  'ip',
+  'person',
+  'place',
+  'city',
+]
+/** Structured (regex) kinds — always available. */
+export const PII_STRUCTURED_KINDS: PiiKind[] = [
+  'secret',
+  'email',
+  'card',
+  'iban',
+  'ssn',
+  'phone',
+  'ip',
+]
+/** Fuzzy kinds filled only by the optional on-device NER model. */
+export const PII_NER_KINDS: PiiKind[] = ['person', 'place', 'city']
 
 // How aggressively selective capture skips storing "minor" (throwaway) prompts:
 //   - 'off'      → filter nothing; save every prompt
@@ -56,11 +89,24 @@ export type OpenLibraryMessage = {
   query: string
 }
 
+/** Settings → background: download / load the optional NER helper. */
+export type NerLoadMessage = { type: 'NER_LOAD' }
+
+/** Settings → background: preview redaction (structured + NER when ready). */
+export type RedactPreviewMessage = {
+  type: 'REDACT_PREVIEW'
+  text: string
+  /** Optional vault snapshot so a multi-prompt scan keeps stable numbers. */
+  existingVault?: Record<string, string>
+}
+
 export type RuntimeMessage =
   | CapturedPromptMessage
   | UndoCaptureMessage
   | SimilarQueryMessage
   | OpenLibraryMessage
+  | NerLoadMessage
+  | RedactPreviewMessage
 
 // `filtered` is true when the prompt was classified "minor" and not stored.
 // `notice` is true only the first time that happens, so the content script can
