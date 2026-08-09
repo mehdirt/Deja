@@ -12,7 +12,7 @@ import { env, pipeline } from '@huggingface/transformers'
 import { NER_MODEL_ID } from '@/lib/nerPii'
 import { toSafeNerError } from '@/lib/nerErrors'
 import { writeNerStatus } from '@/lib/nerStatus'
-import { createNerProgressTracker } from '@/lib/nerProgress'
+import { prefetchNerModel } from './prefetchModel'
 import type { NerEntity } from '@/lib/nerPii'
 
 // Transformers logs a console.warn when HF omits Content-Length. Chrome's
@@ -105,24 +105,39 @@ lockLocalWasmPaths()
 
 let ner: TokenClassificationPipeline | null = null
 let loadPromise: Promise<void> | null = null
+let loadAbort: AbortController | null = null
+let lastProgressWriteAt = 0
+let lastProgressSent = -1
 
-function createProgressTracker(): (item: {
-  status?: string
-  file?: string
-  progress?: number
-  loaded?: number
-  total?: number
-}) => void {
-  return createNerProgressTracker((progress) => {
-    void writeNerStatus({ state: 'downloading', progress })
-  })
+function reportDownloadProgress(fraction: number, force = false): void {
+  const progress = Math.min(0.99, Math.max(0, fraction))
+  const now = Date.now()
+  if (
+    !force &&
+    progress - lastProgressSent < 0.01 &&
+    now - lastProgressWriteAt < 120 &&
+    progress < 0.97
+  ) {
+    return
+  }
+  lastProgressWriteAt = now
+  lastProgressSent = progress
+  void writeNerStatus({ state: 'downloading', progress })
+  try {
+    void chrome.runtime.sendMessage({
+      type: 'NER_DOWNLOAD_PROGRESS',
+      progress,
+    })
+  } catch {
+    /* no listeners / SW asleep — storage still updates */
+  }
 }
 
 async function writeSafeError(err: unknown): Promise<void> {
   const safe = toSafeNerError(err)
-  // Keep a scrubbed technical line in storage; also log locally for debugging
-  // (filtered warn above only swallows the content-length noise).
-  console.error('[deja-ner]', safe.kind, safe.detail || safe.message)
+  // Handled + shown in Settings with retry. console.error/warn both badge
+  // chrome://extensions "Errors" — use debug so reload/clear isn't needed.
+  console.debug('[deja-ner]', safe.kind, safe.detail || safe.message)
   await writeNerStatus(
     {
       state: 'error',
@@ -134,8 +149,8 @@ async function writeSafeError(err: unknown): Promise<void> {
   )
 }
 
-async function loadModel(): Promise<void> {
-  if (ner) {
+async function loadModel(opts?: { force?: boolean }): Promise<void> {
+  if (ner && !opts?.force) {
     await writeNerStatus({
       state: 'ready',
       progress: 1,
@@ -144,7 +159,16 @@ async function loadModel(): Promise<void> {
     })
     return
   }
+  if (opts?.force) {
+    ner = null
+    loadAbort?.abort()
+    loadAbort = null
+    loadPromise = null
+  }
   if (loadPromise) return loadPromise
+
+  const ac = new AbortController()
+  loadAbort = ac
 
   loadPromise = (async () => {
     lockLocalWasmPaths()
@@ -159,11 +183,17 @@ async function loadModel(): Promise<void> {
       { resetProgress: true },
     )
     try {
-      const onProgress = createProgressTracker()
+      // Own the big download — stall timeouts + real byte progress.
+      // Files land in Transformers customCache; pipeline() then reads locally.
+      lastProgressSent = -1
+      await prefetchNerModel((p) => reportDownloadProgress(p.fraction), {
+        signal: ac.signal,
+      })
+      reportDownloadProgress(0.98, true)
+
       const pipe = await pipeline('token-classification', NER_MODEL_ID, {
         dtype: 'q8',
         device: 'wasm',
-        progress_callback: onProgress,
       })
       ner = pipe as unknown as TokenClassificationPipeline
       await writeNerStatus({
@@ -175,8 +205,22 @@ async function loadModel(): Promise<void> {
     } catch (err) {
       ner = null
       loadPromise = null
-      await writeSafeError(err)
+      if ((err as Error)?.name === 'AbortError') {
+        await writeNerStatus(
+          {
+            state: 'error',
+            progress: 0,
+            error: 'Download was interrupted. Try again when you’re ready.',
+            errorDetail: undefined,
+          },
+          { resetProgress: true },
+        )
+      } else {
+        await writeSafeError(err)
+      }
       throw err
+    } finally {
+      if (loadAbort === ac) loadAbort = null
     }
   })()
 
@@ -200,7 +244,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === 'NER_OFFSCREEN_LOAD') {
-    void loadModel()
+    const force = message.force === true
+    void loadModel({ force })
       .then(() => sendResponse({ ok: true }))
       .catch((err) => {
         const safe = toSafeNerError(err)

@@ -72,12 +72,15 @@ export async function ensureNerOffscreen(): Promise<void> {
 }
 
 /** Start (or resume) downloading / loading the NER model. */
-export async function loadNerModel(): Promise<{ ok: boolean; error?: string }> {
+export async function loadNerModel(
+  opts?: { force?: boolean },
+): Promise<{ ok: boolean; error?: string }> {
   try {
     await ensureNerOffscreen()
-    const resp = (await chrome.runtime.sendMessage({ type: 'NER_OFFSCREEN_LOAD' })) as
-      | { ok: boolean; error?: string; errorDetail?: string }
-      | undefined
+    const resp = (await chrome.runtime.sendMessage({
+      type: 'NER_OFFSCREEN_LOAD',
+      force: opts?.force === true,
+    })) as { ok: boolean; error?: string; errorDetail?: string } | undefined
     if (!resp?.ok) {
       // Prefer offscreen's already-scrubbed status / response — never re-classify
       // a plain-language message into a second generic error (loses detail).

@@ -242,7 +242,7 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
   }
 
   if (message?.type === 'NER_LOAD') {
-    void loadNerModel().then((result) => sendResponse(result))
+    void loadNerModel({ force: message.force === true }).then((result) => sendResponse(result))
     return true
   }
 

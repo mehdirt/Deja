@@ -90,7 +90,17 @@ export type OpenLibraryMessage = {
 }
 
 /** Settings → background: download / load the optional NER helper. */
-export type NerLoadMessage = { type: 'NER_LOAD' }
+export type NerLoadMessage = {
+  type: 'NER_LOAD'
+  /** Clear a hung prior load and start fresh. */
+  force?: boolean
+}
+
+/** Offscreen → Settings: live download fraction (0–1). */
+export type NerDownloadProgressMessage = {
+  type: 'NER_DOWNLOAD_PROGRESS'
+  progress: number
+}
 
 /** Settings → background: preview redaction (structured + NER when ready). */
 export type RedactPreviewMessage = {
