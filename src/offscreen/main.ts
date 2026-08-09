@@ -12,7 +12,24 @@ import { env, pipeline } from '@huggingface/transformers'
 import { NER_MODEL_ID } from '@/lib/nerPii'
 import { toSafeNerError } from '@/lib/nerErrors'
 import { writeNerStatus } from '@/lib/nerStatus'
+import { createNerProgressTracker } from '@/lib/nerProgress'
 import type { NerEntity } from '@/lib/nerPii'
+
+// Transformers logs a console.warn when HF omits Content-Length. Chrome's
+// chrome://extensions error page treats that warn as an "Errors" badge —
+// scare users for nothing. Swallow only that known-harmless line.
+const _warn = console.warn.bind(console)
+console.warn = (...args: unknown[]) => {
+  const msg = args.map(String).join(' ')
+  if (/unable to determine content-length/i.test(msg)) return
+  _warn(...args)
+}
+
+// Extension Cache API + large HF blobs is flaky (fetch ends as bare
+// "network error" with no progress). Prefer direct downloads.
+env.useBrowserCache = false
+env.allowLocalModels = false
+env.allowRemoteModels = true
 
 type TokenClassificationPipeline = (
   text: string,
@@ -89,7 +106,6 @@ lockLocalWasmPaths()
 let ner: TokenClassificationPipeline | null = null
 let loadPromise: Promise<void> | null = null
 
-/** Aggregate per-file download progress into one 0–1 value (never goes backwards). */
 function createProgressTracker(): (item: {
   status?: string
   file?: string
@@ -97,60 +113,25 @@ function createProgressTracker(): (item: {
   loaded?: number
   total?: number
 }) => void {
-  const totals = new Map<string, number>()
-  const loadedMap = new Map<string, number>()
-  let lastWritten = -1
-  let lastAt = 0
-
-  return (item) => {
-    const file = typeof item.file === 'string' ? item.file : ''
-    if (item.status === 'progress' && file && typeof item.total === 'number' && item.total > 0) {
-      totals.set(file, item.total)
-      loadedMap.set(file, typeof item.loaded === 'number' ? item.loaded : 0)
-    } else if (item.status === 'done' && file) {
-      const t = totals.get(file)
-      if (t != null) loadedMap.set(file, t)
-      else if (typeof item.progress === 'number') {
-        totals.set(file, 1)
-        loadedMap.set(file, 1)
-      }
-    } else if (item.status === 'progress' && typeof item.progress === 'number' && !file) {
-      const p = item.progress > 1 ? item.progress / 100 : item.progress
-      const now = Date.now()
-      if (p - lastWritten < 0.01 && now - lastAt < 120) return
-      lastWritten = p
-      lastAt = now
-      void writeNerStatus({ state: 'downloading', progress: Math.min(0.99, Math.max(0, p)) })
-      return
-    } else {
-      return
-    }
-
-    let loaded = 0
-    let total = 0
-    for (const [f, t] of totals) {
-      total += t
-      loaded += Math.min(loadedMap.get(f) ?? 0, t)
-    }
-    if (total <= 0) return
-    const p = Math.min(0.99, loaded / total)
-    const now = Date.now()
-    if (p + 0.0001 < lastWritten) return
-    if (p - lastWritten < 0.01 && now - lastAt < 120 && p < 0.99) return
-    lastWritten = p
-    lastAt = now
-    void writeNerStatus({ state: 'downloading', progress: p })
-  }
+  return createNerProgressTracker((progress) => {
+    void writeNerStatus({ state: 'downloading', progress })
+  })
 }
 
 async function writeSafeError(err: unknown): Promise<void> {
   const safe = toSafeNerError(err)
-  await writeNerStatus({
-    state: 'error',
-    progress: 0,
-    error: safe.message,
-    errorDetail: safe.detail,
-  })
+  // Keep a scrubbed technical line in storage; also log locally for debugging
+  // (filtered warn above only swallows the content-length noise).
+  console.error('[deja-ner]', safe.kind, safe.detail || safe.message)
+  await writeNerStatus(
+    {
+      state: 'error',
+      progress: 0,
+      error: safe.message,
+      errorDetail: safe.detail,
+    },
+    { resetProgress: true },
+  )
 }
 
 async function loadModel(): Promise<void> {
@@ -167,13 +148,16 @@ async function loadModel(): Promise<void> {
 
   loadPromise = (async () => {
     lockLocalWasmPaths()
-    await writeNerStatus({
-      state: 'downloading',
-      progress: 0,
-      error: undefined,
-      errorDetail: undefined,
-      modelId: NER_MODEL_ID,
-    })
+    await writeNerStatus(
+      {
+        state: 'downloading',
+        progress: 0,
+        error: undefined,
+        errorDetail: undefined,
+        modelId: NER_MODEL_ID,
+      },
+      { resetProgress: true },
+    )
     try {
       const onProgress = createProgressTracker()
       const pipe = await pipeline('token-classification', NER_MODEL_ID, {
@@ -220,7 +204,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       .then(() => sendResponse({ ok: true }))
       .catch((err) => {
         const safe = toSafeNerError(err)
-        sendResponse({ ok: false, error: safe.message })
+        // Include detail so the background bridge doesn't have to re-classify.
+        sendResponse({ ok: false, error: safe.message, errorDetail: safe.detail })
       })
     return true
   }

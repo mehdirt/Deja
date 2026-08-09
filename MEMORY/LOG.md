@@ -4,6 +4,8 @@ Append-only log of decisions and context from nontrivial work sessions. Read bef
 
 ## 2026-08-09
 
+**NER download ring + restore UX.** Progress tracker handles missing Content-Length (HF chunked CDN) via byte asymptote; SVG ring uses `<g rotate>` (CSS transform on circle unreliable). `writeNerStatus` won’t regress download progress unless `resetProgress`. Restore shows green check on success; empty Library offers “Restore from a backup” (reinstall path). Save-strength choice borders use accent intensity tiers (not traffic lights). Settings More-options keeps restore for non-empty libraries. Offscreen swallows Transformers’ content-length `console.warn` so Chrome’s extension Errors badge doesn’t scare users; background no longer double-wraps offscreen NER errors. NER load: recreate zombie offscreen; `env.useBrowserCache=false` (Cache API + ~100MB HF blob was failing as bare `network error` with progress stuck); map `network error` to network copy.
+
 **NER PII (opt-in).** Regex + vault first; optional on-device `Xenova/bert-base-NER` (q8) via Transformers.js in an offscreen document for names + street-like places (confidence ≥ 0.8). Extra Settings toggle for cities/countries (`[city_N]`, default off). Prefs `nerNamesPlaces` (default off); download on demand; no per-capture review. Fail-open if model not ready. Prompt text never uploaded.
 
 **NER CSP lock.** Transformers/ORT still tried jsDelivr for `ort-wasm-….mjs` (esp. Vite dev dep cache + wasmPaths overwrites). Fix: lock `env.backends.onnx.wasm.wasmPaths` to `chrome.runtime.getURL('onnx/')` via defineProperty (reject CDN / incomplete overwrites); exclude transformers from `optimizeDeps`; keep local `public/onnx/` assets. “Unable to determine content-length” from HF downloads is harmless.

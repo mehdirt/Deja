@@ -16,12 +16,21 @@ import {
   setMinor,
 } from '@/lib/db'
 import { readPrefs, onPrefsChange } from '@/lib/prefs'
+import { LIBRARY_CAP_DEFAULT } from '@/lib/libraryCap'
+import { restoreBackupFromText } from '@/lib/restoreBackup'
 import { buildIndex, searchPrompts } from '@/lib/search'
 import { usefulnessScore } from '@/lib/ranking'
 import { PromptCard } from '@/ui/PromptCard'
 import { SkeletonList } from '@/ui/Skeleton'
 import { ErrorRetry } from '@/ui/ErrorRetry'
-import { FavoriteIcon, ChevronIcon, SearchIcon, CloseIcon, LockIcon } from '@/ui/ActionIcons'
+import {
+  FavoriteIcon,
+  ChevronIcon,
+  SearchIcon,
+  CloseIcon,
+  LockIcon,
+  CheckCircleIcon,
+} from '@/ui/ActionIcons'
 import { CaptureHealthBadge } from '@/ui/CaptureHealthBadge'
 import { StarterPrompts } from '@/ui/StarterPrompts'
 import { useAsyncList } from '@/ui/useAsyncList'
@@ -76,15 +85,35 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const [selecting, setSelecting] = useState(false)
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set())
   const [undoBatch, setUndoBatch] = useState<number[] | null>(null)
+  const [libraryCap, setLibraryCap] = useState(LIBRARY_CAP_DEFAULT)
+  const [restoreMsg, setRestoreMsg] = useState<string | null>(null)
+  const [restoreOk, setRestoreOk] = useState(false)
 
   const undoTimer = useRef<number | undefined>(undefined)
+  const restoreFileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     // filterStrength === 'off' means the filter is disabled, so show every
     // prompt by default (the library's local equivalent of the old keepMinor).
-    void readPrefs().then((p) => setKeepMinor(p.filterStrength === 'off'))
-    return onPrefsChange((p) => setKeepMinor(p.filterStrength === 'off'))
+    const apply = (p: Awaited<ReturnType<typeof readPrefs>>) => {
+      setKeepMinor(p.filterStrength === 'off')
+      setLibraryCap(p.libraryCap)
+    }
+    void readPrefs().then(apply)
+    return onPrefsChange(apply)
   }, [])
+
+  const onRestoreFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setRestoreMsg(null)
+    setRestoreOk(false)
+    const result = await restoreBackupFromText(await file.text(), libraryCap)
+    setRestoreOk(result.ok)
+    setRestoreMsg(result.message)
+    if (result.ok && result.imported > 0) reload()
+  }
 
   const minorCount = useMemo(() => prompts.filter((p) => p.minor).length, [prompts])
   // Only show the platform row when the library actually spans more than one
@@ -613,6 +642,39 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
                     and it&apos;ll show up here on its own. Or borrow one of the starters below if
                     you&apos;d like a gentle first try.
                   </p>
+                </div>
+                <div className="mx-auto flex w-full max-w-md flex-col items-center gap-2">
+                  <p className="text-sm text-ink-soft">
+                    Reinstalling? Bring your prompts back from a backup file.
+                  </p>
+                  <input
+                    ref={restoreFileRef}
+                    type="file"
+                    accept="application/json,.json"
+                    onChange={onRestoreFile}
+                    className="hidden"
+                    aria-hidden
+                  />
+                  <button
+                    type="button"
+                    onClick={() => restoreFileRef.current?.click()}
+                    className="dj-btn px-3 py-1.5 text-sm"
+                  >
+                    Restore from a backup
+                  </button>
+                  {restoreMsg && (
+                    <span
+                      className={`dj-meta inline-flex items-center gap-1.5 ${
+                        restoreOk ? 'text-ok' : ''
+                      }`}
+                      role="status"
+                    >
+                      {restoreOk && (
+                        <CheckCircleIcon size={14} className="shrink-0 text-ok" />
+                      )}
+                      <span>{restoreMsg}</span>
+                    </span>
+                  )}
                 </div>
                 <StarterPrompts />
               </div>

@@ -39,22 +39,34 @@ async function pingOffscreen(): Promise<boolean> {
   }
 }
 
+async function createOffscreen(): Promise<void> {
+  const reason =
+    chrome.offscreen?.Reason?.WORKERS ?? ('WORKERS' as chrome.offscreen.Reason)
+  await chrome.offscreen.createDocument({
+    url: OFFSCREEN_PATH,
+    reasons: [reason],
+    justification: OFFSCREEN_JUSTIFICATION,
+  })
+}
+
 export async function ensureNerOffscreen(): Promise<void> {
+  // Dead/stale offscreen (hasDocument but no ping) must be recreated — otherwise
+  // we poll for a few seconds and fail forever on a zombie page.
   if (await hasOffscreen()) {
     if (await pingOffscreen()) return
-  } else {
-    const reason =
-      chrome.offscreen?.Reason?.WORKERS ?? ('WORKERS' as chrome.offscreen.Reason)
-    await chrome.offscreen.createDocument({
-      url: OFFSCREEN_PATH,
-      reasons: [reason],
-      justification: OFFSCREEN_JUSTIFICATION,
-    })
+    try {
+      await chrome.offscreen.closeDocument()
+    } catch {
+      /* ignore */
+    }
   }
-  // createDocument can resolve before the page's message listener is ready.
-  for (let i = 0; i < 40; i++) {
+
+  await createOffscreen()
+
+  // First boot parses a large Transformers bundle — allow longer than a couple seconds.
+  for (let i = 0; i < 100; i++) {
     if (await pingOffscreen()) return
-    await new Promise((r) => setTimeout(r, 50))
+    await new Promise((r) => setTimeout(r, 100))
   }
   throw new Error('Helper page did not become ready in time')
 }
@@ -64,27 +76,46 @@ export async function loadNerModel(): Promise<{ ok: boolean; error?: string }> {
   try {
     await ensureNerOffscreen()
     const resp = (await chrome.runtime.sendMessage({ type: 'NER_OFFSCREEN_LOAD' })) as
-      | { ok: boolean; error?: string }
+      | { ok: boolean; error?: string; errorDetail?: string }
       | undefined
     if (!resp?.ok) {
-      const safe = toSafeNerError(resp?.error ?? 'Could not load the helper')
-      await writeNerStatus({
-        state: 'error',
-        progress: 0,
-        error: safe.message,
-        errorDetail: safe.detail,
-      })
-      return { ok: false, error: safe.message }
+      // Prefer offscreen's already-scrubbed status / response — never re-classify
+      // a plain-language message into a second generic error (loses detail).
+      const status = await readNerStatus()
+      if (status.state === 'error' && status.error) {
+        return { ok: false, error: status.error }
+      }
+      const message =
+        typeof resp?.error === 'string' && resp.error
+          ? resp.error
+          : 'Something went wrong while getting the helper ready. Try again in a moment.'
+      const errorDetail =
+        typeof resp?.errorDetail === 'string' && resp.errorDetail
+          ? resp.errorDetail
+          : undefined
+      await writeNerStatus(
+        {
+          state: 'error',
+          progress: 0,
+          error: message,
+          errorDetail,
+        },
+        { resetProgress: true },
+      )
+      return { ok: false, error: message }
     }
     return { ok: true }
   } catch (err) {
     const safe = toSafeNerError(err)
-    await writeNerStatus({
-      state: 'error',
-      progress: 0,
-      error: safe.message,
-      errorDetail: safe.detail,
-    })
+    await writeNerStatus(
+      {
+        state: 'error',
+        progress: 0,
+        error: safe.message,
+        errorDetail: safe.detail,
+      },
+      { resetProgress: true },
+    )
     return { ok: false, error: safe.message }
   }
 }

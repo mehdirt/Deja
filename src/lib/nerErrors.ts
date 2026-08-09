@@ -58,7 +58,7 @@ export function toSafeNerError(raw: unknown): SafeNerError {
   }
 
   if (
-    /failed to fetch|networkerror|net::err_|load failed|aborted|timeout|econnreset|enotfound|offline/i.test(
+    /failed to fetch|network\s*error|networkerror|net::err_|load failed|aborted|timeout|econnreset|enotfound|offline|couldn’t reach the download server|couldn't reach the download server/i.test(
       lower,
     )
   ) {

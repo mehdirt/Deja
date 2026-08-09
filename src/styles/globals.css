@@ -454,6 +454,16 @@ html.dj-popup #root {
   .dj-choice-active .dj-choice-label {
     @apply text-accent;
   }
+  /* Save-strength tiers: accent intensity only — not traffic-light colors. */
+  .dj-choice-tier-off:not(.dj-choice-active) {
+    border-color: var(--dj-line);
+  }
+  .dj-choice-tier-balanced:not(.dj-choice-active) {
+    border-color: color-mix(in srgb, var(--dj-accent) 34%, var(--dj-line));
+  }
+  .dj-choice-tier-strict:not(.dj-choice-active) {
+    border-color: color-mix(in srgb, var(--dj-accent) 72%, var(--dj-line));
+  }
   .dj-row {
     @apply flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3.5 py-3.5;
   }

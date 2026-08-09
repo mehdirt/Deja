@@ -4,7 +4,6 @@ import {
   listPrompts,
   bulkUpdateText,
   exportAll,
-  importPrompts,
   purgeExpiredDeleted,
 } from '@/lib/db'
 import {
@@ -32,6 +31,7 @@ import {
   type NerStatus,
 } from '@/lib/nerStatus'
 import { buildMarkdown } from '@/lib/markdown'
+import { restoreBackupFromText } from '@/lib/restoreBackup'
 import { feedbackHref } from '@/lib/feedback'
 import { BugIcon, ChevronIcon, IdeaIcon, CheckCircleIcon, CrossCircleIcon } from '@/ui/ActionIcons'
 import {
@@ -147,7 +147,7 @@ function Switch({
   )
 }
 
-/** Progress ring — fills with real download progress (no percent label). */
+/** Progress ring — fills with real download progress. */
 function NerProgressRing({ progress }: { progress: number }) {
   const size = 16
   const stroke = 1.75
@@ -156,8 +156,9 @@ function NerProgressRing({ progress }: { progress: number }) {
   const clamped = Math.min(1, Math.max(0, progress))
   // Soft spin only before the first byte report; then determinate fill.
   const awaiting = clamped < 0.005
-  const fill = awaiting ? 0.2 : clamped
+  const fill = awaiting ? 0.22 : clamped
   const offset = c * (1 - fill)
+  const mid = size / 2
   return (
     <svg
       width={size}
@@ -167,27 +168,29 @@ function NerProgressRing({ progress }: { progress: number }) {
       aria-hidden="true"
     >
       <circle
-        cx={size / 2}
-        cy={size / 2}
+        cx={mid}
+        cy={mid}
         r={r}
         fill="none"
         stroke="currentColor"
         strokeWidth={stroke}
         className="text-line"
       />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={stroke}
-        strokeLinecap="round"
-        strokeDasharray={c}
-        strokeDashoffset={offset}
-        className="text-accent"
-        style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
-      />
+      {/* Rotate via <g> — CSS transform on SVG circle is unreliable in Chromium. */}
+      <g transform={`rotate(-90 ${mid} ${mid})`}>
+        <circle
+          cx={mid}
+          cy={mid}
+          r={r}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${c} ${c}`}
+          strokeDashoffset={offset}
+          className="text-accent"
+        />
+      </g>
     </svg>
   )
 }
@@ -214,18 +217,20 @@ function NerStatusGlyph({ active, status }: { active: boolean; status: NerStatus
     )
   }
   const pct = Math.round(Math.min(1, Math.max(0, status.progress)) * 100)
+  const hasPct = status.progress > 0.005
   return (
     <span
-      className="inline-flex shrink-0 text-accent"
-      title={status.progress > 0.005 ? `Downloading… ${pct}%` : 'Getting ready…'}
-      aria-label={
-        status.progress > 0.005
-          ? `Downloading, ${pct} percent`
-          : 'Getting the helper ready'
-      }
+      className="inline-flex shrink-0 items-center gap-1.5 text-accent"
+      title={hasPct ? `Downloading… ${pct}%` : 'Getting ready…'}
+      aria-label={hasPct ? `Downloading, ${pct} percent` : 'Getting the helper ready'}
       role="status"
     >
       <NerProgressRing progress={status.progress} />
+      {hasPct && (
+        <span className="text-[11px] font-medium tabular-nums leading-none tracking-tight">
+          {pct}%
+        </span>
+      )}
     </span>
   )
 }
@@ -337,6 +342,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
     mappings: Record<string, string>
   } | null>(null)
   const [importMsg, setImportMsg] = useState<string | null>(null)
+  const [importOk, setImportOk] = useState(false)
   const [promptCount, setPromptCount] = useState(0)
   const [libraryCap, setLibraryCap] = useState(LIBRARY_CAP_DEFAULT)
 
@@ -460,6 +466,8 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
       const kinds = { ...piiKinds, person: true, place: true }
       setPiiKinds(kinds)
       // Optimistic busy state so the ring appears the moment the switch flips.
+      // Don't write progress:0 here — that races the offscreen tracker and
+      // freezes the ring. loadModel owns the reset.
       setNerStatus((s) =>
         s.state === 'ready'
           ? s
@@ -471,12 +479,6 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
               errorDetail: undefined,
             },
       )
-      void writeNerStatus({
-        state: 'downloading',
-        progress: 0,
-        error: undefined,
-        errorDetail: undefined,
-      })
       await writePrefs({ nerNamesPlaces: true, piiKinds: kinds })
       void chrome.runtime.sendMessage({ type: 'NER_LOAD' }).catch(() => {})
     } else {
@@ -500,12 +502,15 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
       error: undefined,
       errorDetail: undefined,
     }))
-    void writeNerStatus({
-      state: 'downloading',
-      progress: 0,
-      error: undefined,
-      errorDetail: undefined,
-    })
+    void writeNerStatus(
+      {
+        state: 'downloading',
+        progress: 0,
+        error: undefined,
+        errorDetail: undefined,
+      },
+      { resetProgress: true },
+    )
     void chrome.runtime.sendMessage({ type: 'NER_LOAD' }).catch(() => {})
   }
 
@@ -662,30 +667,10 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
     e.target.value = '' // allow re-importing the same file
     if (!file) return
     setImportMsg(null)
-    try {
-      const parsed = JSON.parse(await file.text())
-      // A Deja backup is a JSON array of prompts. Anything else parses fine but
-      // isn't ours — say so plainly instead of reporting "imported 0", which
-      // reads like a successful no-op.
-      if (!Array.isArray(parsed)) {
-        setImportMsg("That file isn't a Deja backup.")
-        return
-      }
-      const res = await importPrompts(parsed)
-      let trimNote = ''
-      if (libraryCap > 0 && res.imported > 0) {
-        const trimmed = await trimLibraryToCap(libraryCap)
-        if (trimmed > 0) {
-          trimNote =
-            trimmed === 1
-              ? ' Removed 1 rarely used prompt to stay under your limit.'
-              : ` Removed ${trimmed} rarely used prompts to stay under your limit.`
-        }
-      }
-      setImportMsg(`Added ${res.imported}. Skipped ${res.skipped} you already had.${trimNote}`)
-    } catch {
-      setImportMsg("Couldn't read that file. It should be a backup from Deja.")
-    }
+    setImportOk(false)
+    const result = await restoreBackupFromText(await file.text(), libraryCap)
+    setImportOk(result.ok)
+    setImportMsg(result.message)
   }
 
   const hasRules = bl.domains.length > 0 || bl.patterns.length > 0
@@ -741,7 +726,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
               key={o.key}
               onClick={() => setFilter(o.key)}
               aria-pressed={strength === o.key}
-              className={`dj-choice ${strength === o.key ? 'dj-choice-active' : ''}`}
+              className={`dj-choice dj-choice-tier-${o.key} ${strength === o.key ? 'dj-choice-active' : ''}`}
             >
               <span className="dj-choice-label text-sm font-medium text-ink">{o.label}</span>
               <span className="text-[12px] leading-snug text-ink-soft">{o.hint}</span>
@@ -1239,7 +1224,19 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
               >
                 Choose a backup file
               </button>
-              {importMsg && <span className="dj-meta">{importMsg}</span>}
+              {importMsg && (
+                <span
+                  className={`dj-meta inline-flex min-w-0 items-center gap-1.5 ${
+                    importOk ? 'text-ok' : ''
+                  }`}
+                  role="status"
+                >
+                  {importOk && (
+                    <CheckCircleIcon size={14} className="shrink-0 text-ok" />
+                  )}
+                  <span className="min-w-0">{importMsg}</span>
+                </span>
+              )}
             </div>
           </Section>
 

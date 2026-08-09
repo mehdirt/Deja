@@ -28,5 +28,6 @@ describe('toSafeNerError', () => {
 
   it('maps network failures', () => {
     expect(toSafeNerError(new Error('Failed to fetch')).kind).toBe('network')
+    expect(toSafeNerError(new Error('network error')).kind).toBe('network')
   })
 })

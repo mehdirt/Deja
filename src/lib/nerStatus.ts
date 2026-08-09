@@ -57,9 +57,24 @@ export async function readNerStatus(): Promise<NerStatus> {
   }
 }
 
-export async function writeNerStatus(patch: Partial<NerStatus>): Promise<NerStatus> {
+export async function writeNerStatus(
+  patch: Partial<NerStatus>,
+  opts?: { /** Allow progress to drop (new download / retry). */ resetProgress?: boolean },
+): Promise<NerStatus> {
   const current = await readNerStatus()
-  const next = coerce({ ...current, ...patch })
+  // Settings may fire `progress: 0` while the offscreen tracker already advanced —
+  // never let a stale download write move the ring backwards.
+  const merged: Partial<NerStatus> = { ...patch }
+  if (
+    !opts?.resetProgress &&
+    current.state === 'downloading' &&
+    (merged.state === 'downloading' || merged.state === undefined) &&
+    typeof merged.progress === 'number' &&
+    merged.progress + 0.0001 < current.progress
+  ) {
+    merged.progress = current.progress
+  }
+  const next = coerce({ ...current, ...merged })
   try {
     await chrome.storage.local.set({ [KEY]: next })
   } catch {
