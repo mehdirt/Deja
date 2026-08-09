@@ -2,6 +2,10 @@
 
 Append-only log of decisions and context from nontrivial work sessions. Read before starting nontrivial work; append an entry after.
 
+## 2026-08-09
+
+Landing hero brand: dropped duplicate mark under the header logo. Winner from A/B lab — **name in H1**: “Your prompts are work. *deja* keeps them.” Lead no longer repeats “Deja”. Lab harness (`?lab=1`) removed after pick.
+
 ## 2026-08-08
 
 Dark Structure pass (mirror light): sunk `#0c0b12` below bg `#12111a`, surface `#1e1d28`, stronger line `#3f3c4a`, clearer soft/faint ink. Synced `globals.css`, site landing/privacy, resurface + toast overlays.

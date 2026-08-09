@@ -30,7 +30,7 @@
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Deja — your prompts are work. Stop losing them." />
+    <meta property="og:image:alt" content="Deja — your prompts are work. Deja keeps them." />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Deja — your prompts, every AI, one library" />
@@ -39,7 +39,7 @@
       content="Your prompts are work. Deja keeps them on your computer and quietly offers them back when you start to re-ask. Free, no account, no cloud."
     />
     <meta name="twitter:image" content="https://dejaprompts.netlify.app/og-image.jpg" />
-    <meta name="twitter:image:alt" content="Deja — your prompts are work. Stop losing them." />
+    <meta name="twitter:image:alt" content="Deja — your prompts are work. Deja keeps them." />
 
     <!-- Theme the browser chrome to match light/dark; let form controls follow too. -->
     <meta name="color-scheme" content="light dark" />
@@ -279,10 +279,7 @@
       }
       .hero-copy { grid-area: copy; }
       .hero-actions { grid-area: actions; }
-      .hero .hero-mark {
-        width: 48px; height: 48px; display: block; margin: 0 auto 4px;
-      }
-      .hero .eyebrow { display: block; margin: 10px 0 0; }
+      .hero .eyebrow { display: block; margin: 0; }
       .hero h1 {
         font-size: clamp(30px, 7.2vw, 44px); line-height: 1.06; letter-spacing: -0.03em;
         margin: 12px 0 12px; font-weight: 700; text-wrap: balance;
@@ -380,7 +377,6 @@
           text-align: left;
           align-items: center;
         }
-        .hero .hero-mark { margin: 0 0 2px; width: 52px; height: 52px; }
         .hero h1 {
           font-size: clamp(40px, 4.4vw, 56px); letter-spacing: -0.035em; margin: 14px 0 14px;
         }
@@ -992,16 +988,10 @@
       <section class="hero" aria-labelledby="hero-title">
         <div class="wrap hero-grid">
           <div class="hero-copy">
-            <svg class="hero-mark" width="52" height="52" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-              <rect width="32" height="32" rx="8" fill="var(--accent)" />
-              <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity="0.4" />
-              <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity="0.95" />
-              <rect x="15" y="17" width="2.4" height="3.6" rx="0.6" fill="var(--accent)" />
-            </svg>
             <span class="eyebrow">Your prompts · every AI · one library</span>
-            <h1 id="hero-title">Your prompts are work.<br />Stop <span class="accent">losing</span> them.</h1>
+            <h1 id="hero-title">Your prompts are work.<br /><span class="wordmark">de<span class="ja">ja</span></span> keeps them.</h1>
             <p class="lead">
-              Deja quietly saves what you ask — and offers it back the moment you start typing again.
+              Quietly saves what you ask — and offers it back the moment you start typing again.
             </p>
           </div>
 
