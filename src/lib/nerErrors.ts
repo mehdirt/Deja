@@ -58,14 +58,20 @@ export function toSafeNerError(raw: unknown): SafeNerError {
   }
 
   if (
-    /failed to fetch|network\s*error|networkerror|net::err_|load failed|aborted|timeout|econnreset|enotfound|offline|couldn’t reach the download server|couldn't reach the download server/i.test(
+    /failed to fetch|network\s*error|networkerror|net::err_|load failed|download failed|couldn’t download|couldn't download|aborted|timeout|econnreset|enotfound|offline|couldn’t reach the download server|couldn't reach the download server|interrupted|connection reset|incomplete/i.test(
       lower,
     )
   ) {
+    const detail = scrubNerErrorDetail(msg)
+    // Bare Chromium "network error" adds nothing useful in “What went wrong?”.
+    const useful =
+      detail && !/^(network error|failed to fetch|typeerror:\s*network error)$/i.test(detail)
+        ? detail
+        : undefined
     return {
       kind: 'network',
-      message: 'Couldn’t reach the download server. Check your connection and try again.',
-      detail: scrubNerErrorDetail(msg) || undefined,
+      message: 'Couldn’t finish the download. Check your connection and try again.',
+      detail: useful,
     }
   }
 

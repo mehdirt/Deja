@@ -1,7 +1,7 @@
 // Aggregate Transformers.js hub download callbacks into one 0–1 progress.
 // HF often omits Content-Length (chunked CDN) — then loaded===total every tick
-// and naive loaded/total stays stuck at 100%. We detect that and use a soft
-// byte budget so the Settings ring can actually fill.
+// and naive loaded/total stays stuck at 100%. Prefer the per-file `progress`
+// field (0–100) when it moves; fall back to a soft byte asymptote otherwise.
 
 /** Soft size hint for q8 bert-base-NER + tokenizer when Content-Length missing. */
 export const NER_DOWNLOAD_BYTE_HINT = 110 * 1024 * 1024
@@ -16,51 +16,6 @@ export type NerHubProgressItem = {
 
 export type NerProgressEmit = (progress: number) => void
 
-type FileProg = {
-  loaded: number
-  /** Declared Content-Length when known; else 0. */
-  total: number
-  known: boolean
-  done: boolean
-}
-
-function overallProgress(files: Map<string, FileProg>, byteHint: number): number {
-  if (files.size === 0) return 0
-
-  let knownLoaded = 0
-  let knownTotal = 0
-  let unknownLoaded = 0
-  let unknownFiles = 0
-
-  for (const f of files.values()) {
-    if (f.done) {
-      const t = f.total > 0 ? f.total : Math.max(f.loaded, 1)
-      knownLoaded += t
-      knownTotal += t
-      continue
-    }
-    if (f.known && f.total > 0) {
-      knownLoaded += Math.min(f.loaded, f.total)
-      knownTotal += f.total
-    } else {
-      unknownFiles += 1
-      unknownLoaded += f.loaded
-    }
-  }
-
-  if (unknownFiles === 0) {
-    if (knownTotal <= 0) return 0
-    return Math.min(0.99, knownLoaded / knownTotal)
-  }
-
-  // Budget each unknown file at byteHint so the ring moves as bytes arrive.
-  const unknownTotal = unknownFiles * byteHint
-  const loaded = knownLoaded + Math.min(unknownLoaded, unknownTotal * 0.95)
-  const total = knownTotal + unknownTotal
-  if (total <= 0) return 0
-  return Math.min(0.99, loaded / total)
-}
-
 /**
  * Returns a callback suitable for `pipeline(..., { progress_callback })`.
  * Progress is monotonic 0–0.99 until the caller marks ready.
@@ -70,30 +25,44 @@ export function createNerProgressTracker(
   opts?: { byteHint?: number; minDelta?: number; minMs?: number },
 ): (item: NerHubProgressItem) => void {
   const byteHint = opts?.byteHint ?? NER_DOWNLOAD_BYTE_HINT
-  const minDelta = opts?.minDelta ?? 0.01
-  const minMs = opts?.minMs ?? 80
+  const minDelta = opts?.minDelta ?? 0.005
+  const minMs = opts?.minMs ?? 50
 
-  const files = new Map<string, FileProg>()
+  /** Per-file fraction 0–1. */
+  const filePct = new Map<string, number>()
+  const fileLoaded = new Map<string, number>()
+  /** Files whose Content-Length looks real (loaded < total at some point). */
+  const knownLength = new Map<string, boolean>()
+
   let lastWritten = -1
   let lastAt = 0
 
   const flush = (force = false) => {
-    const p = overallProgress(files, byteHint)
+    const keys = [...filePct.keys()]
+    if (keys.length === 0) return
+
+    let sum = 0
+    for (const k of keys) sum += filePct.get(k) ?? 0
+    let p = sum / keys.length
+
+    // If every active file looks "full" only because total grew with loaded,
+    // prefer a global byte asymptote so the ring still moves.
+    const allFakeFull =
+      keys.length > 0 &&
+      keys.every((k) => !knownLength.get(k) && (filePct.get(k) ?? 0) >= 0.9)
+    if (allFakeFull) {
+      let bytes = 0
+      for (const b of fileLoaded.values()) bytes += b
+      p = Math.min(0.95, 1 - 1 / (1 + bytes / Math.max(byteHint, 1)))
+    }
+
+    p = Math.min(0.99, Math.max(0, p))
     const now = Date.now()
     if (!force && p + 0.0001 < lastWritten) return
     if (!force && p - lastWritten < minDelta && now - lastAt < minMs && p < 0.99) return
     lastWritten = p
     lastAt = now
     emit(p)
-  }
-
-  const ensure = (file: string): FileProg => {
-    let f = files.get(file)
-    if (!f) {
-      f = { loaded: 0, total: 0, known: false, done: false }
-      files.set(file, f)
-    }
-    return f
   }
 
   return (item) => {
@@ -105,46 +74,44 @@ export function createNerProgressTracker(
           : '_unknown'
 
     if (item.status === 'initiate' || item.status === 'download') {
-      const existed = files.has(file)
-      ensure(file)
-      // New file expands the denominator — allow the aggregate to drop so later
-      // bytes can move the ring again (instead of sticking at ~100%).
-      if (!existed) lastWritten = -1
-      flush()
-      return
-    }
-
-    if (item.status === 'progress') {
-      const f = ensure(file)
-      if (f.done) return
-
-      const loaded = typeof item.loaded === 'number' ? item.loaded : 0
-      const total = typeof item.total === 'number' ? item.total : 0
-      f.loaded = Math.max(f.loaded, loaded)
-
-      if (total > 0 && loaded < total) {
-        f.known = true
-        f.total = total
-      } else if (f.known && total > 0) {
-        f.total = Math.max(f.total, total)
-      } else if (total > 0 && loaded >= total && !f.known) {
-        // Missing Content-Length: total expands with each chunk.
-        f.known = false
-        f.total = 0
-      } else if (!f.known && typeof item.progress === 'number' && total <= 0) {
-        const raw = item.progress > 1 ? item.progress / 100 : item.progress
-        f.loaded = Math.max(f.loaded, raw * byteHint)
+      if (!filePct.has(file)) {
+        filePct.set(file, 0)
+        lastWritten = -1
       }
       flush()
       return
     }
 
+    if (item.status === 'progress') {
+      const loaded = typeof item.loaded === 'number' ? item.loaded : 0
+      const total = typeof item.total === 'number' ? item.total : 0
+      if (loaded > 0) fileLoaded.set(file, Math.max(fileLoaded.get(file) ?? 0, loaded))
+
+      let pct = filePct.get(file) ?? 0
+
+      if (total > 0 && loaded < total) {
+        knownLength.set(file, true)
+        pct = loaded / total
+      } else if (knownLength.get(file) && total > 0) {
+        pct = Math.min(1, loaded / total)
+      } else if (typeof item.progress === 'number' && !(total > 0 && loaded >= total && item.progress >= 99)) {
+        // Normal HF progress 0–100 (or 0–1). Ignore the "always 100" unknown-length case.
+        const raw = item.progress > 1 ? item.progress / 100 : item.progress
+        pct = Math.min(0.99, Math.max(pct, raw))
+      } else if (total > 0 && loaded >= total) {
+        // Missing Content-Length: total expands with each chunk → always ~100%.
+        knownLength.set(file, false)
+        pct = Math.min(0.95, 1 - 1 / (1 + loaded / byteHint))
+      }
+
+      filePct.set(file, Math.max(filePct.get(file) ?? 0, pct))
+      flush()
+      return
+    }
+
     if (item.status === 'done') {
-      const f = ensure(file)
-      f.done = true
-      if (f.total <= 0) f.total = Math.max(f.loaded, 1)
-      f.loaded = f.total
-      f.known = true
+      knownLength.set(file, true)
+      filePct.set(file, 1)
       flush(true)
     }
   }

@@ -25,6 +25,7 @@ import { clearPiiVault, mergePiiVault, readPiiVault } from '@/lib/piiVault'
 import { NER_SIZE_HINT } from '@/lib/nerPii'
 import {
   DEFAULT_NER_STATUS,
+  mergeNerStatusUi,
   onNerStatusChange,
   readNerStatus,
   writeNerStatus,
@@ -154,8 +155,12 @@ function NerProgressRing({ progress }: { progress: number }) {
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
   const clamped = Math.min(1, Math.max(0, progress))
-  // Soft spin only before the first byte report; then determinate fill.
-  const awaiting = clamped < 0.005
+  // Latch out of the indeterminate spinner once bytes arrive — never flip back
+  // mid-download when a stale 0% status briefly wins a race.
+  const sawBytesRef = useRef(false)
+  if (clamped < 0.005) sawBytesRef.current = false
+  else sawBytesRef.current = true
+  const awaiting = !sawBytesRef.current
   const fill = awaiting ? 0.22 : clamped
   const offset = c * (1 - fill)
   const mid = size / 2
@@ -217,25 +222,22 @@ function NerStatusGlyph({ active, status }: { active: boolean; status: NerStatus
     )
   }
   const pct = Math.round(Math.min(1, Math.max(0, status.progress)) * 100)
-  const hasPct = status.progress > 0.005
   return (
     <span
       className="inline-flex shrink-0 items-center gap-1.5 text-accent"
-      title={hasPct ? `Downloading… ${pct}%` : 'Getting ready…'}
-      aria-label={hasPct ? `Downloading, ${pct} percent` : 'Getting the helper ready'}
+      title={pct > 0 ? `Downloading… ${pct}%` : 'Getting ready…'}
+      aria-label={pct > 0 ? `Downloading, ${pct} percent` : 'Getting the helper ready'}
       role="status"
     >
       <NerProgressRing progress={status.progress} />
-      {hasPct && (
-        <span className="text-[11px] font-medium tabular-nums leading-none tracking-tight">
-          {pct}%
-        </span>
-      )}
+      <span className="min-w-[2.25ch] text-[11px] font-medium tabular-nums leading-none tracking-tight">
+        {pct}%
+      </span>
     </span>
   )
 }
 
-/** Error follow-up under the helper description — busy state is the ring only. */
+/** Follow-up under the helper: error retry, or a calm note when the download stalls. */
 function NerStatusFollowUp({
   active,
   status,
@@ -246,7 +248,39 @@ function NerStatusFollowUp({
   onRetry: () => void
 }) {
   const [showDetails, setShowDetails] = useState(false)
+  const [stalled, setStalled] = useState(false)
+  const lastProgressRef = useRef({ progress: status.progress, at: Date.now() })
+
+  useEffect(() => {
+    if (!active || status.state !== 'downloading') {
+      setStalled(false)
+      lastProgressRef.current = { progress: status.progress, at: Date.now() }
+      return
+    }
+    const prev = lastProgressRef.current
+    if (status.progress > prev.progress + 0.005) {
+      lastProgressRef.current = { progress: status.progress, at: Date.now() }
+      setStalled(false)
+    }
+    const id = window.setInterval(() => {
+      if (Date.now() - lastProgressRef.current.at > 25_000) setStalled(true)
+    }, 2_000)
+    return () => window.clearInterval(id)
+  }, [active, status.state, status.progress])
+
   if (!active) return null
+
+  if (status.state === 'downloading' && stalled) {
+    return (
+      <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1" aria-live="polite">
+        <p className="text-xs text-ink-soft">Still working — large file, may take a few minutes.</p>
+        <button type="button" onClick={onRetry} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
+          Start over
+        </button>
+      </div>
+    )
+  }
+
   if (status.state !== 'error') return null
 
   return (
@@ -382,9 +416,48 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   }, [])
 
   useEffect(() => {
-    void readNerStatus().then(setNerStatus)
-    return onNerStatusChange(setNerStatus)
+    void readNerStatus().then((s) => setNerStatus((prev) => mergeNerStatusUi(prev, s)))
+    return onNerStatusChange((s) => setNerStatus((prev) => mergeNerStatusUi(prev, s)))
   }, [])
+
+  // Live progress from the offscreen downloader (storage is the durable backup).
+  useEffect(() => {
+    const onMsg = (message: { type?: string; progress?: number }) => {
+      if (message?.type !== 'NER_DOWNLOAD_PROGRESS') return
+      if (typeof message.progress !== 'number' || !Number.isFinite(message.progress)) return
+      const progress = Math.min(1, Math.max(0, message.progress))
+      setNerStatus((s) =>
+        mergeNerStatusUi(s, {
+          ...s,
+          state: 'downloading',
+          progress,
+          error: undefined,
+          errorDetail: undefined,
+        }),
+      )
+    }
+    try {
+      chrome.runtime.onMessage.addListener(onMsg)
+    } catch {
+      return () => {}
+    }
+    return () => {
+      try {
+        chrome.runtime.onMessage.removeListener(onMsg)
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [])
+
+  // Poll while downloading — backstop if a progress message is missed.
+  useEffect(() => {
+    if (!nerNamesPlaces || nerStatus.state !== 'downloading') return
+    const id = window.setInterval(() => {
+      void readNerStatus().then((s) => setNerStatus((prev) => mergeNerStatusUi(prev, s)))
+    }, 800)
+    return () => window.clearInterval(id)
+  }, [nerNamesPlaces, nerStatus.state])
 
   useEffect(() => {
     void readPiiVault().then((v) => setVaultCount(Object.keys(v).length))
@@ -466,21 +539,26 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
       const kinds = { ...piiKinds, person: true, place: true }
       setPiiKinds(kinds)
       // Optimistic busy state so the ring appears the moment the switch flips.
-      // Don't write progress:0 here — that races the offscreen tracker and
-      // freezes the ring. loadModel owns the reset.
+      // Force a fresh load so a hung prior attempt can't leave the ring at 0%.
       setNerStatus((s) =>
         s.state === 'ready'
           ? s
-          : {
-              ...s,
-              state: 'downloading',
-              progress: s.progress || 0,
-              error: undefined,
-              errorDetail: undefined,
-            },
+          : mergeNerStatusUi(
+              s,
+              {
+                ...s,
+                state: 'downloading',
+                progress: 0,
+                error: undefined,
+                errorDetail: undefined,
+              },
+              { reset: true },
+            ),
       )
       await writePrefs({ nerNamesPlaces: true, piiKinds: kinds })
-      void chrome.runtime.sendMessage({ type: 'NER_LOAD' }).catch(() => {})
+      void chrome.runtime
+        .sendMessage({ type: 'NER_LOAD', force: true })
+        .catch(() => {})
     } else {
       await writePrefs({ nerNamesPlaces: false })
     }
@@ -495,13 +573,19 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   }
 
   const retryNerDownload = () => {
-    setNerStatus((s) => ({
-      ...s,
-      state: 'downloading',
-      progress: 0,
-      error: undefined,
-      errorDetail: undefined,
-    }))
+    setNerStatus((s) =>
+      mergeNerStatusUi(
+        s,
+        {
+          ...s,
+          state: 'downloading',
+          progress: 0,
+          error: undefined,
+          errorDetail: undefined,
+        },
+        { reset: true },
+      ),
+    )
     void writeNerStatus(
       {
         state: 'downloading',
@@ -511,7 +595,9 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
       },
       { resetProgress: true },
     )
-    void chrome.runtime.sendMessage({ type: 'NER_LOAD' }).catch(() => {})
+    void chrome.runtime
+      .sendMessage({ type: 'NER_LOAD', force: true })
+      .catch(() => {})
   }
 
   const togglePiiKind = async (k: PiiKind) => {

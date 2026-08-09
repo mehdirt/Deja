@@ -57,30 +57,48 @@ export async function readNerStatus(): Promise<NerStatus> {
   }
 }
 
-export async function writeNerStatus(
+/** In-process peak so rapid offscreen ticks don't regress via read/write races. */
+let peakDownloadProgress = 0
+
+// Serialize RMW within one context. Concurrent `void writeNerStatus(...)` from
+// progress ticks otherwise let an older write land after a newer one and snap
+// storage (and the Settings ring) back to 0%.
+let writeChain: Promise<void> = Promise.resolve()
+
+export function writeNerStatus(
   patch: Partial<NerStatus>,
   opts?: { /** Allow progress to drop (new download / retry). */ resetProgress?: boolean },
 ): Promise<NerStatus> {
-  const current = await readNerStatus()
-  // Settings may fire `progress: 0` while the offscreen tracker already advanced —
-  // never let a stale download write move the ring backwards.
-  const merged: Partial<NerStatus> = { ...patch }
-  if (
-    !opts?.resetProgress &&
-    current.state === 'downloading' &&
-    (merged.state === 'downloading' || merged.state === undefined) &&
-    typeof merged.progress === 'number' &&
-    merged.progress + 0.0001 < current.progress
-  ) {
-    merged.progress = current.progress
-  }
-  const next = coerce({ ...current, ...merged })
-  try {
-    await chrome.storage.local.set({ [KEY]: next })
-  } catch {
-    /* never throw into capture */
-  }
-  return next
+  const done = writeChain.catch(() => {}).then(async () => {
+    const current = await readNerStatus()
+    // Settings may fire `progress: 0` while the offscreen tracker already advanced —
+    // never let a stale download write move the ring backwards.
+    const merged: Partial<NerStatus> = { ...patch }
+    if (opts?.resetProgress) {
+      peakDownloadProgress = typeof merged.progress === 'number' ? merged.progress : 0
+    }
+    if (
+      !opts?.resetProgress &&
+      (merged.state === 'downloading' || current.state === 'downloading') &&
+      typeof merged.progress === 'number'
+    ) {
+      peakDownloadProgress = Math.max(peakDownloadProgress, current.progress, merged.progress)
+      merged.progress = peakDownloadProgress
+    }
+    if (merged.state === 'ready') peakDownloadProgress = 1
+    if (merged.state === 'error' || merged.state === 'off') {
+      if (opts?.resetProgress || merged.state === 'off') peakDownloadProgress = 0
+    }
+    const next = coerce({ ...current, ...merged })
+    try {
+      await chrome.storage.local.set({ [KEY]: next })
+    } catch {
+      /* never throw into capture */
+    }
+    return next
+  })
+  writeChain = done.then(() => {}).catch(() => {})
+  return done
 }
 
 export function onNerStatusChange(cb: (status: NerStatus) => void): () => void {
@@ -99,4 +117,21 @@ export function onNerStatusChange(cb: (status: NerStatus) => void): () => void {
       /* ignore */
     }
   }
+}
+
+/**
+ * Merge a status update into UI state without snapping a live download back to
+ * the indeterminate 0% spinner. Pass `reset: true` for an intentional restart.
+ */
+export function mergeNerStatusUi(
+  prev: NerStatus,
+  next: NerStatus,
+  opts?: { reset?: boolean },
+): NerStatus {
+  if (opts?.reset) return next
+  if (next.state === 'ready' || next.state === 'error' || next.state === 'off') return next
+  if (next.state === 'downloading' && prev.state === 'downloading') {
+    return { ...next, progress: Math.max(prev.progress, next.progress) }
+  }
+  return next
 }

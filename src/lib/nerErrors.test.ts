@@ -30,4 +30,11 @@ describe('toSafeNerError', () => {
     expect(toSafeNerError(new Error('Failed to fetch')).kind).toBe('network')
     expect(toSafeNerError(new Error('network error')).kind).toBe('network')
   })
+
+  it('omits useless bare network-error detail', () => {
+    expect(toSafeNerError(new Error('network error')).detail).toBeUndefined()
+    expect(toSafeNerError(new Error('Couldn’t download onnx/model_quantized.onnx: boom')).detail).toMatch(
+      /model_quantized/,
+    )
+  })
 })
