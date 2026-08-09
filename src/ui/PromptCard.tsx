@@ -83,7 +83,17 @@ export function PromptCard({
     <div
       className={`dj-card flex flex-col gap-2 p-4 ${
         checked ? 'ring-2 ring-accent/60' : ''
-      } ${minor ? 'opacity-70' : ''}`}
+      } ${selectable ? 'cursor-pointer' : ''} ${minor ? 'opacity-70' : ''}`}
+      onClick={
+        selectable
+          ? (e) => {
+              // Whole card toggles selection; ignore nested buttons/links/inputs.
+              const t = e.target as HTMLElement
+              if (t.closest('button, a, input, label')) return
+              onToggleCheck?.(prompt)
+            }
+          : undefined
+      }
     >
       <div className="flex min-w-0 items-center justify-between gap-2">
         <span className="flex min-w-0 flex-wrap items-center gap-2">
@@ -97,7 +107,7 @@ export function PromptCard({
                 checked={!!checked}
                 onChange={() => onToggleCheck?.(prompt)}
                 aria-label={`Select prompt: "${truncate(prompt.text, 40)}"`}
-                className="h-3.5 w-3.5 accent-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="h-4 w-4 accent-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               />
             </label>
           )}

@@ -95,7 +95,6 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
     (favoritesOnly ? 1 : 0) +
     (sort !== 'newest' ? 1 : 0) +
     activeTags.length +
-    (selecting ? 1 : 0) +
     (showMinor ? 1 : 0)
   // Headline count reflects the current scope: with minors hidden, don't count
   // them (the "filtered (N)" chip surfaces them separately) so the number always
@@ -245,6 +244,37 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
     setCheckedIds(new Set())
   }, [])
 
+  // Ids in the current list (filters + search). Select all / counts use this set.
+  const selectableIds = useMemo(
+    () => visible.map((p) => p.id).filter((id): id is number => id != null),
+    [visible],
+  )
+  const allVisibleSelected =
+    selectableIds.length > 0 && selectableIds.every((id) => checkedIds.has(id))
+
+  const selectAllVisible = useCallback(() => {
+    setCheckedIds(new Set(selectableIds))
+  }, [selectableIds])
+
+  const clearSelection = useCallback(() => {
+    setCheckedIds(new Set())
+  }, [])
+
+  // Drop checks that fell out of the current view (filter/search changed).
+  useEffect(() => {
+    if (!selecting) return
+    const allowed = new Set(selectableIds)
+    setCheckedIds((prev) => {
+      let changed = false
+      const next = new Set<number>()
+      for (const id of prev) {
+        if (allowed.has(id)) next.add(id)
+        else changed = true
+      }
+      return changed ? next : prev
+    })
+  }, [selecting, selectableIds])
+
   const onBulkDelete = useCallback(async () => {
     const ids = [...checkedIds]
     if (!ids.length) return
@@ -321,7 +351,7 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
           </div>
 
           {prompts.length > 0 && (
-            <details className="dj-filter group" {...(selecting ? { open: true } : {})}>
+            <details className="dj-filter group">
               <summary className="dj-filter-summary">
                 <span className="inline-flex min-w-0 items-center gap-2">
                   <span className="text-sm font-medium">Filter &amp; sort</span>
@@ -449,29 +479,11 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
                   </div>
                 )}
 
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
-                  {selecting ? (
-                    <>
-                      <span className="dj-meta">{checkedIds.size} selected</span>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={exitSelecting}
-                          className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={onBulkDelete}
-                          disabled={checkedIds.size === 0}
-                          className="dj-btn px-2 py-1 text-xs hover:text-danger disabled:opacity-40"
-                        >
-                          Delete selected
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-2">
+                {(!selecting || (!keepMinor && minorCount > 0)) && (
+                  <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
+                    {!selecting && (
                       <button
+                        type="button"
                         onClick={() => setSelecting(true)}
                         className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
                       >
@@ -490,28 +502,80 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
                           <rect x="9" y="2" width="5" height="5" rx="1" />
                           <path d="M2.5 11.5h5M11 9.5l1 1.5 2.5-3" />
                         </svg>
-                        Select several
+                        Select a few
                       </button>
-                      {!keepMinor && minorCount > 0 && (
-                        <button
-                          onClick={() => setShowMinor((v) => !v)}
-                          aria-pressed={showMinor}
-                          title="Short one-offs Deja used to hide instead of skipping — keep or delete them"
-                          className={`dj-btn dj-btn-ghost px-2 py-1 text-xs ${
-                            showMinor ? 'text-ink' : 'text-ink-faint'
-                          }`}
-                        >
-                          {showMinor ? 'Hide short ones' : `Short ones (${minorCount})`}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    )}
+                    {!keepMinor && minorCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowMinor((v) => !v)}
+                        aria-pressed={showMinor}
+                        title="Short one-offs Deja used to hide instead of skipping — keep or delete them"
+                        className={`dj-btn dj-btn-ghost px-2 py-1 text-xs ${
+                          showMinor ? 'text-ink' : 'text-ink-faint'
+                        }`}
+                      >
+                        {showMinor ? 'Hide short ones' : `Short ones (${minorCount})`}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </details>
           )}
         </div>
       </div>
+
+      {selecting && (
+        <div
+          role="region"
+          aria-label="Selecting prompts"
+          className="dj-enter-fast sticky top-0 z-10 flex flex-col gap-3 rounded-card border border-accent/30 bg-accent-soft px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-ink">
+              <span className="tabular-nums">{checkedIds.size}</span>
+              <span className="font-normal text-ink-soft">
+                {' '}
+                of <span className="tabular-nums">{selectableIds.length}</span>
+              </span>{' '}
+              selected
+            </p>
+            <p className="dj-meta mt-0.5">
+              Tick the ones to remove. You can undo for a few seconds after.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={allVisibleSelected ? clearSelection : selectAllVisible}
+              disabled={selectableIds.length === 0}
+              className="dj-btn dj-btn-ghost px-2.5 py-1.5 text-xs disabled:opacity-40"
+            >
+              {allVisibleSelected ? 'Clear selection' : 'Select all'}
+            </button>
+            <button
+              type="button"
+              onClick={onBulkDelete}
+              disabled={checkedIds.size === 0}
+              className="dj-btn px-2.5 py-1.5 text-xs hover:border-danger hover:text-danger disabled:opacity-40"
+            >
+              {checkedIds.size === 0
+                ? 'Delete'
+                : `Delete ${checkedIds.size} ${checkedIds.size === 1 ? 'prompt' : 'prompts'}`}
+            </button>
+            <button
+              type="button"
+              onClick={exitSelecting}
+              aria-label="Stop selecting"
+              title="Stop selecting"
+              className="dj-btn dj-btn-ghost p-1.5"
+            >
+              <CloseIcon size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {undoId != null && (
         <div className="dj-enter-fast flex flex-wrap items-center justify-between gap-2 rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
@@ -564,12 +628,12 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
               <PromptCard
                 prompt={p}
                 onCopy={onCopy}
-                onDelete={onDelete}
-                onTogglePin={onTogglePin}
-                onAddTag={onAddTag}
-                onRemoveTag={onRemoveTag}
+                onDelete={selecting ? undefined : onDelete}
+                onTogglePin={selecting ? undefined : onTogglePin}
+                onAddTag={selecting ? undefined : onAddTag}
+                onRemoveTag={selecting ? undefined : onRemoveTag}
                 onTagClick={onTagClick}
-                onKeepMinor={onKeepMinor}
+                onKeepMinor={selecting ? undefined : onKeepMinor}
                 activeTags={activeTags}
                 selectable={selecting}
                 checked={p.id != null && checkedIds.has(p.id)}
