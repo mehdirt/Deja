@@ -711,16 +711,16 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
               <label className="text-xs text-ink-soft" htmlFor="bl-domain">
                 Sites to skip
               </label>
-              <div className="flex gap-2">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
                 <input
                   id="bl-domain"
                   value={domainInput}
                   onChange={(e) => setDomainInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addDomain()}
                   placeholder="claude.ai"
-                  className="dj-input text-sm"
+                  className="dj-input min-w-0 flex-1 text-sm"
                 />
-                <button onClick={addDomain} className="dj-btn shrink-0 px-3 py-1 text-xs">
+                <button onClick={addDomain} className="dj-btn w-fit shrink-0 px-3 py-1 text-xs">
                   Never save
                 </button>
               </div>
@@ -749,7 +749,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
                   (regular expressions — leave alone if unsure)
                 </span>
               </label>
-              <div className="flex gap-2">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
                 <input
                   id="bl-pattern"
                   value={patternInput}
@@ -759,9 +759,9 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
                   }}
                   onKeyDown={(e) => e.key === 'Enter' && addPattern()}
                   placeholder="sk-[a-zA-Z0-9]{20,}"
-                  className="dj-input font-mono text-sm"
+                  className="dj-input min-w-0 flex-1 font-mono text-sm"
                 />
-                <button onClick={addPattern} className="dj-btn shrink-0 px-3 py-1 text-xs">
+                <button onClick={addPattern} className="dj-btn w-fit shrink-0 px-3 py-1 text-xs">
                   Add
                 </button>
               </div>

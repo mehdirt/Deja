@@ -281,7 +281,7 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex items-start justify-between gap-3">
+      <header className="flex flex-wrap items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">
             <span className="tabular-nums">{shownCount}</span>{' '}
@@ -449,11 +449,11 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between gap-2 border-t border-line pt-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
                   {selecting ? (
                     <>
                       <span className="dj-meta">{checkedIds.size} selected</span>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           onClick={exitSelecting}
                           className="dj-btn dj-btn-ghost px-2 py-1 text-xs"
@@ -514,20 +514,20 @@ export function Library({ onOpenSettings }: { onOpenSettings?: () => void }) {
       </div>
 
       {undoId != null && (
-        <div className="dj-enter-fast flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
-          <span className="text-ink-soft">Prompt deleted — you can undo if that was a slip.</span>
-          <button onClick={onUndoDelete} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
+        <div className="dj-enter-fast flex flex-wrap items-center justify-between gap-2 rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
+          <span className="min-w-0 text-ink-soft">Prompt deleted — you can undo if that was a slip.</span>
+          <button onClick={onUndoDelete} className="dj-btn dj-btn-ghost shrink-0 px-2 py-1 text-xs">
             Undo
           </button>
         </div>
       )}
 
       {undoBatch != null && (
-        <div className="dj-enter-fast flex items-center justify-between rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
-          <span className="text-ink-soft">
+        <div className="dj-enter-fast flex flex-wrap items-center justify-between gap-2 rounded-btn border border-line bg-sunk px-3 py-2 text-sm">
+          <span className="min-w-0 text-ink-soft">
             {undoBatch.length} {undoBatch.length === 1 ? 'prompt' : 'prompts'} deleted.
           </span>
-          <button onClick={onUndoBatch} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
+          <button onClick={onUndoBatch} className="dj-btn dj-btn-ghost shrink-0 px-2 py-1 text-xs">
             Undo
           </button>
         </div>

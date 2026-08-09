@@ -85,8 +85,8 @@ export function PromptCard({
         checked ? 'ring-2 ring-accent/60' : ''
       } ${minor ? 'opacity-70' : ''}`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <span className="flex min-w-0 flex-wrap items-center gap-2">
           {selectable && (
             // Padding + negative margin enlarges the tap target without
             // shifting layout — the 14px visual checkbox alone is too small

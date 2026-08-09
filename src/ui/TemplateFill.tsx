@@ -46,7 +46,7 @@ export function TemplateFill({ text, onFilled, onCancel }: Props) {
         {result}
       </p>
 
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <span className="dj-meta mr-auto">
           {remaining === 0
             ? 'All filled in — lovely ✨'

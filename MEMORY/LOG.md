@@ -4,6 +4,8 @@ Append-only log of decisions and context from nontrivial work sessions. Read bef
 
 ## 2026-08-09
 
+Options/popup responsive harden: narrow options header stacks (logo above nav) so `justify-between` wrap no longer pins Privacy to the viewport edge; shell `px-4 sm:px-6` + `overflow-x: clip`; prompt/md `overflow-wrap: anywhere`; starter cards / blocklist inputs / undo banners / pause row wrap cleanly; code fences still scroll inside the card.
+
 Landing hero brand: dropped duplicate mark under the header logo. Winner from A/B lab — **name in H1**: “Your prompts are work. *deja* keeps them.” Lead no longer repeats “Deja”. Lab harness (`?lab=1`) removed after pick.
 
 ## 2026-08-08

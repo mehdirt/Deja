@@ -132,6 +132,14 @@ body::before {
   z-index: 1;
 }
 
+/* Options tab: never sprout a horizontal page scrollbar when a flex child
+   misbehaves. Popup keeps its own overflow:hidden pin below. */
+html:not(.dj-popup),
+html:not(.dj-popup) body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 /* Toolbar popup: fixed width, no document scrollbar. Inner list scrolls. */
 html.dj-popup,
 html.dj-popup body {
@@ -170,11 +178,13 @@ html.dj-popup #root {
      person reads, not a code listing. */
   .dj-prompt {
     @apply whitespace-pre-wrap break-words text-[15px] leading-[1.6] text-ink;
+    overflow-wrap: anywhere;
   }
 
   /* Markdown prompt body (Library cards). Prose stays sans; code uses mono. */
   .dj-md {
     @apply break-words text-[15px] leading-[1.6] text-ink;
+    overflow-wrap: anywhere;
   }
   .dj-md > :first-child {
     margin-top: 0;
@@ -445,10 +455,10 @@ html.dj-popup #root {
     @apply text-accent;
   }
   .dj-row {
-    @apply flex items-center justify-between gap-3 px-3.5 py-3.5;
+    @apply flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3.5 py-3.5;
   }
   .dj-page-title {
-    @apply text-[22px] font-semibold text-ink;
+    @apply text-[20px] font-semibold text-ink sm:text-[22px];
     letter-spacing: -0.025em;
     line-height: 1.25;
   }

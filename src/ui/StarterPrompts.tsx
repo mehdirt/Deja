@@ -34,15 +34,15 @@ export function StarterPrompts() {
 
       <ul className="flex flex-col gap-2">
         {STARTER_PROMPTS.map((s, i) => (
-          <li key={i} className="dj-card flex flex-col gap-2 p-3">
-            <div className="flex items-start justify-between gap-3">
+          <li key={i} className="dj-card flex min-w-0 flex-col gap-2 p-3">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
               <div className="flex min-w-0 flex-col gap-1.5">
                 <span className="dj-chip w-fit">{s.kind}</span>
                 <p className="dj-prompt text-[13px]">{s.text}</p>
               </div>
               <button
                 onClick={() => setOpen((o) => (o === i ? null : i))}
-                className="dj-btn dj-btn-primary flex-none px-2 py-1 text-xs"
+                className="dj-btn dj-btn-primary w-fit flex-none px-2 py-1 text-xs"
               >
                 {copied === i ? 'Copied ✓' : open === i ? 'Close' : 'Use this'}
               </button>

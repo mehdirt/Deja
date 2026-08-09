@@ -35,10 +35,15 @@ export function App() {
   const [priorView, setPriorView] = useState<Exclude<View, 'welcome'>>('library')
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 pb-10 pt-5">
-      <header className="flex items-center justify-between gap-4 pb-1">
-        <Logo size={28} />
-        <nav className="flex items-center gap-1 sm:gap-0" aria-label="Sections">
+    <div className="mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-6 px-4 pb-10 pt-5 sm:px-6">
+      {/* Stack on narrow: justify-between + wrap pinned nav to the right edge and
+          clipped Privacy. From sm up, logo left / links right as before. */}
+      <header className="flex flex-col gap-3 pb-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <Logo size={28} className="shrink-0" />
+        <nav
+          className="flex flex-wrap items-center gap-1 sm:justify-end sm:gap-0"
+          aria-label="Sections"
+        >
           {NAV.map((n) => (
             <button
               key={n.key}

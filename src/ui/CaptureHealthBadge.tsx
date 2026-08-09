@@ -40,7 +40,7 @@ export function CaptureHealthBadge({ onOpenSettings }: { onOpenSettings?: () => 
   const saving = isSaving(health, prefs)
   const title = detail(health, prefs)
   const className =
-    'inline-flex items-center gap-2 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-ink-soft transition-[background-color,border-color,color,transform] duration-150 hover:bg-sunk focus:outline-none focus:ring-2 focus:ring-accent active:scale-[0.98]'
+    'inline-flex shrink-0 items-center gap-2 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-ink-soft transition-[background-color,border-color,color,transform] duration-150 hover:bg-sunk focus:outline-none focus:ring-2 focus:ring-accent active:scale-[0.98]'
 
   const body = (
     <>

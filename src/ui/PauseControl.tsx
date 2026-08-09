@@ -112,11 +112,11 @@ export function PauseControl() {
     const label = remainingLabel(pauseUntil, now)
     return (
       <div className="flex items-center justify-between gap-2 rounded-btn border border-warn/40 bg-warn/10 px-3 py-1.5">
-        <span className="inline-flex items-center gap-2 text-xs font-medium text-warn">
-          <span className="h-1.5 w-1.5 rounded-full bg-warn" aria-hidden />
-          Paused{label ? ` · ${label}` : ''}
+        <span className="inline-flex min-w-0 items-center gap-2 text-xs font-medium text-warn">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warn" aria-hidden />
+          <span className="min-w-0 truncate">Paused{label ? ` · ${label}` : ''}</span>
         </span>
-        <button onClick={resume} className="dj-btn dj-btn-ghost px-2 py-0.5 text-xs">
+        <button onClick={resume} className="dj-btn dj-btn-ghost shrink-0 px-2 py-0.5 text-xs">
           Resume
         </button>
       </div>
@@ -126,16 +126,16 @@ export function PauseControl() {
   return (
     <div ref={ref} className="relative">
       <div className="flex items-center justify-between gap-2 rounded-btn border border-line px-3 py-1.5">
-        <span className="inline-flex items-center gap-2 text-xs text-ink-soft">
-          <span className="h-1.5 w-1.5 rounded-full bg-ok" aria-hidden />
-          Quietly saving for you
+        <span className="inline-flex min-w-0 items-center gap-2 text-xs text-ink-soft">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ok" aria-hidden />
+          <span className="min-w-0 truncate">Quietly saving for you</span>
         </span>
         <button
           ref={triggerRef}
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="menu"
           aria-expanded={open}
-          className="dj-btn dj-btn-ghost gap-1 px-2 py-0.5 text-xs"
+          className="dj-btn dj-btn-ghost shrink-0 gap-1 px-2 py-0.5 text-xs"
         >
           <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <rect x="3" y="2" width="3.5" height="12" rx="1" />

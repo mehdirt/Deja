@@ -34,7 +34,7 @@ export function Welcome({ onDone }: { onDone: () => void }) {
               🤗
             </span>
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">
+          <h1 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">
             You&apos;re all set — make yourself at home.
           </h1>
           <p className="mx-auto max-w-lg text-[15px] leading-relaxed text-ink-soft">
