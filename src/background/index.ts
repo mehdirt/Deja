@@ -10,8 +10,8 @@ import {
 import { findSimilar } from '@/lib/similarity'
 import { classifyPrompt } from '@/lib/classify'
 import { trimLibraryToCap } from '@/lib/libraryCap'
-import { redactPii } from '@/lib/pii'
 import { mergePiiVault, readPiiVault } from '@/lib/piiVault'
+import { loadNerModel, redactPiiFull } from '@/background/nerBridge'
 import {
   readPrefs,
   writePrefs,
@@ -38,8 +38,9 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         let redactedTotal = 0
         if (prefs.redactPii) {
           const vault = prefs.rememberHiddenDetails ? await readPiiVault() : {}
-          const redaction = redactPii(message.payload.text, prefs.piiKinds, {
+          const redaction = await redactPiiFull(message.payload.text, prefs.piiKinds, {
             existingVault: vault,
+            nerNamesPlaces: prefs.nerNamesPlaces,
           })
           text = redaction.text
           redactedTotal = redaction.total
@@ -185,9 +186,12 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         // in-progress text matches the placeholders in the pool (and never even
         // gets scored raw).
         const queryText = prefs.redactPii
-          ? redactPii(message.text, prefs.piiKinds, {
-              existingVault: prefs.rememberHiddenDetails ? await readPiiVault() : {},
-            }).text
+          ? (
+              await redactPiiFull(message.text, prefs.piiKinds, {
+                existingVault: prefs.rememberHiddenDetails ? await readPiiVault() : {},
+                nerNamesPlaces: prefs.nerNamesPlaces,
+              })
+            ).text
           : message.text
         const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase()
         const queryNorm = norm(queryText)
@@ -230,6 +234,47 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
       try {
         await hardDelete(message.id)
         sendResponse({ ok: true, id: message.id })
+      } catch (err) {
+        sendResponse({ ok: false, error: String(err) })
+      }
+    })()
+    return true
+  }
+
+  if (message?.type === 'NER_LOAD') {
+    void loadNerModel().then((result) => sendResponse(result))
+    return true
+  }
+
+  if (message?.type === 'REDACT_PREVIEW') {
+    void (async () => {
+      try {
+        const prefs = await readPrefs()
+        if (!prefs.redactPii) {
+          sendResponse({
+            ok: true,
+            text: message.text,
+            total: 0,
+            counts: {},
+            mappings: {},
+          })
+          return
+        }
+        const vault = {
+          ...(prefs.rememberHiddenDetails ? await readPiiVault() : {}),
+          ...(message.existingVault ?? {}),
+        }
+        const r = await redactPiiFull(message.text, prefs.piiKinds, {
+          existingVault: vault,
+          nerNamesPlaces: prefs.nerNamesPlaces,
+        })
+        sendResponse({
+          ok: true,
+          text: r.text,
+          total: r.total,
+          counts: r.counts,
+          mappings: r.mappings,
+        })
       } catch (err) {
         sendResponse({ ok: false, error: String(err) })
       }
