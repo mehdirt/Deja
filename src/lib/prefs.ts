@@ -54,6 +54,9 @@ export interface Prefs {
   // stored. On by default. `piiKinds` toggles individual categories.
   redactPii: boolean
   piiKinds: Record<PiiKind, boolean>
+  // When true, remember the original values behind [email_1] etc. in a private
+  // local vault (never in backups) so Fill-in can offer them again. On by default.
+  rememberHiddenDetails: boolean
   // Soft size cap on live prompts. 0 = no limit; default 5000. When over,
   // least-used (then oldest) are removed; favorites are never touched.
   // See libraryCap.ts.
@@ -77,6 +80,7 @@ export const DEFAULT_PREFS: Prefs = {
   sites: allSitesEnabled(),
   redactPii: true,
   piiKinds: allPiiEnabled(),
+  rememberHiddenDetails: true,
   libraryCap: LIBRARY_CAP_DEFAULT,
 }
 
@@ -122,6 +126,7 @@ function coerce(raw: unknown): Prefs {
     sites: coerceSites(obj.sites),
     redactPii: obj.redactPii !== false,
     piiKinds: coercePiiKinds(obj.piiKinds),
+    rememberHiddenDetails: obj.rememberHiddenDetails !== false,
     libraryCap: coerceLibraryCap(obj.libraryCap),
   }
 }

@@ -22,6 +22,7 @@ import {
 } from '@/lib/libraryCap'
 import { readHealth, onHealthChange, type CaptureHealth } from '@/lib/health'
 import { redactPii, PII_LABEL } from '@/lib/pii'
+import { clearPiiVault, mergePiiVault, readPiiVault } from '@/lib/piiVault'
 import { buildMarkdown } from '@/lib/markdown'
 import { feedbackHref } from '@/lib/feedback'
 import { BugIcon, ChevronIcon, IdeaIcon } from '@/ui/ActionIcons'
@@ -183,13 +184,16 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
     samples: string[]
   } | null>(null)
   const [redactPiiOn, setRedactPiiOn] = useState(true)
+  const [rememberHidden, setRememberHidden] = useState(true)
   const [piiKinds, setPiiKinds] = useState<Record<PiiKind, boolean>>(
     () => Object.fromEntries(PII_KINDS.map((k) => [k, true])) as Record<PiiKind, boolean>,
   )
   const [piiTest, setPiiTest] = useState('')
+  const [vaultCount, setVaultCount] = useState(0)
   const [piiScan, setPiiScan] = useState<{
     updates: Array<{ id: number; text: string }>
     total: number
+    mappings: Record<string, string>
   } | null>(null)
   const [importMsg, setImportMsg] = useState<string | null>(null)
   const [promptCount, setPromptCount] = useState(0)
@@ -221,12 +225,17 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
       setStrength(p.filterStrength)
       setSites(p.sites)
       setRedactPiiOn(p.redactPii)
+      setRememberHidden(p.rememberHiddenDetails)
       setPiiKinds(p.piiKinds)
       setLibraryCap(p.libraryCap)
     }
     void readPrefs().then(apply)
     return onPrefsChange(apply)
   }, [])
+
+  useEffect(() => {
+    void readPiiVault().then((v) => setVaultCount(Object.keys(v).length))
+  }, [cleared, piiScan])
 
   const setResurface = async (next: ResurfaceClick) => {
     setResurfaceClick(next)
@@ -262,6 +271,16 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
     setPiiScan(null)
   }
 
+  const setRemember = async (next: boolean) => {
+    setRememberHidden(next)
+    await writePrefs({ rememberHiddenDetails: next })
+  }
+
+  const forgetRemembered = async () => {
+    await clearPiiVault()
+    setVaultCount(0)
+  }
+
   const togglePiiKind = async (k: PiiKind) => {
     const next = { ...piiKinds, [k]: !piiKinds[k] }
     setPiiKinds(next)
@@ -279,19 +298,30 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   // catch, so a library saved before this was on can be cleaned up.
   const runPiiScan = async () => {
     const all = await listPrompts({ includeMinor: true })
+    const vault = rememberHidden ? await readPiiVault() : {}
     const updates: Array<{ id: number; text: string }> = []
+    const mappings: Record<string, string> = {}
+    let existing = { ...vault }
     for (const p of all) {
       if (p.id == null) continue
-      const r = redactPii(p.text, piiKinds)
-      if (r.total > 0 && r.text !== p.text) updates.push({ id: p.id, text: r.text })
+      const r = redactPii(p.text, piiKinds, { existingVault: existing })
+      if (r.total > 0 && r.text !== p.text) {
+        updates.push({ id: p.id, text: r.text })
+        Object.assign(mappings, r.mappings)
+        existing = { ...existing, ...r.mappings }
+      }
     }
-    setPiiScan({ updates, total: all.length })
+    setPiiScan({ updates, total: all.length, mappings })
   }
 
   const cleanPii = async () => {
     if (!piiScan) return
     await bulkUpdateText(piiScan.updates)
-    setPiiScan({ updates: [], total: piiScan.total })
+    if (rememberHidden && Object.keys(piiScan.mappings).length > 0) {
+      const next = await mergePiiVault(piiScan.mappings)
+      setVaultCount(Object.keys(next).length)
+    }
+    setPiiScan({ updates: [], total: piiScan.total, mappings: {} })
   }
 
   const persist = async (next: Blocklist) => {
@@ -547,17 +577,19 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
         description={
           <>
             Before anything is saved, Deja can swap out personal details — emails, phone numbers,
-            card numbers — for placeholders like <span className="font-mono text-xs">[email]</span>.
-            The real values are never written down, and the prompt still works as a reusable
-            template.
+            card numbers, keys — for placeholders like{' '}
+            <span className="font-mono text-xs">[email_1]</span>. The prompt stays reusable. Names
+            and street addresses aren&apos;t detected yet.
           </>
         }
       >
-        <div className="dj-panel-tight">
+        <div className="dj-panel-tight flex flex-col divide-y divide-line overflow-hidden">
           <div className="dj-row">
             <div className="min-w-0">
               <p className="text-sm font-medium text-ink">Hide before saving</p>
-              <p className="dj-meta mt-0.5">{redactPiiOn ? 'On — details become placeholders' : 'Off'}</p>
+              <p className="dj-meta mt-0.5">
+                {redactPiiOn ? 'On — details become placeholders' : 'Off'}
+              </p>
             </div>
             <Switch
               checked={redactPiiOn}
@@ -565,7 +597,33 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
               label="Hide personal info before saving"
             />
           </div>
+          {redactPiiOn && (
+            <div className="dj-row">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-ink">Remember for fill-in</p>
+                <p className="dj-meta mt-0.5">
+                  Keep the real details in a private list on this computer so you can put them back
+                  when you reuse a prompt. Never included in a backup.
+                  {vaultCount > 0 ? ` (${vaultCount} remembered)` : ''}
+                </p>
+              </div>
+              <Switch
+                checked={rememberHidden}
+                onChange={() => setRemember(!rememberHidden)}
+                label="Remember hidden details for fill-in"
+              />
+            </div>
+          )}
         </div>
+        {redactPiiOn && rememberHidden && vaultCount > 0 && (
+          <button
+            type="button"
+            onClick={forgetRemembered}
+            className="dj-btn dj-btn-ghost w-fit px-2.5 py-1.5 text-xs"
+          >
+            Forget remembered details
+          </button>
+        )}
       </Section>
 
       {/* Your prompts — the trust story stays in plain sight */}

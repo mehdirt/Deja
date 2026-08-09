@@ -11,6 +11,7 @@ import { findSimilar } from '@/lib/similarity'
 import { classifyPrompt } from '@/lib/classify'
 import { trimLibraryToCap } from '@/lib/libraryCap'
 import { redactPii } from '@/lib/pii'
+import { mergePiiVault, readPiiVault } from '@/lib/piiVault'
 import {
   readPrefs,
   writePrefs,
@@ -31,11 +32,21 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         const prefs = await readPrefs()
         // Redact personal info BEFORE anything else, so raw PII never reaches
         // IndexedDB, the search index, or the resurface pool. We store (and
-        // classify) the redacted text.
-        const redaction = prefs.redactPii
-          ? redactPii(message.payload.text, prefs.piiKinds)
-          : { text: message.payload.text, total: 0 }
-        const text = redaction.text
+        // classify) the redacted text. Optional vault keeps originals privately
+        // for Fill-in — never written into the prompt row or backups.
+        let text = message.payload.text
+        let redactedTotal = 0
+        if (prefs.redactPii) {
+          const vault = prefs.rememberHiddenDetails ? await readPiiVault() : {}
+          const redaction = redactPii(message.payload.text, prefs.piiKinds, {
+            existingVault: vault,
+          })
+          text = redaction.text
+          redactedTotal = redaction.total
+          if (prefs.rememberHiddenDetails && redaction.total > 0) {
+            void mergePiiVault(redaction.mappings)
+          }
+        }
 
         // Selective capture: skip storing throwaways at the user's strength.
         // At 'off' nothing is ever skipped. (Legacy rows may still carry
@@ -100,7 +111,7 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
             id: outcome.id,
             filtered: false,
             notice: false,
-            redacted: redaction.total,
+            redacted: redactedTotal,
             duplicate: true,
           })
           return
@@ -116,7 +127,7 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
             ok: true,
             filtered: true,
             notice,
-            redacted: redaction.total,
+            redacted: redactedTotal,
           })
           return
         }
@@ -137,7 +148,7 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           id: outcome.id,
           filtered: false,
           notice: false,
-          redacted: redaction.total,
+          redacted: redactedTotal,
           trimmed,
         })
       } catch (err) {
@@ -174,7 +185,9 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         // in-progress text matches the placeholders in the pool (and never even
         // gets scored raw).
         const queryText = prefs.redactPii
-          ? redactPii(message.text, prefs.piiKinds).text
+          ? redactPii(message.text, prefs.piiKinds, {
+              existingVault: prefs.rememberHiddenDetails ? await readPiiVault() : {},
+            }).text
           : message.text
         const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase()
         const queryNorm = norm(queryText)

@@ -5,9 +5,9 @@
 //
 // Two kinds of blank, both already present in real libraries:
 //   1. Ones people write themselves — {topic}, {{name}}.
-//   2. Ones Deja created — the [email] / [phone] placeholders that PII redaction
-//      leaves behind. Redaction already turns a prompt into a template; this is
-//      what makes that template usable again.
+//   2. Ones Deja created — the [email] / [email_1] / [phone_2] placeholders
+//      that PII redaction leaves behind. Redaction already turns a prompt into
+//      a template; this is what makes that template usable again.
 //
 // Deliberately NOT a template language: no conditionals, no defaults, no
 // escaping rules. A blank is a blank. Anything cleverer is a feature nobody
@@ -15,25 +15,34 @@
 //
 // Pure and dependency-free; the UI layer owns all the state.
 
-import { PII_KINDS } from './types'
+import { PII_KINDS, type PiiKind } from './types'
 
-// The [labels] PII redaction can leave behind. Only these bracketed words are
-// treated as blanks — otherwise ordinary prose like "[sic]" or a Markdown link
-// would sprout input boxes.
-const PII_PLACEHOLDERS = new Set<string>(PII_KINDS)
+const PII_KIND_SET = new Set<string>(PII_KINDS)
 
 // {topic} or {{topic}}: letters, numbers, spaces, dashes and underscores only,
 // kept short. This is tight on purpose — JSON, code snippets and CSS all live
 // in people's prompts inside braces, and turning those into blanks would be
 // worse than having no templates at all.
 const BRACE = /\{\{?\s*([a-zA-Z][a-zA-Z0-9 _-]{0,38})\s*\}?\}/g
-const BRACKET = /\[([a-z]{2,12})\]/g
+// Legacy [email] plus numbered [email_1] from hardened redaction.
+const BRACKET = /\[([a-z]{2,12})(?:_(\d{1,3}))?\]/g
 
 export interface Placeholder {
-  /** What the UI shows as the field label, e.g. "topic". */
+  /** Field key used in fill maps, e.g. "topic" or "email_1". */
   name: string
-  /** Exact text to replace, e.g. "{topic}" or "[email]". */
+  /** Exact text to replace, e.g. "{topic}" or "[email_1]". */
   token: string
+}
+
+/** Friendly label for the fill UI — "Email 1", "Phone", "topic". */
+export function blankLabel(name: string): string {
+  const m = /^([a-z]{2,12})(?:_(\d{1,3}))?$/i.exec(name)
+  if (m && PII_KIND_SET.has(m[1].toLowerCase())) {
+    const kind = m[1].toLowerCase() as PiiKind
+    const title = kind.charAt(0).toUpperCase() + kind.slice(1)
+    return m[2] ? `${title} ${m[2]}` : title
+  }
+  return name
 }
 
 /** Blank out fenced + inline code (same length) so brace scans skip them. */
@@ -65,6 +74,10 @@ function lineAt(text: string, index: number): string {
   return text.slice(start, end === -1 ? text.length : end)
 }
 
+function isPiiBracket(kind: string, _index: string | undefined): boolean {
+  return PII_KIND_SET.has(kind)
+}
+
 /** Every distinct blank in a prompt, in the order it first appears. A blank
  *  repeated in the prompt is one field and fills every occurrence. */
 export function findPlaceholders(text: string): Placeholder[] {
@@ -85,9 +98,11 @@ export function findPlaceholders(text: string): Placeholder[] {
   for (const m of scan.matchAll(BRACKET)) {
     if (m.index == null) continue
     if (lineLooksLikeCode(lineAt(text, m.index))) continue
-    const name = m[1]
-    if (!PII_PLACEHOLDERS.has(name)) continue
+    const kind = m[1]
+    const index = m[2]
+    if (!isPiiBracket(kind, index)) continue
     const token = text.slice(m.index, m.index + m[0].length)
+    const name = index ? `${kind}_${index}` : kind
     const key = `[${name}]`
     if (!seen.has(key)) seen.set(key, { name, token })
   }

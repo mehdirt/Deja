@@ -4,6 +4,10 @@ Append-only log of decisions and context from nontrivial work sessions. Read bef
 
 ## 2026-08-09
 
+PII harden (1+2): numbered placeholders (`[email_1]`), Luhn/SSN/IBAN validators, more secret shapes; private `piiVault` for fill-in remember (prefs `rememberHiddenDetails`, never in backups); TemplateFill prefills + “Email 1” labels; Settings remember toggle + forget.
+
+Bulk select UX: sticky bar above the list (count, Select all / Clear selection, × dismiss, Delete N); entry copy “Select a few”; no longer forces Filter & sort open or counts as a filter chip. Card click toggles check; per-card delete/favorite hidden while selecting.
+
 Options/popup responsive harden: narrow options header stacks (logo above nav) so `justify-between` wrap no longer pins Privacy to the viewport edge; shell `px-4 sm:px-6` + `overflow-x: clip`; prompt/md `overflow-wrap: anywhere`; starter cards / blocklist inputs / undo banners / pause row wrap cleanly; code fences still scroll inside the card.
 
 Landing hero brand: dropped duplicate mark under the header logo. Winner from A/B lab — **name in H1**: “Your prompts are work. *deja* keeps them.” Lead no longer repeats “Deja”. Lab harness (`?lab=1`) removed after pick.

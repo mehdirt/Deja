@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
-import { fillTemplate, findPlaceholders } from '@/lib/template'
+import { useEffect, useMemo, useState } from 'react'
+import { blankLabel, fillTemplate, findPlaceholders } from '@/lib/template'
+import { readPrefs } from '@/lib/prefs'
+import { readPiiVault, vaultValuesForPlaceholders } from '@/lib/piiVault'
 import { CopyIcon } from '@/ui/ActionIcons'
 
 interface Props {
@@ -11,10 +13,32 @@ interface Props {
 
 // The form that appears when you reuse a prompt with blanks in it. One field
 // per blank, a live preview of the result, and no obligation to fill anything
-// in — an untouched blank stays as it is.
+// in — an untouched blank stays as it is. When “Remember hidden details” is on,
+// fields Deja hid earlier (emails, phones, …) start filled from the private
+// local vault — never from the prompt library itself.
 export function TemplateFill({ text, onFilled, onCancel }: Props) {
   const placeholders = useMemo(() => findPlaceholders(text), [text])
   const [values, setValues] = useState<Record<string, string>>({})
+  const [fromMemory, setFromMemory] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const prefs = await readPrefs()
+      if (!prefs.rememberHiddenDetails) return
+      const vault = await readPiiVault()
+      const prefill = vaultValuesForPlaceholders(
+        vault,
+        placeholders.map((p) => p.token),
+      )
+      if (cancelled || Object.keys(prefill).length === 0) return
+      setValues((prev) => ({ ...prefill, ...prev }))
+      setFromMemory(true)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [placeholders])
 
   const result = useMemo(() => fillTemplate(text, values), [text, values])
   const remaining = placeholders.filter((p) => !values[p.name]?.trim()).length
@@ -27,15 +51,21 @@ export function TemplateFill({ text, onFilled, onCancel }: Props) {
       }}
       className="flex flex-col gap-3 rounded-btn border border-line bg-sunk p-3"
     >
+      {fromMemory && (
+        <p className="dj-meta">
+          Some blanks were filled from details remembered on this computer — change anything you
+          like.
+        </p>
+      )}
       <div className="grid gap-2 sm:grid-cols-2">
         {placeholders.map((p, i) => (
           <label key={p.token} className="flex flex-col gap-1">
-            <span className="text-[11px] font-medium text-ink-soft">{p.name}</span>
+            <span className="text-[11px] font-medium text-ink-soft">{blankLabel(p.name)}</span>
             <input
               autoFocus={i === 0}
               value={values[p.name] ?? ''}
               onChange={(e) => setValues((v) => ({ ...v, [p.name]: e.target.value }))}
-              placeholder={`Your ${p.name}`}
+              placeholder={`Your ${blankLabel(p.name).toLowerCase()}`}
               className="dj-input py-1 text-sm"
             />
           </label>

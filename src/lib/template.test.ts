@@ -11,6 +11,10 @@ describe('findPlaceholders', () => {
     expect(findPlaceholders('email [email] about the invoice')).toEqual([
       { name: 'email', token: '[email]' },
     ])
+    expect(findPlaceholders('email [email_1] and [email_2]')).toEqual([
+      { name: 'email_1', token: '[email_1]' },
+      { name: 'email_2', token: '[email_2]' },
+    ])
   })
 
   it('ignores bracketed words that are not PII placeholders', () => {
@@ -95,6 +99,9 @@ describe('fillTemplate', () => {
 
   it('fills PII placeholders', () => {
     expect(fillTemplate('email [email] today', { email: 'sam@example.com' })).toBe(
+      'email sam@example.com today',
+    )
+    expect(fillTemplate('email [email_1] today', { email_1: 'sam@example.com' })).toBe(
       'email sam@example.com today',
     )
   })

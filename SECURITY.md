@@ -104,12 +104,15 @@ guarantees above, never a replacement for them.
 
 ### 3.7 PII redaction (default on, before storage)
 Independently of the field gate, detected personal info *in* the prompt text —
-emails, phones, Luhn-checked cards, SSN, IBAN, IPs, and known API-key/token
-shapes — is replaced with labels (`[email]`, `[card]`, `[secret]`, …) **before**
-the row is written. On by default; per-category toggles in settings. Names and
-street addresses are not covered (NER deferred). The same redaction runs on the
+emails, phones, Luhn-checked cards, structurally valid SSNs, mod-97 IBANs, IPs,
+and known API-key/token shapes — is replaced with numbered labels (`[email_1]`,
+`[card_1]`, `[secret_1]`, …) **before** the row is written. On by default;
+per-category toggles in settings. An optional private vault (separate storage
+key, never in backups) can remember originals for Fill-in only. Names and street
+addresses are not covered (NER deferred). The same redaction runs on the
 resurface query so matches stay consistent.
-→ `src/lib/pii.ts`, applied first in the background `PROMPT_CAPTURED` handler.
+→ `src/lib/pii.ts` + `src/lib/piiVault.ts`, applied first in the background
+`PROMPT_CAPTURED` handler.
 
 ---
 

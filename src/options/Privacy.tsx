@@ -12,7 +12,7 @@ const SITES: Array<{ platform: Platform; host: string }> = [
 const DOES = [
   'Saves the prompts you send on the sites below, into your browser’s own storage on this computer.',
   'Saves only what you type. The AI’s answers are never recorded.',
-  'Swaps personal details it recognises — emails, phone numbers, card numbers, passwords and keys — for placeholders like [email] before anything is saved. On by default. The real values are never written down, not even in a backup.',
+  'Swaps personal details it recognises — emails, phone numbers, card numbers, passwords and keys — for placeholders like [email_1] before anything is saved. On by default. Optionally remembers the real values in a private list on this computer for fill-in only — never in a backup. Names and street addresses aren’t detected yet.',
   'Lets you search, copy, tag, favorite, back up, and delete any of it.',
 ]
 
@@ -51,11 +51,11 @@ function ListCard({
           <li key={item} className="flex gap-2.5 text-[14.5px] leading-relaxed text-ink-soft">
             <Icon size={14} className={`mt-1 shrink-0 ${iconClass}`} />
             <span>
-              {item.includes('[email]') ? (
+              {item.includes('[email_1]') ? (
                 <>
-                  {item.split('[email]')[0]}
-                  <span className="font-mono text-xs">[email]</span>
-                  {item.split('[email]')[1]}
+                  {item.split('[email_1]')[0]}
+                  <span className="font-mono text-xs">[email_1]</span>
+                  {item.split('[email_1]')[1]}
                 </>
               ) : (
                 item
