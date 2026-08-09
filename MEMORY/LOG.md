@@ -4,6 +4,12 @@ Append-only log of decisions and context from nontrivial work sessions. Read bef
 
 ## 2026-08-09
 
+**NER PII (opt-in).** Regex + vault first; optional on-device `Xenova/bert-base-NER` (q8) via Transformers.js in an offscreen document for names + street-like places (confidence ≥ 0.8). Extra Settings toggle for cities/countries (`[city_N]`, default off). Prefs `nerNamesPlaces` (default off); download on demand; no per-capture review. Fail-open if model not ready. Prompt text never uploaded.
+
+**NER CSP lock.** Transformers/ORT still tried jsDelivr for `ort-wasm-….mjs` (esp. Vite dev dep cache + wasmPaths overwrites). Fix: lock `env.backends.onnx.wasm.wasmPaths` to `chrome.runtime.getURL('onnx/')` via defineProperty (reject CDN / incomplete overwrites); exclude transformers from `optimizeDeps`; keep local `public/onnx/` assets. “Unable to determine content-length” from HF downloads is harmless.
+
+**Android app (near-future intent).** Owner plans a mobile Deja so people who live on phones can keep a prompt library — mobile users rarely install browser extensions. Inspiration reference: Grammarly (ubiquitous writing help across surfaces). Implications for current work: keep local-first / no-account; prefer small opt-in downloads (NER) over fat default bundles; don’t couple capture logic to Chrome-only APIs harder than needed; treat extension as one client, shared core (redact/search/classify) as portable. Capture approach on Android TBD (share sheet / paste / etc.). Not fully scoped to build yet.
+
 PII harden (1+2): numbered placeholders (`[email_1]`), Luhn/SSN/IBAN validators, more secret shapes; private `piiVault` for fill-in remember (prefs `rememberHiddenDetails`, never in backups); TemplateFill prefills + “Email 1” labels; Settings remember toggle + forget.
 
 Bulk select UX: sticky bar above the list (count, Select all / Clear selection, × dismiss, Delete N); entry copy “Select a few”; no longer forces Filter & sort open or counts as a filter chip. Card click toggles check; per-card delete/favorite hidden while selecting.

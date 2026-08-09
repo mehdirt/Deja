@@ -116,7 +116,7 @@ We deliberately ship v1 with **zero LLM calls**:
 - Fuzzy search → MiniSearch (local, ~50KB, instant), plus local spelling/plural folding and an everyday synonym pass so half-remembered wording still finds things
 - "Been here before" similarity → IDF-weighted trigram similarity with a length-aware threshold (local, zero dependencies)
 - Selective capture → local classifier (`off` / `balanced` / `strict`), soft-hide minors
-- PII → regex + Luhn redaction before storage (names/addresses deferred)
+- PII → regex + Luhn redaction before storage; optional on-device NER for names / street-like places
 - Auto-categorization → not in v1; v2 may use an on-device classifier or user tags
 - Scoring → cut entirely; users don't want their notes graded
 

@@ -251,3 +251,45 @@ export function IdeaIcon({ size = 14, className = '' }: Omit<Props, 'filled'>) {
     </svg>
   )
 }
+
+/** Soft success mark for quiet status (e.g. helper ready). */
+export function CheckCircleIcon({ size = 14, className = '' }: Omit<Props, 'filled'>) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <circle cx="8" cy="8" r="5.25" />
+      <path d="M5.5 8.1 7.2 9.8 10.5 6.2" />
+    </svg>
+  )
+}
+
+/** Soft failure mark for quiet status (e.g. download failed). */
+export function CrossCircleIcon({ size = 14, className = '' }: Omit<Props, 'filled'>) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <circle cx="8" cy="8" r="5.25" />
+      <path d="M6 6l4 4M10 6l-4 4" />
+    </svg>
+  )
+}

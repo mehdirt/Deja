@@ -12,7 +12,7 @@ const SITES: Array<{ platform: Platform; host: string }> = [
 const DOES = [
   'Saves the prompts you send on the sites below, into your browser’s own storage on this computer.',
   'Saves only what you type. The AI’s answers are never recorded.',
-  'Swaps personal details it recognises — emails, phone numbers, card numbers, passwords and keys — for placeholders like [email_1] before anything is saved. On by default. Optionally remembers the real values in a private list on this computer for fill-in only — never in a backup. Names and street addresses aren’t detected yet.',
+  'Swaps personal details it recognises — emails, phone numbers, card numbers, passwords and keys — for placeholders like [email_1] before anything is saved. On by default. Optionally remembers the real values in a private list on this computer for fill-in only — never in a backup. Names, streets, and (if you turn it on) cities/countries use an optional on-device helper in Settings.',
   'Lets you search, copy, tag, favorite, back up, and delete any of it.',
 ]
 

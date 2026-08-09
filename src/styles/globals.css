@@ -552,6 +552,16 @@ html.dj-popup #root {
   }
 }
 
+@keyframes dj-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.dj-spin {
+  animation: dj-spin 0.85s linear infinite;
+}
+
 @keyframes dj-glow-pulse-ok {
   0% {
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--dj-ok) 55%, transparent);

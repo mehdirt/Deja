@@ -21,14 +21,24 @@ import {
   trimLibraryToCap,
 } from '@/lib/libraryCap'
 import { readHealth, onHealthChange, type CaptureHealth } from '@/lib/health'
-import { redactPii, PII_LABEL } from '@/lib/pii'
+import { PII_LABEL } from '@/lib/pii'
 import { clearPiiVault, mergePiiVault, readPiiVault } from '@/lib/piiVault'
+import { NER_SIZE_HINT } from '@/lib/nerPii'
+import {
+  DEFAULT_NER_STATUS,
+  onNerStatusChange,
+  readNerStatus,
+  writeNerStatus,
+  type NerStatus,
+} from '@/lib/nerStatus'
 import { buildMarkdown } from '@/lib/markdown'
 import { feedbackHref } from '@/lib/feedback'
-import { BugIcon, ChevronIcon, IdeaIcon } from '@/ui/ActionIcons'
+import { BugIcon, ChevronIcon, IdeaIcon, CheckCircleIcon, CrossCircleIcon } from '@/ui/ActionIcons'
 import {
   PLATFORM_LABEL,
   PII_KINDS,
+  PII_NER_KINDS,
+  PII_STRUCTURED_KINDS,
   type Platform,
   type FilterStrength,
   type PiiKind,
@@ -137,6 +147,132 @@ function Switch({
   )
 }
 
+/** Progress ring — fills with real download progress (no percent label). */
+function NerProgressRing({ progress }: { progress: number }) {
+  const size = 16
+  const stroke = 1.75
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  const clamped = Math.min(1, Math.max(0, progress))
+  // Soft spin only before the first byte report; then determinate fill.
+  const awaiting = clamped < 0.005
+  const fill = awaiting ? 0.2 : clamped
+  const offset = c * (1 - fill)
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      className={awaiting ? 'dj-spin' : undefined}
+      aria-hidden="true"
+    >
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={stroke}
+        className="text-line"
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={offset}
+        className="text-accent"
+        style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
+      />
+    </svg>
+  )
+}
+
+/** Title-aligned glyph: progress · check · cross. */
+function NerStatusGlyph({ active, status }: { active: boolean; status: NerStatus }) {
+  if (!active) return null
+  if (status.state === 'ready') {
+    return (
+      <span className="inline-flex shrink-0 text-accent" title="Ready" aria-label="Helper ready">
+        <CheckCircleIcon size={16} />
+      </span>
+    )
+  }
+  if (status.state === 'error') {
+    return (
+      <span
+        className="inline-flex shrink-0 text-danger"
+        title="Couldn’t finish"
+        aria-label="Download failed"
+      >
+        <CrossCircleIcon size={16} />
+      </span>
+    )
+  }
+  const pct = Math.round(Math.min(1, Math.max(0, status.progress)) * 100)
+  return (
+    <span
+      className="inline-flex shrink-0 text-accent"
+      title={status.progress > 0.005 ? `Downloading… ${pct}%` : 'Getting ready…'}
+      aria-label={
+        status.progress > 0.005
+          ? `Downloading, ${pct} percent`
+          : 'Getting the helper ready'
+      }
+      role="status"
+    >
+      <NerProgressRing progress={status.progress} />
+    </span>
+  )
+}
+
+/** Error follow-up under the helper description — busy state is the ring only. */
+function NerStatusFollowUp({
+  active,
+  status,
+  onRetry,
+}: {
+  active: boolean
+  status: NerStatus
+  onRetry: () => void
+}) {
+  const [showDetails, setShowDetails] = useState(false)
+  if (!active) return null
+  if (status.state !== 'error') return null
+
+  return (
+    <div className="mt-2 flex flex-col gap-1.5" aria-live="polite">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+        <p className="text-xs text-danger">
+          {status.error ?? 'Couldn\u2019t finish downloading.'}
+        </p>
+        <button type="button" onClick={onRetry} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
+          Try again
+        </button>
+        {status.errorDetail ? (
+          <button
+            type="button"
+            onClick={() => setShowDetails((v) => !v)}
+            aria-expanded={showDetails}
+            className="dj-meta underline-offset-2 hover:text-ink hover:underline"
+          >
+            {showDetails ? 'Hide details' : 'What went wrong?'}
+          </button>
+        ) : null}
+      </div>
+      {showDetails && status.errorDetail ? (
+        <p className="rounded-btn bg-sunk px-2.5 py-2 text-[11px] leading-relaxed text-ink-soft">
+          {status.errorDetail}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 function Section({
   title,
   description,
@@ -185,10 +321,15 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   } | null>(null)
   const [redactPiiOn, setRedactPiiOn] = useState(true)
   const [rememberHidden, setRememberHidden] = useState(true)
-  const [piiKinds, setPiiKinds] = useState<Record<PiiKind, boolean>>(
-    () => Object.fromEntries(PII_KINDS.map((k) => [k, true])) as Record<PiiKind, boolean>,
-  )
+  const [nerNamesPlaces, setNerNamesPlaces] = useState(false)
+  const [nerStatus, setNerStatus] = useState<NerStatus>(DEFAULT_NER_STATUS)
+  const [piiKinds, setPiiKinds] = useState<Record<PiiKind, boolean>>(() => {
+    const out = Object.fromEntries(PII_KINDS.map((k) => [k, false])) as Record<PiiKind, boolean>
+    for (const k of PII_STRUCTURED_KINDS) out[k] = true
+    return out
+  })
   const [piiTest, setPiiTest] = useState('')
+  const [piiTestResult, setPiiTestResult] = useState<{ text: string; total: number } | null>(null)
   const [vaultCount, setVaultCount] = useState(0)
   const [piiScan, setPiiScan] = useState<{
     updates: Array<{ id: number; text: string }>
@@ -226,6 +367,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
       setSites(p.sites)
       setRedactPiiOn(p.redactPii)
       setRememberHidden(p.rememberHiddenDetails)
+      setNerNamesPlaces(p.nerNamesPlaces)
       setPiiKinds(p.piiKinds)
       setLibraryCap(p.libraryCap)
     }
@@ -234,8 +376,38 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   }, [])
 
   useEffect(() => {
+    void readNerStatus().then(setNerStatus)
+    return onNerStatusChange(setNerStatus)
+  }, [])
+
+  useEffect(() => {
     void readPiiVault().then((v) => setVaultCount(Object.keys(v).length))
   }, [cleared, piiScan])
+
+  // Live “Try it out” via background so NER is included when ready.
+  useEffect(() => {
+    const sample = piiTest.trim()
+    if (!sample) {
+      setPiiTestResult(null)
+      return
+    }
+    let cancelled = false
+    const t = window.setTimeout(() => {
+      void chrome.runtime
+        .sendMessage({ type: 'REDACT_PREVIEW', text: sample })
+        .then((resp: { ok?: boolean; text?: string; total?: number } | undefined) => {
+          if (cancelled || !resp?.ok || typeof resp.text !== 'string') return
+          setPiiTestResult({ text: resp.text, total: resp.total ?? 0 })
+        })
+        .catch(() => {
+          if (!cancelled) setPiiTestResult(null)
+        })
+    }, 250)
+    return () => {
+      cancelled = true
+      window.clearTimeout(t)
+    }
+  }, [piiTest, piiKinds, redactPiiOn, nerNamesPlaces, nerStatus.state])
 
   const setResurface = async (next: ResurfaceClick) => {
     setResurfaceClick(next)
@@ -281,18 +453,68 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
     setVaultCount(0)
   }
 
+  const setNer = async (next: boolean) => {
+    setNerNamesPlaces(next)
+    if (next) {
+      // Names + streets on with the helper; cities stay off until the extra toggle.
+      const kinds = { ...piiKinds, person: true, place: true }
+      setPiiKinds(kinds)
+      // Optimistic busy state so the ring appears the moment the switch flips.
+      setNerStatus((s) =>
+        s.state === 'ready'
+          ? s
+          : {
+              ...s,
+              state: 'downloading',
+              progress: s.progress || 0,
+              error: undefined,
+              errorDetail: undefined,
+            },
+      )
+      void writeNerStatus({
+        state: 'downloading',
+        progress: 0,
+        error: undefined,
+        errorDetail: undefined,
+      })
+      await writePrefs({ nerNamesPlaces: true, piiKinds: kinds })
+      void chrome.runtime.sendMessage({ type: 'NER_LOAD' }).catch(() => {})
+    } else {
+      await writePrefs({ nerNamesPlaces: false })
+    }
+    setPiiScan(null)
+  }
+
+  const setNerCities = async (next: boolean) => {
+    const kinds = { ...piiKinds, city: next }
+    setPiiKinds(kinds)
+    await writePrefs({ piiKinds: kinds })
+    setPiiScan(null)
+  }
+
+  const retryNerDownload = () => {
+    setNerStatus((s) => ({
+      ...s,
+      state: 'downloading',
+      progress: 0,
+      error: undefined,
+      errorDetail: undefined,
+    }))
+    void writeNerStatus({
+      state: 'downloading',
+      progress: 0,
+      error: undefined,
+      errorDetail: undefined,
+    })
+    void chrome.runtime.sendMessage({ type: 'NER_LOAD' }).catch(() => {})
+  }
+
   const togglePiiKind = async (k: PiiKind) => {
     const next = { ...piiKinds, [k]: !piiKinds[k] }
     setPiiKinds(next)
     await writePrefs({ piiKinds: next })
     setPiiScan(null)
   }
-
-  // Live preview of what redaction would do to a sample.
-  const piiTestResult = useMemo(
-    () => (piiTest.trim() ? redactPii(piiTest, piiKinds) : null),
-    [piiTest, piiKinds],
-  )
 
   // Scan already-saved prompts for personal info the current categories would
   // catch, so a library saved before this was on can be cleaned up.
@@ -304,11 +526,24 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
     let existing = { ...vault }
     for (const p of all) {
       if (p.id == null) continue
-      const r = redactPii(p.text, piiKinds, { existingVault: existing })
-      if (r.total > 0 && r.text !== p.text) {
-        updates.push({ id: p.id, text: r.text })
-        Object.assign(mappings, r.mappings)
-        existing = { ...existing, ...r.mappings }
+      try {
+        const resp = (await chrome.runtime.sendMessage({
+          type: 'REDACT_PREVIEW',
+          text: p.text,
+          existingVault: existing,
+        })) as
+          | { ok?: boolean; text?: string; total?: number; mappings?: Record<string, string> }
+          | undefined
+        if (!resp?.ok || typeof resp.text !== 'string') continue
+        if ((resp.total ?? 0) > 0 && resp.text !== p.text) {
+          updates.push({ id: p.id, text: resp.text })
+          if (resp.mappings) {
+            Object.assign(mappings, resp.mappings)
+            existing = { ...existing, ...resp.mappings }
+          }
+        }
+      } catch {
+        /* skip one row — never fail the whole scan */
       }
     }
     setPiiScan({ updates, total: all.length, mappings })
@@ -579,7 +814,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
             Before anything is saved, Deja can swap out personal details — emails, phone numbers,
             card numbers, keys — for placeholders like{' '}
             <span className="font-mono text-xs">[email_1]</span>. The prompt stays reusable. Names
-            and street addresses aren&apos;t detected yet.
+            and street addresses need an optional helper you can turn on below.
           </>
         }
       >
@@ -611,6 +846,45 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
                 checked={rememberHidden}
                 onChange={() => setRemember(!rememberHidden)}
                 label="Remember hidden details for fill-in"
+              />
+            </div>
+          )}
+          {redactPiiOn && (
+            <div className="dj-row items-start">
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-center gap-2">
+                  <p className="text-sm font-medium text-ink">Also hide names &amp; street addresses</p>
+                  <NerStatusGlyph active={nerNamesPlaces} status={nerStatus} />
+                </div>
+                <p className="dj-meta mt-0.5">
+                  Downloads a small helper ({NER_SIZE_HINT}) that runs only on this computer. Your
+                  prompts never leave the device.
+                </p>
+                <NerStatusFollowUp
+                  active={nerNamesPlaces}
+                  status={nerStatus}
+                  onRetry={retryNerDownload}
+                />
+              </div>
+              <Switch
+                checked={nerNamesPlaces}
+                onChange={() => setNer(!nerNamesPlaces)}
+                label="Also hide names and street addresses"
+              />
+            </div>
+          )}
+          {redactPiiOn && nerNamesPlaces && (
+            <div className="dj-row">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-ink">Also hide cities &amp; countries</p>
+                <p className="dj-meta mt-0.5">
+                  Uses the same helper. Try it on trip plans — if it hides too much, turn it off.
+                </p>
+              </div>
+              <Switch
+                checked={piiKinds.city === true}
+                onChange={() => setNerCities(!piiKinds.city)}
+                label="Also hide cities and countries"
               />
             </div>
           )}
@@ -700,7 +974,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
             {redactPiiOn ? (
               <>
                 <div className="flex flex-wrap gap-2">
-                  {PII_KINDS.map((k) => (
+                  {(nerNamesPlaces ? PII_KINDS : PII_STRUCTURED_KINDS).map((k) => (
                     <button
                       key={k}
                       onClick={() => togglePiiKind(k)}
@@ -712,6 +986,14 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
                     </button>
                   ))}
                 </div>
+                {nerNamesPlaces && nerStatus.state !== 'ready' && (
+                  <p className="dj-meta">
+                    Names and street addresses turn on after the helper finishes downloading.
+                    {PII_NER_KINDS.every((k) => !piiKinds[k])
+                      ? ''
+                      : ' Structured details (email, phone, …) still hide as usual.'}
+                  </p>
+                )}
 
                 <div className="flex flex-col gap-2">
                   <label className="text-xs text-ink-soft" htmlFor="pii-test">
