@@ -1,48 +1,49 @@
-// A minimal, self-contained "Saved · Undo" toast injected into
-// the host page. Rendered inside a Shadow DOM so host CSS can't touch it and
-// our CSS can't leak out. The container is pointer-events:none so it never
-// intercepts clicks on the host page — only the undo button is interactive.
+import { createOverlayHost } from './overlayTheme'
 
-let host: HTMLDivElement | null = null
+// A minimal, self-contained "Saved · Undo" toast injected into the host page.
+// Rendered inside a closed Shadow DOM so host CSS can't touch it, our CSS can't
+// leak out, and page scripts can't read it. The container is pointer-events:none
+// so it never intercepts clicks on the host page — only the undo button is
+// interactive.
+//
+// The toast is the one overlay that stays dark in both themes. That's on
+// purpose: it's a transient confirmation in the corner of somebody else's page,
+// and a dark chip reads as a notification everywhere, where a warm-paper card
+// reads as part of the site's own UI and gets missed.
+
+const TOAST_CSS = `
+.dj-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.dj-toast{pointer-events:auto;display:flex;align-items:center;gap:12px;
+  background:#1e1d28;color:#f3f1ea;font:var(--dj-font);
+  padding:10px 12px;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);
+  border:1px solid #3f3c4a;animation:dj-in .14s ease-out}
+.dj-dot{width:7px;height:7px;border-radius:50%;background:#8983f5;flex:none}
+.dj-msg{white-space:nowrap}
+.dj-undo{pointer-events:auto;background:none;border:none;color:#9c97f7;
+  font:600 13px system-ui,-apple-system,'Segoe UI',sans-serif;cursor:pointer;padding:2px 4px;border-radius:6px}
+.dj-undo:hover{background:#2a2740}
+.dj-undo:focus-visible{outline:2px solid #8983f5;outline-offset:1px}
+`
+
+let layer: ReturnType<typeof createOverlayHost> | null = null
+let wrapEl: HTMLElement | null = null
 let hideTimer: number | undefined
 
-function ensureHost(): ShadowRoot {
-  if (host) {
+function ensureWrap(): HTMLElement {
+  if (layer && wrapEl) {
     // Re-attach if a host-page SPA navigation detached our node.
-    if (!host.isConnected) document.documentElement.appendChild(host)
-    return host.shadowRoot as ShadowRoot
+    layer.reattach()
+    return wrapEl
   }
-  host = document.createElement('div')
-  host.style.cssText = 'position:fixed;inset:0;z-index:2147483647;pointer-events:none;'
-  const shadow = host.attachShadow({ mode: 'open' })
-  const style = document.createElement('style')
-  const reduce = '@media (prefers-reduced-motion: reduce){.dj-toast{animation:none}}'
-  style.textContent = `
-    .dj-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-    .dj-toast{pointer-events:auto;display:flex;align-items:center;gap:12px;
-      background:#1e1d28;color:#f3f1ea;font:13px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;
-      padding:10px 12px;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);
-      border:1px solid #3f3c4a;animation:dj-in .14s ease-out}
-    .dj-dot{width:7px;height:7px;border-radius:50%;background:#8983f5;flex:none}
-    .dj-msg{white-space:nowrap}
-    .dj-undo{pointer-events:auto;background:none;border:none;color:#9c97f7;
-      font:600 13px system-ui,-apple-system,'Segoe UI',sans-serif;cursor:pointer;padding:2px 4px;border-radius:6px}
-    .dj-undo:hover{background:#2a2740}
-    .dj-undo:focus-visible{outline:2px solid #8983f5;outline-offset:1px}
-    @keyframes dj-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-    ${reduce}
-  `
-  shadow.appendChild(style)
-  const wrap = document.createElement('div')
-  wrap.className = 'dj-wrap'
-  shadow.appendChild(wrap)
-  document.documentElement.appendChild(host)
-  return shadow
+  layer = createOverlayHost('toast', TOAST_CSS)
+  wrapEl = document.createElement('div')
+  wrapEl.className = 'dj-wrap'
+  layer.shadow.appendChild(wrapEl)
+  return wrapEl
 }
 
 export function showSavedToast(onUndo: () => void, note?: string): void {
-  const shadow = ensureHost()
-  const wrap = shadow.querySelector('.dj-wrap') as HTMLElement
+  const wrap = ensureWrap()
   wrap.replaceChildren()
 
   const toast = document.createElement('div')
@@ -80,8 +81,7 @@ export function showSavedToast(onUndo: () => void, note?: string): void {
 // prompt was not stored (selective capture), so the skip is never silent.
 // Auto-dismisses; no undo, because nothing was written.
 export function showInfoToast(message: string): void {
-  const shadow = ensureHost()
-  const wrap = shadow.querySelector('.dj-wrap') as HTMLElement
+  const wrap = ensureWrap()
   wrap.replaceChildren()
 
   const toast = document.createElement('div')
@@ -104,6 +104,5 @@ export function showInfoToast(message: string): void {
 }
 
 function dismiss(): void {
-  const wrap = host?.shadowRoot?.querySelector('.dj-wrap') as HTMLElement | null
-  wrap?.replaceChildren()
+  wrapEl?.replaceChildren()
 }

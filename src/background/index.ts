@@ -5,6 +5,7 @@ import {
   listPrompts,
   findExistingPrompt,
   touchUsage,
+  touchDismiss,
   purgeExpiredDeleted,
 } from '@/lib/db'
 import { findSimilar } from '@/lib/similarity'
@@ -12,6 +13,9 @@ import { classifyPrompt } from '@/lib/classify'
 import { trimLibraryToCap } from '@/lib/libraryCap'
 import { mergePiiVault, readPiiVault } from '@/lib/piiVault'
 import { loadNerModel, redactPiiFull } from '@/background/nerBridge'
+import { getPool, invalidatePool } from '@/background/pool'
+import { buildIndex, searchPrompts } from '@/lib/search'
+import { usefulnessScore } from '@/lib/ranking'
 import {
   readPrefs,
   writePrefs,
@@ -24,6 +28,10 @@ import type { RuntimeMessage } from '@/lib/types'
 
 // How many matches the resurface tooltip shows inline before offering "see all".
 const SURFACED_MATCHES = 3
+
+// How many rows the in-page panel / picker show before offering "see all in
+// your library". Six fits the panel's max height without scrolling on a laptop.
+const DEFAULT_SEARCH_LIMIT = 6
 
 chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResponse) => {
   if (message?.type === 'PROMPT_CAPTURED') {
@@ -105,6 +113,10 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           })
           return { kind: 'saved', id } as const
         })
+        // Any of the three outcomes can have changed the pool: 'saved' adds a
+        // row, 'duplicate' bumped usage on one, and only 'minor' left it alone
+        // (cheap enough not to special-case).
+        invalidatePool()
 
         if (outcome.kind === 'duplicate') {
           sendResponse({
@@ -139,6 +151,7 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         if (prefs.libraryCap > 0) {
           try {
             trimmed = await trimLibraryToCap(prefs.libraryCap)
+            if (trimmed > 0) invalidatePool()
           } catch {
             /* cap is best-effort — never fail the capture itself */
           }
@@ -173,7 +186,7 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         // Resurface never suggests minor (filtered) prompts unless the filter is
         // off — short throwaways are exactly the noise it should not surface.
         const prefs = await readPrefs()
-        const pool = await listPrompts({ includeMinor: prefs.filterStrength === 'off' })
+        const pool = await getPool(prefs.filterStrength === 'off')
         // Score the whole pool (already sorted, best first) so we know the true
         // count above threshold; surface only the top few inline and report the
         // rest as `total` so the tooltip can offer "see all in library".
@@ -213,6 +226,154 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
     return true
   }
 
+  if (message?.type === 'LIBRARY_SEARCH') {
+    void (async () => {
+      try {
+        const prefs = await readPrefs()
+        // Same rule the resurface pool uses: a throwaway the filter chose not
+        // to keep shouldn't reappear through a different door.
+        const pool = await getPool(prefs.filterStrength === 'off')
+        const limit = Math.max(1, Math.min(20, message.limit ?? DEFAULT_SEARCH_LIMIT))
+        const q = message.query.trim()
+
+        let ordered: typeof pool
+        if (q) {
+          // Reuse the library's own search so plural/spelling folding and the
+          // everyday-synonym pass apply here too — someone half-remembering
+          // their own wording is exactly who this surface is for.
+          const index = buildIndex(pool)
+          const byId = new Map(pool.map((p) => [p.id, p]))
+          ordered = searchPrompts(index, q, 100)
+            .map((h) => byId.get(h.id as number))
+            .filter((p): p is (typeof pool)[number] => p != null)
+        } else {
+          // No query yet: the most useful ones, which is what someone opening
+          // the panel cold most likely wants.
+          const now = Date.now()
+          ordered = [...pool].sort((a, b) => usefulnessScore(b, now) - usefulnessScore(a, now))
+        }
+
+        const rows = ordered.slice(0, limit).map((p) => ({
+          id: p.id as number,
+          text: p.text,
+          platform: p.platform,
+          usageCount: p.usageCount ?? 0,
+          lastUsedAt: p.lastUsedAt ?? p.createdAt,
+        }))
+        sendResponse({ ok: true, rows, total: ordered.length })
+      } catch (err) {
+        sendResponse({ ok: false, error: String(err) })
+      }
+    })()
+    return true
+  }
+
+  // A prompt the user kept by hand, because capture couldn't see the box.
+  // Deliberately NOT a copy of the PROMPT_CAPTURED path: redaction still runs
+  // (they asked to keep the text, not their card number) and duplicate
+  // collapsing still runs, but the throwaway classifier does NOT — an explicit
+  // click is explicit intent, and filtering it would be overriding the person.
+  if (message?.type === 'SAVE_MANUAL') {
+    void (async () => {
+      try {
+        const prefs = await readPrefs()
+        let text = message.text.trim()
+        let redactedTotal = 0
+        if (prefs.redactPii) {
+          const vault = prefs.rememberHiddenDetails ? await readPiiVault() : {}
+          const redaction = await redactPiiFull(text, prefs.piiKinds, {
+            existingVault: vault,
+            nerNamesPlaces: prefs.nerNamesPlaces,
+          })
+          text = redaction.text
+          redactedTotal = redaction.total
+          if (prefs.rememberHiddenDetails && redaction.total > 0) {
+            void mergePiiVault(redaction.mappings)
+          }
+        }
+
+        const outcome = await db.transaction('rw', db.prompts, async () => {
+          const existing = await findExistingPrompt(message.platform, text)
+          if (existing?.id != null) {
+            await touchUsage(existing.id)
+            return { kind: 'duplicate', id: existing.id } as const
+          }
+          const id = await savePrompt({
+            text,
+            platform: message.platform,
+            url: message.url,
+            createdAt: Date.now(),
+          })
+          return { kind: 'saved', id } as const
+        })
+        invalidatePool()
+
+        if (outcome.kind === 'duplicate') {
+          sendResponse({
+            ok: true,
+            id: outcome.id,
+            filtered: false,
+            notice: false,
+            redacted: redactedTotal,
+            duplicate: true,
+          })
+          return
+        }
+
+        let trimmed = 0
+        if (prefs.libraryCap > 0) {
+          try {
+            trimmed = await trimLibraryToCap(prefs.libraryCap)
+            invalidatePool()
+          } catch {
+            /* cap is best-effort — never fail the save itself */
+          }
+        }
+        sendResponse({
+          ok: true,
+          id: outcome.id,
+          filtered: false,
+          notice: false,
+          redacted: redactedTotal,
+          trimmed,
+        })
+      } catch (err) {
+        sendResponse({ ok: false, error: String(err) })
+      }
+    })()
+    return true
+  }
+
+  // Reuse and dismissal signals from the in-page surfaces. Both only nudge the
+  // order of future suggestions; neither hides anything or is ever shown back
+  // to the user. Both invalidate the pool, because the fields they bump are
+  // precisely the ones the ordering reads.
+  if (message?.type === 'PROMPT_USED') {
+    void (async () => {
+      try {
+        await touchUsage(message.id)
+        invalidatePool()
+        sendResponse({ ok: true })
+      } catch (err) {
+        sendResponse({ ok: false, error: String(err) })
+      }
+    })()
+    return true
+  }
+
+  if (message?.type === 'SUGGESTION_DISMISSED') {
+    void (async () => {
+      try {
+        await touchDismiss(message.id)
+        invalidatePool()
+        sendResponse({ ok: true })
+      } catch (err) {
+        sendResponse({ ok: false, error: String(err) })
+      }
+    })()
+    return true
+  }
+
   if (message?.type === 'OPEN_LIBRARY') {
     // Open the library (options page) in a new tab, pre-searched with the user's
     // in-progress text. tabs.create needs no extra permission (unlike reading
@@ -233,6 +394,7 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
     void (async () => {
       try {
         await hardDelete(message.id)
+        invalidatePool()
         sendResponse({ ok: true, id: message.id })
       } catch (err) {
         sendResponse({ ok: false, error: String(err) })

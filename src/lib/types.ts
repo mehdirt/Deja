@@ -64,6 +64,11 @@ export interface Prompt {
   // a normal prompt. Kept so previously soft-captured rows stay recoverable in
   // the library's "filtered" view. See src/lib/classify.ts.
   minor?: boolean
+  // How many times a suggestion of this prompt was waved away (the resurface
+  // tooltip's ×). Feeds the suggestion ordering only — never shown to the user,
+  // and never a score *of* the user. Optional: undefined means zero.
+  // See src/lib/ranking.ts → suggestionRank.
+  dismissCount?: number
 }
 
 export type CapturedPromptMessage = {
@@ -110,6 +115,53 @@ export type RedactPreviewMessage = {
   existingVault?: Record<string, string>
 }
 
+// ── In-page library surfaces (the dot's panel and the `//` picker) ───────────
+// Content scripts run in the host page's origin, so they can't read the
+// extension's IndexedDB. Every library read goes through the worker.
+
+/** One library row, thin enough to cross the message boundary cheaply. */
+export type LibraryRow = {
+  id: number
+  text: string
+  platform: Platform
+  usageCount: number
+  lastUsedAt: number
+}
+
+/** Content → background: search the library for an in-page surface. */
+export type LibrarySearchMessage = {
+  type: 'LIBRARY_SEARCH'
+  /** '' means "the most useful ones", not "everything". */
+  query: string
+  limit?: number
+}
+
+// `total` is how many matched overall, so a surface capped at `limit` can offer
+// "see all in your library" instead of silently truncating someone's library.
+export type LibrarySearchResponse =
+  | { ok: true; rows: LibraryRow[]; total: number }
+  | { ok: false; error: string }
+
+/** Content → background: the user explicitly kept this one (hand-save). */
+export type SaveManualMessage = {
+  type: 'SAVE_MANUAL'
+  text: string
+  platform: Platform
+  url: string
+}
+
+/** Content → background: a saved prompt was reused from an in-page surface. */
+export type PromptUsedMessage = {
+  type: 'PROMPT_USED'
+  id: number
+}
+
+/** Content → background: a volunteered suggestion was waved away. */
+export type SuggestionDismissedMessage = {
+  type: 'SUGGESTION_DISMISSED'
+  id: number
+}
+
 export type RuntimeMessage =
   | CapturedPromptMessage
   | UndoCaptureMessage
@@ -117,6 +169,10 @@ export type RuntimeMessage =
   | OpenLibraryMessage
   | NerLoadMessage
   | RedactPreviewMessage
+  | LibrarySearchMessage
+  | SaveManualMessage
+  | PromptUsedMessage
+  | SuggestionDismissedMessage
 
 // `filtered` is true when the prompt was classified "minor" and not stored.
 // `notice` is true only the first time that happens, so the content script can

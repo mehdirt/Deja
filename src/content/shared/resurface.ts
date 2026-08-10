@@ -12,24 +12,26 @@
 // This file never captures (saves) anything. The only time it writes to the
 // host page is the replace path, on an explicit click.
 //
-// Rendered inside a Shadow DOM so host-page CSS can't break the tooltip and
-// our CSS can't leak into the host page. Mirrors Deja's palette (warm paper /
-// ink / indigo) with a handful of hardcoded colors and a dark-mode media query.
-// Type is the system UI stack rather than Deja's bundled face: this overlay
-// should read as part of the page it sits on, not as a foreign widget.
+// Rendered inside a closed Shadow DOM so host-page CSS can't break the tooltip,
+// our CSS can't leak into the host page, and page scripts can't read what's on
+// screen. Palette, primitives and positioning come from overlayTheme.ts and
+// anchor.ts, shared with every other in-page surface. Type is the system UI
+// stack rather than Deja's bundled face: this overlay should read as part of
+// the page it sits on, not as a foreign widget.
 
 import type { Platform, SimilarMatch, SimilarResponse } from '@/lib/types'
 import { isCapturableField } from '@/lib/sensitive'
 import { readPrefs, onPrefsChange } from '@/lib/prefs'
 import { shouldCapture } from './captureGate'
-import { readText, editableFromEvent } from './editable'
+import { readText, editableFromEvent, replaceComposerText } from './editable'
+import { createOverlayHost } from './overlayTheme'
+import { anchorTo, rectOf, watchAnchor } from './anchor'
 
 // Quiet by default — the host page's console must stay clean (Principle 5:
 // fail silent to them). Flip to true only when debugging locally.
 const DEBUG = false
 const DEBOUNCE_MS = 400
 const MIN_CHARS = 15
-const REPOSITION_THROTTLE_MS = 100
 const COPIED_CONFIRM_MS = 1100
 
 function log(...args: unknown[]) {
@@ -52,40 +54,6 @@ const LEAD_PHRASES = [
 function randomLead(): string {
   return LEAD_PHRASES[Math.floor(Math.random() * LEAD_PHRASES.length)]
 }
-
-// Replace the composer's contents with the remembered prompt (insert-mode path).
-// Select-all + execCommand('insertText') is deprecated but remains the most
-// reliable way across both <textarea> and rich contenteditable editors
-// (ProseMirror, Quill) — it's undoable and the site's framework registers it as
-// real input. Falls back to a direct value/text write for plain fields. Returns
-// false if nothing could be written (caller then falls back to copy). Never throws.
-function replaceComposerText(el: HTMLElement, text: string): boolean {
-  try {
-    el.focus()
-    if (el instanceof HTMLTextAreaElement) {
-      el.select()
-      if (document.execCommand('insertText', false, text)) return true
-      el.value = text
-      el.selectionStart = el.selectionEnd = text.length
-      el.dispatchEvent(new Event('input', { bubbles: true }))
-      return true
-    }
-    const sel = window.getSelection()
-    if (sel) {
-      const range = document.createRange()
-      range.selectNodeContents(el)
-      sel.removeAllRanges()
-      sel.addRange(range)
-    }
-    if (document.execCommand('insertText', false, text)) return true
-    el.textContent = text
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-    return true
-  } catch {
-    return false
-  }
-}
-
 
 // ── Shadow-DOM tooltip ──────────────────────────────────────────────────────
 
@@ -116,8 +84,36 @@ interface Tooltip {
   destroy: () => void
 }
 
+// The tooltip's own rules. The palette and the shared primitives (card, focus
+// ring, reduced-motion escape) come from overlayTheme.ts — see that file for
+// why the tokens live on :host rather than being hardcoded per rule here.
+const TOOLTIP_CSS = `
+.dj-rs{display:flex;align-items:flex-start;gap:10px;
+  max-width:min(440px,calc(100vw - 16px));padding:8px 10px;transition:opacity .1s ease}
+.dj-rs[hidden]{display:none}
+.dj-rs:hover{background:var(--dj-card-hover)}
+.dj-rs-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;
+  background:none;border:none;padding:0;margin:0;cursor:pointer;text-align:left;
+  color:inherit;font:inherit;border-radius:6px}
+.dj-rs-main:focus-visible{outline:2px solid var(--dj-accent);outline-offset:1px}
+.dj-rs-lead{display:flex;align-items:center;gap:6px;color:var(--dj-accent-text);
+  font-weight:600;white-space:nowrap}
+.dj-rs-dot{width:6px;height:6px;border-radius:50%;background:var(--dj-accent);flex:none}
+.dj-rs-preview{color:var(--dj-text-soft);font-size:12px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:min(400px,calc(100vw - 80px))}
+.dj-rs-meta{color:var(--dj-text-faint);font-size:10px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:min(400px,calc(100vw - 80px))}
+.dj-rs-meta:empty{display:none}
+.dj-rs-ctl{display:flex;align-items:center;gap:4px;flex:none;align-self:flex-start}
+.dj-rs-count{color:var(--dj-text-faint);font-weight:600;font-size:10px;line-height:1;
+  white-space:nowrap;font-variant-numeric:tabular-nums}
+.dj-rs-all{color:var(--dj-accent-text);font-weight:600;font-size:11px;line-height:1;
+  white-space:nowrap;flex:none}
+.dj-rs-all:hover{background:var(--dj-accent-soft)}
+`
+
 function createTooltip(onDismiss: () => void): Tooltip {
-  let host: HTMLDivElement | null = null
+  let layer: ReturnType<typeof createOverlayHost> | null = null
   let card: HTMLElement | null = null
   let leadEl: HTMLSpanElement | null = null
   let previewEl: HTMLSpanElement | null = null
@@ -132,79 +128,23 @@ function createTooltip(onDismiss: () => void): Tooltip {
   let visible = false
 
   const ensure = () => {
-    if (host) {
-      if (!host.isConnected) document.documentElement.appendChild(host)
+    if (layer) {
+      layer.reattach()
       return
     }
-    host = document.createElement('div')
-    // pointer-events:none on the layer so the host page stays clickable; only
-    // the card itself opts back in.
-    host.style.cssText = 'position:fixed;inset:0;z-index:2147483647;pointer-events:none;'
+    layer = createOverlayHost('resurface', TOOLTIP_CSS)
     // Announce the suggestion to screen readers when it appears.
-    host.setAttribute('role', 'status')
-    host.setAttribute('aria-live', 'polite')
-    const shadow = host.attachShadow({ mode: 'open' })
-
-    const style = document.createElement('style')
-    // Colors are hardcoded to mirror the --dj-* tokens in src/styles/globals.css
-    // (shadow DOM + :host{all:initial} blocks variable inheritance). If the
-    // palette there changes, update these to match. Meta uses the AA-safe
-    // faint tokens (#655f56 / dark #9a9488), not the old under-contrast greys.
-    style.textContent = `
-      :host{all:initial}
-      .dj-rs{position:fixed;left:0;top:0;max-width:min(440px,calc(100vw - 16px));pointer-events:auto;
-        display:flex;align-items:flex-start;gap:10px;text-align:left;
-        background:#faf8f3;color:#1c1b19;border:1px solid #d0caba;
-        border-radius:10px;padding:8px 10px;box-shadow:0 8px 28px rgba(0,0,0,.18);
-        font:13px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-        animation:dj-rs-in .14s ease-out;transition:opacity .1s ease}
-      .dj-rs:hover{background:#ebe6db}
-      .dj-rs-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;
-        background:none;border:none;padding:0;margin:0;cursor:pointer;text-align:left;
-        color:inherit;font:inherit;border-radius:6px}
-      .dj-rs-main:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
-      .dj-rs-lead{display:flex;align-items:center;gap:6px;color:#5b54f0;font-weight:600;white-space:nowrap}
-      .dj-rs-dot{width:6px;height:6px;border-radius:50%;background:#5b54f0;flex:none}
-      .dj-rs-preview{color:#534f49;font-size:12px;white-space:nowrap;overflow:hidden;
-        text-overflow:ellipsis;max-width:min(400px,calc(100vw - 80px))}
-      .dj-rs-meta{color:#655f56;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-        max-width:min(400px,calc(100vw - 80px))}
-      .dj-rs-meta:empty{display:none}
-      .dj-rs-ctl{display:flex;align-items:center;gap:4px;flex:none;align-self:flex-start}
-      .dj-rs-count{color:#655f56;font-weight:600;font-size:10px;line-height:1;white-space:nowrap;
-        font-variant-numeric:tabular-nums}
-      .dj-rs-all{flex:none;background:none;border:none;cursor:pointer;white-space:nowrap;
-        color:#5b54f0;font-family:inherit;font-weight:600;font-size:11px;line-height:1;padding:2px 5px;border-radius:6px}
-      .dj-rs-all:hover{background:#ecebfe}
-      .dj-rs-next,.dj-rs-x{flex:none;background:none;border:none;cursor:pointer;
-        color:#655f56;font-family:inherit;font-weight:600;font-size:14px;line-height:1;
-        padding:2px 4px;border-radius:6px}
-      .dj-rs-next:hover,.dj-rs-x:hover{background:#d0caba;color:#1c1b19}
-      .dj-rs-all:focus-visible,.dj-rs-next:focus-visible,.dj-rs-x:focus-visible{outline:2px solid #5b54f0;outline-offset:1px}
-      @keyframes dj-rs-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-      @media (prefers-reduced-motion: reduce){.dj-rs{animation:none}}
-      @media (prefers-color-scheme: dark){
-        .dj-rs{background:#1e1d28;color:#f3f1ea;border-color:#3f3c4a;box-shadow:0 8px 28px rgba(0,0,0,.4)}
-        .dj-rs:hover{background:#0c0b12}
-        .dj-rs-lead{color:#9c97f7}
-        .dj-rs-dot{background:#8983f5}
-        .dj-rs-preview{color:#b9b4a8}
-        .dj-rs-meta,.dj-rs-count{color:#9a9488}
-        .dj-rs-all{color:#9c97f7}
-        .dj-rs-all:hover{background:#2a2740}
-        .dj-rs-next,.dj-rs-x{color:#9a9488}
-        .dj-rs-next:hover,.dj-rs-x:hover{background:#3f3c4a;color:#f3f1ea}
-      }
-    `
-    shadow.appendChild(style)
+    layer.host.setAttribute('role', 'status')
+    layer.host.setAttribute('aria-live', 'polite')
+    const shadow = layer.shadow
 
     // Shell is a group, not a button — secondary controls are real <button>s
     // so keyboard / SR users can reach See all, next, and dismiss independently.
     card = document.createElement('div')
-    card.className = 'dj-rs'
+    card.className = 'dj-card dj-rs'
     card.setAttribute('role', 'group')
     card.setAttribute('aria-label', 'Reuse a similar prompt you saved before')
-    card.style.display = 'none'
+    card.hidden = true
 
     const main = document.createElement('button')
     main.type = 'button'
@@ -249,7 +189,7 @@ function createTooltip(onDismiss: () => void): Tooltip {
 
     nextEl = document.createElement('button')
     nextEl.type = 'button'
-    nextEl.className = 'dj-rs-next'
+    nextEl.className = 'dj-btn dj-x'
     nextEl.setAttribute('aria-label', 'Show the next match')
     nextEl.textContent = '›'
     nextEl.addEventListener('mousedown', (e) => e.preventDefault())
@@ -260,7 +200,7 @@ function createTooltip(onDismiss: () => void): Tooltip {
 
     const close = document.createElement('button')
     close.type = 'button'
-    close.className = 'dj-rs-x'
+    close.className = 'dj-btn dj-x'
     close.setAttribute('aria-label', 'Dismiss')
     close.textContent = '×'
     close.addEventListener('mousedown', (e) => e.preventDefault())
@@ -273,7 +213,6 @@ function createTooltip(onDismiss: () => void): Tooltip {
     ctlEl.append(seeAllEl, countEl, nextEl, close)
     card.append(main, ctlEl)
     shadow.appendChild(card)
-    document.documentElement.appendChild(host)
   }
 
   const render = (view: CandidateView) => {
@@ -304,7 +243,7 @@ function createTooltip(onDismiss: () => void): Tooltip {
       // the user steps through candidates via update()).
       if (leadEl) leadEl.textContent = randomLead()
       render(view)
-      if (card) card.style.display = 'flex'
+      if (card) card.hidden = false
       visible = true
     },
     update(view) {
@@ -321,34 +260,19 @@ function createTooltip(onDismiss: () => void): Tooltip {
       if (ctlEl) ctlEl.style.display = 'none'
     },
     hide() {
-      if (card) card.style.display = 'none'
+      if (card) card.hidden = true
       visible = false
     },
     reposition(anchor) {
       if (!card || !visible) return
-      // Anchor just above the input, left-aligned, clamped to the viewport.
-      card.style.visibility = 'hidden'
-      card.style.display = 'flex'
-      const h = card.offsetHeight || 44
-      const w = card.offsetWidth || 320
-      let top = anchor.top - h - 8
-      if (top < 8) top = anchor.bottom + 8 // flip below if no room above
-      let left = anchor.left
-      const maxLeft = window.innerWidth - w - 8
-      if (left > maxLeft) left = Math.max(8, maxLeft)
-      if (left < 8) left = 8
-      card.style.left = `${left}px`
-      card.style.top = `${top}px`
-      card.style.visibility = 'visible'
+      // Just above the input, left-aligned, clamped to the viewport (anchor.ts
+      // flips it below when there's no room above).
+      anchorTo(card, anchor, 'above')
     },
     isVisible: () => visible,
     destroy() {
-      try {
-        host?.remove()
-      } catch {
-        /* ignore */
-      }
-      host = null
+      layer?.destroy()
+      layer = null
       card = null
       leadEl = null
       previewEl = null
@@ -383,7 +307,6 @@ export function attachResurface(
   let currentIndex = 0
   let grandTotal = 0 // total matches above threshold, incl. those not surfaced
   let lastQueried = ''
-  let repositionTimer: number | undefined
   let confirmTimer: number | undefined
   let confirming = false // showing the "copied" confirmation; suppress re-query
   let queryToken = 0
@@ -416,13 +339,7 @@ export function attachResurface(
     more: Math.max(0, grandTotal - currentMatches.length),
   })
 
-  const anchorRect = (): DOMRect | null => {
-    const el = activeEl ?? getInput()
-    if (!el) return null
-    const r = el.getBoundingClientRect()
-    if (r.width === 0 && r.height === 0) return null
-    return r
-  }
+  const anchorRect = (): DOMRect | null => rectOf(activeEl ?? getInput())
 
   const reposition = () => {
     const r = anchorRect()
@@ -615,15 +532,6 @@ export function attachResurface(
     }
   }
 
-  const onScrollResize = () => {
-    if (!tooltip.isVisible()) return
-    if (repositionTimer != null) return
-    repositionTimer = window.setTimeout(() => {
-      repositionTimer = undefined
-      reposition()
-    }, REPOSITION_THROTTLE_MS)
-  }
-
   const onFocusOut = () => {
     // If the input is cleared or focus leaves it, the prompt is gone — hide.
     // While confirming a copy, leave the tooltip alone (clicking it blurred the
@@ -639,21 +547,21 @@ export function attachResurface(
   document.addEventListener('input', onInput, true)
   document.addEventListener('keydown', onKeyDown, true)
   document.addEventListener('focusout', onFocusOut, true)
-  window.addEventListener('scroll', onScrollResize, true)
-  window.addEventListener('resize', onScrollResize, true)
+  // Keep the tooltip pinned to the composer as the page moves under it.
+  const unwatchAnchor = watchAnchor(anchorRect, () => {
+    if (tooltip.isVisible()) reposition()
+  })
 
   log('armed for', platform)
 
   return () => {
     window.clearTimeout(debounceTimer)
-    window.clearTimeout(repositionTimer)
     window.clearTimeout(confirmTimer)
     unsubPrefs()
+    unwatchAnchor()
     document.removeEventListener('input', onInput, true)
     document.removeEventListener('keydown', onKeyDown, true)
     document.removeEventListener('focusout', onFocusOut, true)
-    window.removeEventListener('scroll', onScrollResize, true)
-    window.removeEventListener('resize', onScrollResize, true)
     tooltip.destroy()
   }
 }

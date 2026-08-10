@@ -33,6 +33,17 @@ class DejaDB extends Dexie {
     this.version(3).stores({
       prompts: '++id, platform, createdAt, lastUsedAt, *tags',
     })
+    // v4 — ADDITIVE, and the schema string is deliberately IDENTICAL to v3.
+    // The new field is `dismissCount` (see types.ts), which is read in memory
+    // when ordering suggestions and never queried by index, so indexing it
+    // would cost writes and buy nothing. The version exists only so Dexie runs
+    // a clean upgrade rather than us editing an already-applied version in
+    // place — doing that once before made Dexie throw "schema was changed" on
+    // open, which silently broke every write including capture. Data preserved;
+    // old rows simply have no `dismissCount` and are treated as 0.
+    this.version(4).stores({
+      prompts: '++id, platform, createdAt, lastUsedAt, *tags',
+    })
   }
 }
 
@@ -115,6 +126,17 @@ export async function touchUsage(id: number): Promise<void> {
   await db.prompts.where('id').equals(id).modify((p) => {
     p.usageCount = (p.usageCount ?? 0) + 1
     p.lastUsedAt = now
+  })
+}
+
+// The other half of the suggestion signal: the user saw this prompt offered and
+// waved it away. Same atomic modify() shape as touchUsage, and for the same
+// reason. Note what this does NOT do — it doesn't touch lastUsedAt, doesn't
+// hide the prompt, and doesn't suppress it anywhere. It nudges the order of
+// future suggestions and nothing else.
+export async function touchDismiss(id: number): Promise<void> {
+  await db.prompts.where('id').equals(id).modify((p) => {
+    p.dismissCount = (p.dismissCount ?? 0) + 1
   })
 }
 

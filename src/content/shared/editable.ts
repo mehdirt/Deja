@@ -21,6 +21,47 @@ export function readText(el: HTMLElement): string {
 // resolves to (or drift over time). isCapturableField excludes <input>
 // entirely (so password/email/search fields can never match) and refuses
 // credential/OTP/payment fields.
+// Replace the composer's contents with `text`.
+//
+// select-all + execCommand('insertText') is deprecated but remains the most
+// reliable path across both <textarea> and rich contenteditable editors
+// (ProseMirror, Quill): it's undoable with the site's own Ctrl-Z, and the
+// site's framework registers it as real input, so send buttons enable and
+// autosize handlers run. The direct value/textContent write is the fallback for
+// plain fields where execCommand is unavailable.
+//
+// Returns false when nothing could be written, so the caller can fall back to
+// copying instead. Never throws — this runs inside someone else's page.
+//
+// Shared by every path that puts a remembered prompt back in the box: the
+// resurface tooltip, the dot's panel, the `//` picker, and the blanks step.
+export function replaceComposerText(el: HTMLElement, text: string): boolean {
+  try {
+    el.focus()
+    if (el instanceof HTMLTextAreaElement) {
+      el.select()
+      if (document.execCommand('insertText', false, text)) return true
+      el.value = text
+      el.selectionStart = el.selectionEnd = text.length
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+      return true
+    }
+    const sel = window.getSelection()
+    if (sel) {
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    }
+    if (document.execCommand('insertText', false, text)) return true
+    el.textContent = text
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+    return true
+  } catch {
+    return false
+  }
+}
+
 export function editableFromEvent(e: Event): HTMLElement | null {
   const path = (e.composedPath?.() ?? []) as Element[]
   for (const node of path) {

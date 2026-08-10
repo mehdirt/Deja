@@ -67,6 +67,27 @@ export interface Prefs {
   // least-used (then oldest) are removed; favorites are never touched.
   // See libraryCap.ts.
   libraryCap: number
+  // ── In-page surfaces ───────────────────────────────────────────────────────
+  // A small Deja button in the corner of the chat box. On by default: without
+  // it, Deja is invisible unless the similarity threshold happens to fire, and
+  // an extension nobody sees is an extension nobody keeps. Turning it off
+  // removes the element entirely (and with it the hand-save offer, which is a
+  // third state of the same dot).
+  inPageDot: boolean
+  // Typing `//` in the chat box opens a search over everything saved. On by
+  // default; it costs nothing until those two characters are typed.
+  slashPicker: boolean
+  // Let the order of suggestions follow what the user actually reuses. On by
+  // default. Local only — this never leaves the machine, and no score is ever
+  // shown to (or about) the person.
+  learnFromUse: boolean
+  // Which everyday topics the person said they use AI for, from the welcome
+  // chips. Purely cosmetic: it picks which starter examples show while the
+  // library is empty. Empty means "show them all" — skipping is a real choice.
+  intents: string[]
+  // Whether the welcome demo has played once. After that it shows its final
+  // frame with a play button instead of looping at a returning visitor.
+  welcomeDemoSeen: boolean
 }
 
 function allSitesEnabled(): Record<Platform, boolean> {
@@ -92,6 +113,11 @@ export const DEFAULT_PREFS: Prefs = {
   rememberHiddenDetails: true,
   nerNamesPlaces: false,
   libraryCap: LIBRARY_CAP_DEFAULT,
+  inPageDot: true,
+  slashPicker: true,
+  learnFromUse: true,
+  intents: [],
+  welcomeDemoSeen: false,
 }
 
 const KEY = 'prefs'
@@ -129,6 +155,23 @@ function coercePiiKinds(raw: unknown): Record<PiiKind, boolean> {
   return out
 }
 
+// Starter-example topics. Kept loose (a plain string[]) in storage but coerced
+// against this list, so a stale or hand-edited value can never make the empty
+// library show nothing.
+export const INTENTS = ['email', 'planning', 'learning', 'everyday'] as const
+export type Intent = (typeof INTENTS)[number]
+
+function coerceIntents(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return []
+  const out: string[] = []
+  for (const v of raw) {
+    if (typeof v === 'string' && (INTENTS as readonly string[]).includes(v) && !out.includes(v)) {
+      out.push(v)
+    }
+  }
+  return out
+}
+
 function coerce(raw: unknown): Prefs {
   const obj = (raw ?? {}) as Partial<Prefs> & { keepMinor?: unknown }
   return {
@@ -146,6 +189,13 @@ function coerce(raw: unknown): Prefs {
     rememberHiddenDetails: obj.rememberHiddenDetails !== false,
     nerNamesPlaces: obj.nerNamesPlaces === true,
     libraryCap: coerceLibraryCap(obj.libraryCap),
+    // On-by-default booleans use `!== false` so an install predating the key
+    // gets the new behaviour, and only an explicit opt-out turns it off.
+    inPageDot: obj.inPageDot !== false,
+    slashPicker: obj.slashPicker !== false,
+    learnFromUse: obj.learnFromUse !== false,
+    intents: coerceIntents(obj.intents),
+    welcomeDemoSeen: obj.welcomeDemoSeen === true,
   }
 }
 
