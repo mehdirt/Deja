@@ -188,6 +188,25 @@ The content hot path reads all of this through a synchronous, fail-open cache (`
 
 ---
 
+## Phase 8 — In-page mechanisms ✅ *(built; August 2026)*
+
+Grammarly's actual mechanism was never grammar — it was **placement**: it lives in the box you're typing in. Deja was the opposite shape, a library you visit plus one tooltip that only fired above a similarity threshold, so on an ordinary day a user saw nothing at all. That is the Phase 6 failure mode restated.
+
+Seven additions, all in-page, all individually switchable, and all additive — the popup stays the quick glance, the library stays home, and turning every one of them off leaves Deja behaving exactly as it did before.
+
+- **A quiet dot** anchored to the chat box (`src/content/shared/presence.ts`), with a panel for search-and-insert. Its badge costs nothing: the resurface layer was already running one debounced `SIMILAR_QUERY`, and the count rides along on that response.
+- **`//` to reach anything saved** (`picker.ts`) — word-boundary trigger so `https://` never opens it, 120 ms debounce, arrow keys / Enter / Tab, and blanks filled in place. Replaces only the `//query` token, because it can fire mid-sentence.
+- **Turn it off from the dot** — never save from this site, or pause for an hour, both with undo. The controls already existed in settings; this is them at the moment of annoyance.
+- **Suggestions follow what you reuse** (`suggestionRank` in `ranking.ts`) — a saturating normalisation keeps standing a tie-breaker rather than the main event, and dismissals damp rather than punish. No score is ever shown; a visible standing number is prompt scoring wearing a different hat.
+- **Hand-save when a selector breaks** — the health probe already knew; now it tells the dot, and silent data loss becomes one click.
+- **Welcome intent chips** filtering `starter.ts`, and **a welcome demo** that plays the resurface moment instead of describing it.
+
+Two decisions worth keeping: shadow roots are now **closed** (an open root is readable by any page script, which stops being a narrow leak once a surface renders library rows), and **saving off is not reading off** — pause and per-site off dim the dot but leave the library reachable, while incognito and blocklisted domains remove the surfaces entirely.
+
+**Still open:** the presentation surfaces. See `docs/plans/2026-08-10-in-context-mechanisms.md` → Phase H.
+
+---
+
 ## Phase 7+ — Decide from data, not from this document
 
 After ~50 users have used the v1 for a few weeks, look at what they actually do and pick the next feature.
@@ -225,7 +244,7 @@ Explicitly **not** on the roadmap unless someone shows a clear reason:
 
 - **Selectors will break.** Every supported site (ChatGPT, Claude, Gemini, DeepSeek, Grok) changes its DOM every few weeks. Build a habit of testing capture on all of them after every release, lean on the capture-health view to catch silent breakage, and keep selector code in one file per site for fast fixes.
 - **Latency budget.** From Enter keypress to toast: under 100 ms. From popup open to first result: under 50 ms. If we miss either, fix it before adding the next feature.
-- **Resurface scaling (deferred until it bites).** Each debounced keystroke re-reads the whole prompt table and trigram-scans every row to find similar prompts. That's fine for hundreds of prompts; at thousands it'll start to drag — exactly when a power user's library is most valuable. The fix when (and only when) real libraries feel slow: a worker-scope cache of precomputed trigram sets plus an inverted index (trigram → prompts), so a query only scores candidates that share a rare trigram instead of the whole table. Premature now; building it before the data shows the slowdown is speculative. Flagged in `src/background/index.ts`.
+- **Resurface scaling (half done, August 2026).** Each debounced keystroke used to re-read the whole prompt table *and* trigram-scan every row. The `//` picker made the first half bite — it searches on a 120 ms debounce, so a keystroke meant two full-table reads — so `src/background/pool.ts` now caches the row list in worker scope and every write path invalidates it. The second half is still deferred and still speculative: precomputed trigram sets plus an inverted index (trigram → prompts), so a query only scores candidates sharing a rare trigram. Build that when real libraries feel slow *with* the cache in place, not before.
 - **Cost budget.** $0/month to operate v1. The moment we add a hosted feature, we have a different product with different risks; weigh that carefully.
 - **Listening, not asking.** Don't run feature surveys. Watch how people use it, what they wish was faster, and what causes uninstalls.
 

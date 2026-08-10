@@ -70,7 +70,19 @@ Defined in `globals.css` `@layer components` — compose these instead of re-sty
 
 `.dj-card` · `.dj-chip` · `.dj-input` · `.dj-btn` / `.dj-btn-primary` / `.dj-btn-ghost` · `.dj-pill` / `.dj-pill-active` · `.dj-tag` / `.dj-tag-active` / `.dj-tag-label` · `.dj-prompt` · `.dj-md` · `.dj-wordmark` · `.dj-meta`
 
-The in-page overlays (the save toast and the resurface tooltip) live in a Shadow DOM on the host site and can't use any of this — they re-declare the palette inline. They also deliberately use the **system UI font**, not Figtree: an overlay sitting on chatgpt.com should read as part of that page, not as a foreign widget.
+The in-page overlays live in a Shadow DOM on the host site and can't use any of this — see *In-page surfaces* below.
+
+## In-page surfaces
+
+Six things now render inside the chat sites themselves: the save toast, the resurface tooltip, the ambient dot, its panel, the `//` picker, and the fill-in-the-blank step. They share one source of truth — `src/content/shared/overlayTheme.ts` — and the rules below exist because six copies of a palette is six chances for dark mode to be half-applied.
+
+- **The palette lives on `:host` as custom properties.** `:host{all:initial}` blocks *inheritance* from the page, which is why the `--dj-*` variables in `globals.css` never reach a shadow tree. Properties declared on the host element itself do cascade in, so one dark-mode media query covers a whole surface instead of one per rule. `overlayTheme.ts` mirrors `globals.css` by hand — **when a token changes there, change it here in the same commit.**
+- **Shadow roots are `mode: 'closed'`.** An open root is readable by any script on the host page. That was a narrow leak when the only content was a prompt the user had just typed; it stops being narrow once a surface renders rows of the saved library. Expect `shadowRoot: null` in DevTools — that's the point, not a bug.
+- **Overlays use the system UI font**, not Figtree. An overlay sitting on chatgpt.com should read as part of that page, not as a foreign widget. Mono is only for `{blank}` tokens, `[email_1]` placeholders, hostnames, and the literal `//` hint.
+- **Radii are tighter than the extension's own pages**: 10px cards, 8px rows, 6px icon buttons. The 16px/11px pair is for Deja's pages, which can breathe; an overlay on somebody else's UI should read as a small utility.
+- **Two extra tokens exist only here.** `--dj-card` / `--dj-card-hover` are warm paper in light and surface in dark, because an overlay reads better on paper than on pure white. `--dj-accent-text` is the accent at text weight — dark mode needs the lighter step to stay legible on a dark card.
+- **The toast stays dark in both themes**, deliberately: it's a transient confirmation in the corner of someone else's page, and a dark chip reads as a notification everywhere, where a warm card reads as part of the site and gets missed.
+- **Anchoring is shared too** (`src/content/shared/anchor.ts`): clamp to the viewport with an 8px margin, flip above↔below when there's no room, throttle scroll/resize at 100ms. The dot anchors *outside* the composer's right edge, because every supported site puts its own send button inside that corner.
 
 ## Logo
 

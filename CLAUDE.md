@@ -89,6 +89,17 @@ Shared core lives under `src/lib/`:
 - `markdown.ts` — Markdown export. `import.ts` — JSON import. `format.ts` — text/relative-time helpers, plus `conversationUrl()`, which returns a link back to the original chat only when the captured URL actually points at a conversation (a prompt sent as the first message of a new chat is captured before the site assigns one, so the path is bare and the link would just reload the homepage).
 - `types.ts` — `Prompt`, `Platform`, the runtime message/response shapes, and `PLATFORM_LABEL` / `PLATFORM_COLOR`.
 
+The in-page surfaces (everything Deja renders inside a chat site) share three modules under `src/content/shared/`:
+
+- `overlayTheme.ts` — the palette and primitives for every overlay, plus `createOverlayHost()`. Shadow roots are **closed** (an open root is readable by any script on the host page, and these surfaces render library rows). Tokens are declared on `:host`, mirroring `globals.css` — change both in the same commit. See the *In-page surfaces* section of `DESIGN.md`.
+- `anchor.ts` — positioning and viewport clamping, shared by the tooltip, dot, panel, and picker.
+- `presence.ts` / `picker.ts` / `blanks.ts` — the ambient dot and its panel, the `//` picker, and the shared fill-in step.
+
+Two rules those surfaces follow that aren't obvious from the code:
+
+- **Saving off is not reading off.** Pause and the per-site switch mean "don't record what I type"; they dim the dot but leave the library readable. Incognito auto-pause and a blocklisted domain remove the surfaces entirely — those are the fail-closed cases. A *write* (the hand-save) stays blocked in all of them.
+- **`isTrusted` gates the two triggers that open a library-reading surface** (the dot's click, the `//` trigger) — a hostile page script can forge events. It deliberately does **not** gate capture: site frameworks legitimately emit synthetic input, and refusing those would mean silently failing to save someone's prompt.
+
 The path alias `@/` resolves to `src/` (configured in `tsconfig.json` and `vite.config.ts` — keep them in sync).
 
 ## Things to keep in mind when editing

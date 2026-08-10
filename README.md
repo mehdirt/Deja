@@ -56,7 +56,7 @@ Site DOMs change often, so each platform uses an **ordered list of selector fall
 
 ## Features
 
-### Capture you can trust
+### Saving you can trust
 - Passive capture on **Enter** and on **send‑button** clicks; duplicate submits within ~2 s are de‑duplicated.
 - **Never captures credentials** — password / OTP / payment / non‑composer fields are refused, and stored URLs are minimized to origin + path.
 - **Capture‑health** per platform, surfaced in the library and settings, so a broken selector is visible to *you* and never leaks to the host page.
@@ -69,12 +69,12 @@ Site DOMs change often, so each platform uses an **ordered list of selector fall
 - Shows *why* it matched ("matched on …") and lets you **step through multiple candidates**; offers "see all" in the library when there are more.
 - Click to **copy** by default — or opt into **insert‑at‑cursor** in settings. It never silently auto‑fills, and never overwrites what you've typed. Dismissible per query (× / Esc suppresses that prompt only); it never nags.
 
-### Selective capture — keep the keepers
+### What gets saved — keep the keepers
 - A local, zero‑LLM classifier flags **"minor"** prompts (bare follow‑ups like "yes" / "continue", tiny fragments with no code, URL, structure, or length).
 - **Soft capture, never a silent drop:** minor prompts are still stored, just hidden from the library and resurface by default — surfaced under **`filtered (N)`** with a one‑click **keep** to promote any back.
 - **Filter strength** is a setting: `off` (keep everything) · `balanced` (default — only obvious throwaways) · `strict` (only longer / structured prompts).
 
-### Capture controls — what gets recorded is yours
+### What gets recorded is yours
 - **Pause capture** from the popup: for **1 hour** or **until you resume**, with a live countdown and a toolbar badge. Capture resumes on its own.
 - **Per‑site switches** in Settings → **Where Deja works**, next to each site's capture‑health status — turn capture off on any site.
 - **Auto‑pause in incognito** by default.
@@ -118,8 +118,11 @@ Send a prompt on any [supported site](#supported-sites), then click the Deja too
 
 ## Using Deja
 
-- **Just work.** Prompt on any supported site as you normally do. Each prompt is saved the moment you hit Enter — a brief "remembered · undo" toast confirms it.
-- **Reuse in‑context.** Start typing something you've asked before; when the tooltip appears, click it to copy your earlier version (or step through `1/3` matches with `›`).
+- **Just work.** Prompt on any supported site as you normally do. Each prompt is saved the moment you hit Enter — a brief "Saved for you ✔ · Undo" toast confirms it.
+- **Reuse in‑context.** Start typing something you've asked before; when the tooltip appears, click it to put your earlier version back in the box (or step through `1/3` matches with `›`).
+- **Type `//` to reach anything saved.** Two slashes in the chat box open a search over your whole library — arrow keys to move, Enter to take one. If the prompt has `{blanks}`, you fill them in before it lands. It never opens inside a URL.
+- **The quiet dot.** A small Deja button sits in the corner of the chat box. It lights up when something you saved looks like what you're typing, and opens the same search-and-insert panel. Its footer is the fastest way to say "not here" — never save from this site, or pause for an hour.
+- **When a site changes.** If Deja loses the message box, the dot turns amber and offers to save that prompt by hand rather than letting it vanish.
 - **Browse the popup.** The toolbar icon opens a search box + recent prompts. Hit `library →` for the full page.
 - **Curate the library.** Search, filter by platform/tag, pin favorites, tag prompts, bulk‑delete, and sort by usefulness. Deleted prompts are undoable.
 - **Control capture.** Use **⏸ pause** in the popup before a private session; switch off a site or set filter strength in **settings**; add blocklist rules for anything secret.
@@ -148,13 +151,16 @@ Deja runs entirely on the client across **four execution contexts**, all TypeScr
                        popup & options (React)  ──┘  search · tag · pin · export · settings
 ```
 
-- **Content scripts** — `src/content/<platform>/index.ts`, one per site. Each resolves the prompt composer via its selector fallbacks and wires up four shared helpers from `src/content/shared/`:
+- **Content scripts** — `src/content/<platform>/index.ts`, one per site. Each resolves the prompt composer via its selector fallbacks and wires up the shared helpers in `src/content/shared/`:
   - `capture.ts` — watches Enter / send clicks, debounces duplicates, checks the gate + blocklist, and sends `PROMPT_CAPTURED`.
-  - `resurface.ts` — debounced similarity queries, the Shadow‑DOM tooltip, copy / insert.
+  - `resurface.ts` — debounced similarity queries, the tooltip, copy / insert.
+  - `presence.ts` — the ambient dot and its panel (search, insert, "not here", hand-save).
+  - `picker.ts` — the `//` trigger, its list, and the shared `blanks.ts` fill-in step.
   - `captureGate.ts` — a synchronous, fail‑open snapshot of pause / per‑site / incognito state for the hot path.
-  - `health.ts` — the capture‑health probe.
+  - `health.ts` — the capture‑health probe, which also drives the dot's amber state.
+  - `overlayTheme.ts` / `anchor.ts` — one palette and one positioning kit for all six in-page surfaces. Shadow roots are **closed**, so nothing on the host page can read what Deja renders.
   They **fail silently and never block the host page.**
-- **Background service worker** — `src/background/index.ts`. The only writer to IndexedDB from outside the UI. Handles `PROMPT_CAPTURED` (redact PII → classify → store), `SIMILAR_QUERY` (score the pool → top matches), `OPEN_LIBRARY`, and `UNDO_CAPTURE`, and paints the pause badge. MV3 workers are short‑lived, so it keeps no state in module scope — everything persists through Dexie / `chrome.storage`.
+- **Background service worker** — `src/background/index.ts`. The only writer to IndexedDB from outside the UI. Handles `PROMPT_CAPTURED` (redact PII → classify → store), `SIMILAR_QUERY` (score the pool → re-rank → top matches), `LIBRARY_SEARCH` (the in-page panel and picker, which can't read IndexedDB themselves), `SAVE_MANUAL`, `PROMPT_USED` / `SUGGESTION_DISMISSED`, `OPEN_LIBRARY`, and `UNDO_CAPTURE`, and paints the pause badge. `pool.ts` caches the prompt list in worker scope so a keystroke doesn't cost a full table read. MV3 workers are short‑lived, so it keeps no state in module scope that matters across wakes — everything persists through Dexie / `chrome.storage`.
 - **Popup** — `src/popup/`. Search + recent prompts + pause control.
 - **Options / Library** — `src/options/`. The full library, settings, and privacy page.
 

@@ -126,3 +126,34 @@ describe('isPaused', () => {
     expect(isPaused({ ...DEFAULT_PREFS, pauseUntil: PAUSE_FOREVER }, Date.now() + 1e15)).toBe(true)
   })
 })
+
+describe('the in-page surface preferences', () => {
+  it('turns the new helpers on for installs that predate them', async () => {
+    // These keys did not exist before, so an existing prefs blob has no opinion
+    // about them. Absent must mean on, or nobody who already had Deja would
+    // ever see the new surfaces.
+    installChromeStorage({ prefs: { resurfaceClick: 'insert' } })
+    const prefs = await readPrefs()
+    expect(prefs.inPageDot).toBe(true)
+    expect(prefs.slashPicker).toBe(true)
+    expect(prefs.learnFromUse).toBe(true)
+  })
+
+  it('honours an explicit opt-out', async () => {
+    installChromeStorage({ prefs: { inPageDot: false, slashPicker: false, learnFromUse: false } })
+    const prefs = await readPrefs()
+    expect(prefs.inPageDot).toBe(false)
+    expect(prefs.slashPicker).toBe(false)
+    expect(prefs.learnFromUse).toBe(false)
+  })
+
+  it('drops unknown or malformed example topics', async () => {
+    installChromeStorage({ prefs: { intents: ['email', 'nonsense', 42, 'email'] } })
+    expect((await readPrefs()).intents).toEqual(['email'])
+  })
+
+  it('treats a non-list of topics as no choice at all', async () => {
+    installChromeStorage({ prefs: { intents: 'email' } })
+    expect((await readPrefs()).intents).toEqual([])
+  })
+})
