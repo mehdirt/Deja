@@ -456,7 +456,8 @@ Placement: replaces the third step's body text in `Welcome.tsx` (the "Later, it 
 3. **Latency re-measure.** Enter→stored, popup→first result, keystroke→picker.
 4. **Tests.** New colocated files: `presence.test.ts` (the state machine, including the `off` > `broken` precedence and the no-dot-in-incognito case), `picker.test.ts` (trigger/cancel rules, the `https://` case, the `isTrusted` gate), `pool.test.ts` (invalidation — including the `touchUsage`/`touchDismiss` paths), `ranking.test.ts` (extend for `suggestionRank`: normalisation keeps standing bounded, similarity stays dominant, a below-threshold prompt never surfaces), `prefs.test.ts` (extend for the new keys and their coercion defaults).
 5. **Review.** `compound-engineering:ce-code-review` over the full diff before calling it done.
-6. **Docs, in the same body of work:**
+6. **Presentation** — Phase H below covers the outward-facing surfaces (landing page, store listing, screenshots, video, privacy page, README, in-extension empty states). H0 is independent of this work and should be done now.
+7. **Docs, in the same body of work:**
    - `DESIGN.md` — an "In-page surfaces" subsection covering the overlay token contract and the tighter radii.
    - `ROADMAP.md` — mark the pool cache done and note that the inverted index is still deferred; log M1–M7 as a phase.
    - `README.md` — the `//` shortcut is user-facing and belongs in usage.
@@ -464,10 +465,63 @@ Placement: replaces the third step's body text in `Welcome.tsx` (the "Later, it 
 
 ---
 
+## Phase H — Presentation (the outward-facing surfaces)
+
+Shipping M1–M7 changes what Deja *is* in one sentence, so every surface that describes it goes stale at the same moment. Worse, three of them are stale **already** — `ROADMAP.md` Phase 6 flagged this and it was never closed. Doing the two together is cheaper than doing them twice.
+
+### H0. What is already wrong today (fix regardless of M1–M7)
+
+1. **The store listing describes behavior the extension no longer has.** `store/listing.md` says of the resurface moment: *"Click to copy it to your clipboard — it never types into the box unless you opt in."* The default flipped to **insert** on 2026-08-05. The file's own header warns *"reviewers compare the listing against behavior"* — this is the exact kind of mismatch that gets a submission bounced, and it is also just untrue to the user.
+2. **The screenshots predate the entire visual identity.** `store/screenshot-*.png` are dated **2026-07-10**; Phase 6's bundled fonts, sentence case, plain-English vocabulary, and the warm-paper Structure palette all landed in August. So the store shows Deja rendering in OS-fallback fonts — the precise bug Phase 6 was about ("the product literally looked its best for the audience it was least useful to"), now frozen in the shop window.
+3. **`README.md` still leads with the old vocabulary.** Section headings read *"Capture you can trust"*, *"Selective capture"*, *"Capture controls"*. The `DESIGN.md` voice table maps capture → **save**. The README is the first thing a curious person reads on a public repo.
+4. **`store/assets.md`'s video script quotes copy that no longer exists** — a toast reading *"remembered."* (it says "Saved for you ✔") and a settings line reading *"capture is working ✓"* (it says "Saving" / "Not yet" / "Needs attention").
+
+The landing page (`site/index.html`, updated 2026-08-09) and privacy page are in good shape — same tokens, right voice. They need *additions*, not repair.
+
+### H1. The positioning shift M1–M7 forces
+
+Every surface currently frames Deja **passively**: it "quietly saves", it "resurfaces", it works "in the background". That was accurate. After M1 and M2 it is only half the story — Deja becomes something you also **reach for**, mid-sentence, on purpose.
+
+The landing page's three-beat flow (*ask like you always do → saves it on this computer → the right one comes back*) is the clearest expression of the old frame, and it now needs a fourth beat: **and it's right there when you want it.**
+
+That is the whole content change. Say it once, well, in each place — do not bolt seven feature bullets onto every surface.
+
+### H2. Surface-by-surface
+
+**Landing page — `site/index.html`.** Tokens are already synced with the extension (done 2026-08-08), so this is *content* work, not a restyle. Add the fourth flow step. Add one section showing the `//` picker, because it is the most demonstrable thing Deja will do and the hardest to convey in prose.
+
+> **Reuse the evaluation demo.** The interactive demo built for this decision is already a self-contained page using the real tokens, the real fonts, and both themes. Its mock composer + picker is a better landing-page section than any screenshot or video — it lets someone *try* the mechanism before installing. Lift the stage, drop the control rail and the verdict UI, and inline it. This is the highest-leverage single item in Phase H.
+
+**Store listing — `store/listing.md`.** Fix the copy/insert lie first (that one is a today-bug). Then rewrite `▸ AUTOMATIC CAPTURE` and `▸ "YOU'VE BEEN HERE BEFORE"` to carry the new frame, and add one block for the in-page library reach. Re-verify the 132-character summary after any edit — the current one is at 131.
+
+**Screenshots — all five, retaken, plus two new.** The existing shot list in `store/assets.md` stays; the seeding instructions there still apply. New shots: **the panel open on a real chat page** (the single clearest image of what Deja now is) and **the `//` picker mid-query with a blank-filled row**. Retake the other five against the current UI — they are the ones showing the wrong fonts.
+
+**Demo video — `store/assets.md` script.** Rewrite beats 1–2. The current script opens on a passive save and waits for a tooltip that may or may not appear; the new script opens on someone typing `//`, picking their own prompt, filling a blank, and sending. That is a 15-second demo instead of a 45-second one, and it shows a person in control rather than a tool being clever at them.
+
+**Privacy page — `site/privacy.html`.** One honest addition under *Built-in protections*: the new in-page surfaces **read** your library inside the chat page, and the page itself cannot see them (closed shadow roots) or drive them (trusted-event gating). This is a genuine strengthening of the privacy story, not a caveat — say it as one.
+
+**README.md.** Rename the three "capture" headings per the voice table. Add `//` to *Using Deja*. Add the new modules to *Architecture & how it works* — that section is how a contributor forms a mental model, and six new files with no entry there is how a codebase starts feeling undocumented.
+
+**In-extension presentation.** Welcome is already handled (M6, M7). Two more: Settings' *Suggestions while you type* section gains the new toggles (specified per phase above), and the **Library empty state** should mention that `//` works on the chat sites — right now it teaches only "send a prompt and it appears here", which after M2 is no longer the fastest path to value.
+
+### H3. Ordering
+
+Do **H0 now** — it is four small corrections and two of them are factually wrong statements about shipped behavior. Do the rest **after Phase C lands**, not before: the screenshots and the video need the panel and picker to exist to photograph, and rewriting the pitch before the thing is built means writing it twice.
+
+### H4. Acceptance
+
+- No surface claims behavior the build does not have. Check the listing against the extension line by line before submitting.
+- Every screenshot renders in bundled Figtree/Literata (not an OS fallback) — verify by eye against a known-good extension page.
+- The word "capture" appears in no user-facing copy on any surface.
+- Someone who has never used Deja can watch the 15-second demo and correctly describe what the `//` picker does.
+
+---
+
 ## Build order and why
 
 ```
-A (foundations)  →  B (M1+M3)  →  C (M2)  →  D (M5)  →  E (M4)  →  F (M6+M7)  →  G
+H0 (fix what's already wrong — do this now, it's independent)
+A (foundations)  →  B (M1+M3)  →  C (M2)  →  D (M5)  →  E (M4)  →  F (M6+M7)  →  G  →  H1–H4
 ```
 
 - **A before everything** — four surfaces share it; building it later means four rewrites.
