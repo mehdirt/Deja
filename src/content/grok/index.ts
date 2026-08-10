@@ -2,6 +2,7 @@ import { attachSubmitHook } from '../shared/capture'
 import { startHealthProbe } from '../shared/health'
 import { attachResurface } from '../shared/resurface'
 import { attachPresence } from '../shared/presence'
+import { attachPicker } from '../shared/picker'
 import { startBlocklistSync } from '../shared/blocklist'
 import { startCaptureGate } from '../shared/captureGate'
 
@@ -34,3 +35,4 @@ startHealthProbe(getInput, 'grok')
 // runs it, presence just reads the count off the response.
 const presence = attachPresence(getInput, 'grok')
 attachResurface(getInput, 'grok', { onMatchCount: presence.setMatchCount })
+attachPicker(getInput, 'grok')
