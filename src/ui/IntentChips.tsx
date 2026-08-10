@@ -10,7 +10,7 @@ import { INTENTS, type Intent } from '@/lib/prefs'
 // worth asking someone in their first thirty seconds.
 
 const LABELS: Record<Intent, string> = {
-  email: 'Writing emails ✉️',
+  email: 'Writing emails',
   planning: 'Planning things',
   learning: 'Learning something new',
   everyday: 'Everyday questions',

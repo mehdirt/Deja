@@ -108,7 +108,7 @@ The path alias `@/` resolves to `src/` (configured in `tsconfig.json` and `vite.
 - **Never block the host page.** The content scripts must fail silently. `sendCapture` already swallows runtime errors; preserve that.
 - **Local-first is a feature, not an oversight.** Do not add network calls, telemetry, or third-party services without an explicit user-facing opt-in. Cloud sync, LLM scoring, and auto-categorization were intentionally deferred from v1 — see the concept doc for the deferred roadmap.
 - **Capture only the prompt text.** v1 does not record AI responses; don't add that without a product decision.
-- **MV3 service workers are short-lived.** Don't keep state in module scope in `src/background/`; persist through Dexie.
+- **MV3 service workers are short-lived.** Don't keep state in module scope in `src/background/`; persist through Dexie. The one sanctioned exception is `src/background/pool.ts`, a cache that is *safe to lose*: losing it on worker death costs one re-read and nothing else. Anything whose loss would change behaviour still belongs in Dexie.
 
 - **Plain language is load-bearing, not cosmetic.** Renaming "capture" to "save" isn't polish — the vocabulary is what tells a non-technical person whether a product is for them. When adding UI, check the voice table in `DESIGN.md` before inventing a label.
 

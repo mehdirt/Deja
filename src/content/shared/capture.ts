@@ -141,6 +141,13 @@ export function attachSubmitHook(
   }
 
   const onKeyDown = (e: KeyboardEvent) => {
+    // One of Deja's own in-page surfaces already claimed this Enter (the `//`
+    // picker takes a row with it). This listener is document-capture-phase, so
+    // by the time it runs only our own code could have called preventDefault —
+    // a site that prevents its own Enter does so later, on its own element.
+    // Without this, choosing a row from the picker also saves the half-typed
+    // draft as if it had been sent.
+    if (e.defaultPrevented) return
     if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.isComposing) return
     const el = editableFromEvent(e) ?? document.activeElement
     captureIfComposer(el, 'enter')

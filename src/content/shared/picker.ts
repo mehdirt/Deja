@@ -10,7 +10,7 @@ import {
   type Platform,
 } from '@/lib/types'
 import { anchorTo, rectOf, watchAnchor } from './anchor'
-import { getBlocklist } from './blocklist'
+import { getBlocklist, isBlocklistLoaded } from './blocklist'
 import { surfacesAllowed } from './captureGate'
 import { editableFromEvent } from './editable'
 import { BLANKS_CSS, hasBlanks, renderBlanks } from './blanks'
@@ -116,7 +116,14 @@ function textBeforeCaret(el: HTMLElement): string | null {
     const pre = range.cloneRange()
     pre.selectNodeContents(el)
     pre.setEnd(range.startContainer, range.startOffset)
-    return pre.toString()
+    // Range.toString() concatenates text nodes and drops block boundaries, so
+    // a `//` starting a fresh paragraph would look glued to the last word of
+    // the previous one and fail the word-boundary check. Render the fragment
+    // and read innerText, which puts the line breaks back.
+    const holder = document.createElement('div')
+    holder.appendChild(pre.cloneContents())
+    const rendered = holder.innerText
+    return rendered || pre.toString()
   } catch {
     return null
   }
@@ -225,6 +232,9 @@ export function attachPicker(
   const allowedHere = (): boolean => {
     if (!prefs.slashPicker) return false
     if (!surfacesAllowed()) return false
+    // Fail closed until the rules load — see presence.ts for why this differs
+    // from capture's fail-open stance.
+    if (!isBlocklistLoaded()) return false
     if (isBlocked(location.href, '', getBlocklist())) return false
     return true
   }
@@ -320,6 +330,9 @@ export function attachPicker(
   }
 
   const position = () => {
+    // Host-page SPA navigations detach injected nodes on these sites; put the
+    // layer back before measuring. Idempotent when it's still attached.
+    layer.reattach()
     const rect = rectOf(activeEl ?? getInput())
     if (!rect) {
       close()
@@ -389,7 +402,15 @@ export function attachPicker(
 
   const insert = (text: string, id: number) => {
     const el = activeEl ?? getInput()
-    const length = tokenLength
+    // Re-measure rather than trusting the length captured when the list was
+    // built: the caret can move between opening the picker and choosing a row,
+    // and a stale length would eat the wrong characters.
+    let length = tokenLength
+    if (el) {
+      const before = textBeforeCaret(el)
+      const live = before == null ? null : findTrigger(before)
+      length = live ? before!.length - live.at : 0
+    }
     close()
     if (el && replaceTrigger(el, length, text)) {
       void send({ type: 'PROMPT_USED', id })
@@ -480,6 +501,9 @@ export function attachPicker(
   // every preventDefault below is guarded on `open`.
   const onKeyDown = (e: KeyboardEvent) => {
     if (!open) return
+    // Opening is gated on a real user; taking a row must be too, or a page
+    // script could drive the selection and read what we type back.
+    if (!isRealUserEvent(e)) return
     if (!fillView.hidden) {
       // The blanks step owns its own keys; only Escape backs out of it.
       if (e.key === 'Escape') {
@@ -523,8 +547,10 @@ export function attachPicker(
 
   const onPointerDown = (e: Event) => {
     if (!open) return
-    const path = e.composedPath?.() ?? []
-    if (path.includes(card)) return
+    // composedPath() stops at the host for a closed root, so testing for
+    // `card` here is always false — which made every click on a row close the
+    // picker before the click could land.
+    if ((e.composedPath?.() ?? []).includes(layer.host)) return
     close()
   }
 

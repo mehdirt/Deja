@@ -13,8 +13,8 @@ import { classifyPrompt } from '@/lib/classify'
 import { trimLibraryToCap } from '@/lib/libraryCap'
 import { mergePiiVault, readPiiVault } from '@/lib/piiVault'
 import { loadNerModel, redactPiiFull } from '@/background/nerBridge'
-import { getPool, invalidatePool } from '@/background/pool'
-import { buildIndex, searchPrompts } from '@/lib/search'
+import { getIndex, getPool, invalidatePool } from '@/background/pool'
+import { searchPrompts } from '@/lib/search'
 import { suggestionRank, usefulnessScore } from '@/lib/ranking'
 import {
   readPrefs,
@@ -250,7 +250,7 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           // Reuse the library's own search so plural/spelling folding and the
           // everyday-synonym pass apply here too — someone half-remembering
           // their own wording is exactly who this surface is for.
-          const index = buildIndex(pool)
+          const index = await getIndex(prefs.filterStrength === 'off')
           const byId = new Map(pool.map((p) => [p.id, p]))
           ordered = searchPrompts(index, q, 100)
             .map((h) => byId.get(h.id as number))

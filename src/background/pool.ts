@@ -1,4 +1,6 @@
+import MiniSearch from 'minisearch'
 import { listPrompts } from '@/lib/db'
+import { buildIndex } from '@/lib/search'
 import type { Prompt } from '@/lib/types'
 
 // A worker-scope cache of the prompt list.
@@ -23,6 +25,8 @@ import type { Prompt } from '@/lib/types'
 interface Entry {
   rows: Prompt[]
   at: number
+  /** Built lazily — only the picker/panel search path needs it. */
+  index?: MiniSearch<Prompt>
 }
 
 // Keyed by includeMinor: the two pools have different contents, and callers
@@ -42,19 +46,41 @@ const MAX_AGE_MS = 30_000
  * The prompt pool, cached in worker scope. Never throws — on a DB error the
  * caller gets an empty pool, the same shape a genuinely empty library has.
  */
-export async function getPool(includeMinor: boolean): Promise<Prompt[]> {
+async function getEntry(includeMinor: boolean): Promise<Entry> {
   const slot = includeMinor ? full : live
-  if (slot && Date.now() - slot.at < MAX_AGE_MS) return slot.rows
+  if (slot && Date.now() - slot.at < MAX_AGE_MS) return slot
 
   try {
     const rows = await listPrompts({ includeMinor })
     const entry: Entry = { rows, at: Date.now() }
     if (includeMinor) full = entry
     else live = entry
-    return rows
+    return entry
   } catch {
-    return slot?.rows ?? []
+    return slot ?? { rows: [], at: Date.now() }
   }
+}
+
+export async function getPool(includeMinor: boolean): Promise<Prompt[]> {
+  return (await getEntry(includeMinor)).rows
+}
+
+/**
+ * The search index over that pool, built once and reused.
+ *
+ * Caching the rows without caching the index would have missed the expensive
+ * half. `buildIndex` re-tokenises every prompt in the library, and the in-page
+ * picker asks for a search on a 120ms debounce — so rebuilding per keystroke
+ * put the whole library through MiniSearch ten times a second. Every other
+ * consumer in the codebase already memoises it (Library.tsx, Popup.tsx via
+ * useMemo); this is the worker's equivalent.
+ *
+ * Shares the pool's lifetime exactly: same TTL, same invalidation.
+ */
+export async function getIndex(includeMinor: boolean): Promise<MiniSearch<Prompt>> {
+  const entry = await getEntry(includeMinor)
+  if (!entry.index) entry.index = buildIndex(entry.rows)
+  return entry.index
 }
 
 /**

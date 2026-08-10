@@ -2,7 +2,7 @@ import { DEFAULT_PREFS, onPrefsChange, readPrefs, writePrefs, type Prefs } from 
 import { isBlocked } from '@/lib/blocklist'
 import { onHealthChange } from '@/lib/health'
 import { relativeTime } from '@/lib/format'
-import { safeCaptureUrl } from '@/lib/sensitive'
+import { isCapturableField, safeCaptureUrl } from '@/lib/sensitive'
 import {
   PLATFORM_COLOR,
   PLATFORM_LABEL,
@@ -11,7 +11,7 @@ import {
   type Platform,
 } from '@/lib/types'
 import { anchorTo, rectOf, watchAnchor } from './anchor'
-import { getBlocklist } from './blocklist'
+import { getBlocklist, isBlocklistLoaded } from './blocklist'
 import { captureState, surfacesAllowed } from './captureGate'
 import { readText, replaceComposerText } from './editable'
 import { BLANKS_CSS, hasBlanks, renderBlanks } from './blanks'
@@ -66,10 +66,10 @@ export function pickDotState(opts: {
 }
 
 const MARK_SVG = `<svg viewBox="0 0 32 32" fill="none" aria-hidden="true" focusable="false">
-<rect width="32" height="32" rx="8" fill="#5b54f0"/>
+<rect width="32" height="32" rx="8" fill="var(--dj-accent)"/>
 <rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity=".4"/>
 <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity=".95"/>
-<rect x="15" y="17" width="2.4" height="3.6" rx=".6" fill="#5b54f0"/></svg>`
+<rect x="15" y="17" width="2.4" height="3.6" rx=".6" fill="var(--dj-accent)"/></svg>`
 
 const PRESENCE_CSS = `
 .dj-dot{position:fixed;pointer-events:auto;width:26px;height:26px;border-radius:50%;
@@ -153,6 +153,8 @@ interface PresenceOptions {
 export interface PresenceHandle {
   setMatchCount: (n: number) => void
   setBroken: (broken: boolean) => void
+  /** Re-evaluate visibility now (e.g. once the blocklist rules have loaded). */
+  refresh: () => void
   destroy: () => void
 }
 
@@ -252,18 +254,41 @@ export function attachPresence(
     // A domain the user named in "never save from…" is somewhere Deja does not
     // operate, full stop — not somewhere it reads quietly. Text is empty here
     // because we're asking about the page, not about a particular prompt.
+    // Stay hidden until the rules have actually loaded: unlike capture, which
+    // fails open because never saving is the worse outcome, a surface that
+    // reads the library out onto the page must fail closed.
+    if (!isBlocklistLoaded()) return false
     if (isBlocked(location.href, '', getBlocklist())) return false
     return true
   }
 
+  // What the last paint rendered, so an idle tick can do nothing at all. The
+  // dot lives on every supported page for the life of the tab; rebuilding its
+  // footer and forcing a layout read twice a minute for no reason is exactly
+  // the kind of ambient cost that makes an extension feel heavy.
+  let painted = ''
+
   const paint = () => {
+    // Single-page apps sometimes replace large parts of the document; put our
+    // layer back if that took it with them. No-op when still attached.
+    layer.reattach()
     if (!allowedHere()) {
       dot.hidden = true
+      painted = ''
       if (panelOpen) closePanel()
       return
     }
     dot.hidden = false
-    const state = pickDotState({ saving: savingState(), broken, matches: matchCount })
+    const saving = savingState()
+    const state = pickDotState({ saving, broken, matches: matchCount })
+    // Position still has to be re-checked (the composer moves), but the DOM
+    // rebuild below only matters when what we're saying changed.
+    const signature = `${state}|${saving}|${matchCount}`
+    if (signature === painted && !panelOpen) {
+      position()
+      return
+    }
+    painted = signature
     dot.setAttribute('data-state', state)
 
     badge.classList.toggle('dj-badge-warn', state === 'broken')
@@ -291,7 +316,7 @@ export function attachPresence(
 
     // Footer copy follows the current state: offering "pause" to someone who is
     // already paused would be nonsense.
-    const s = savingState()
+    const s = saving
     offBtn.replaceChildren()
     if (s === 'site-off') {
       offBtn.append(document.createTextNode('Start saving here again'))
@@ -532,8 +557,13 @@ export function attachPresence(
       'This site changed its layout, so nothing here is being saved. You can still keep this one.'
     wrap.appendChild(p)
 
+    // Same eligibility rules the capture path applies: never read a field that
+    // isn't a real composer (isCapturableField already refuses <input>,
+    // password and OTP fields), and never offer to keep text a blocklist rule
+    // says must not be stored. A hand-save is still a save.
     const el = getInput()
-    const draft = el ? readText(el).trim() : ''
+    const raw = el && isCapturableField(el) ? readText(el).trim() : ''
+    const draft = raw && !isBlocked(location.href, raw, getBlocklist()) ? raw : ''
     if (!draft) {
       const hint = document.createElement('p')
       hint.textContent = 'Type something first and this will offer to keep it.'
@@ -639,26 +669,35 @@ export function attachPresence(
   // composer so the person is exactly where they were.
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && panelOpen) {
+      // Claim the key. resurface.ts also listens for Escape in the capture
+      // phase; without this, one press closes the panel *and* dismisses the
+      // tooltip, recording a "waved away" signal the person never gave.
+      e.preventDefault()
       e.stopPropagation()
       closePanel()
       returnFocus()
     }
   }
+  // A closed shadow root is invisible to composedPath() at a document listener:
+  // the path stops at the host element. Testing for `panel`/`dot` here would
+  // always be false, so every click inside our own panel would close it. The
+  // host is the only node we can legitimately recognise from out here.
+  const withinOurSurface = (e: Event): boolean =>
+    (e.composedPath?.() ?? []).includes(layer.host)
+
   const onDocPointerDown = (e: Event) => {
     if (!panelOpen) return
-    const path = e.composedPath?.() ?? []
-    if (path.includes(panel) || path.includes(dot)) return
+    if (withinOurSurface(e)) return
     closePanel()
   }
   // Keep focus inside the panel while it's open (it's a dialog), but never
   // steal focus back from the host page once it's closed.
   const onFocusIn = (e: FocusEvent) => {
     if (!panelOpen) return
-    const path = e.composedPath?.() ?? []
-    if (path.includes(panel)) return
+    if (withinOurSurface(e)) return
     // The composer legitimately keeps focus for insert-at-cursor to work.
     const el = getInput()
-    if (el && path.includes(el)) return
+    if (el && (e.composedPath?.() ?? []).includes(el)) return
     closePanel()
   }
 
@@ -712,6 +751,9 @@ export function attachPresence(
       const next = Math.max(0, n | 0)
       if (next === matchCount) return
       matchCount = next
+      paint()
+    },
+    refresh() {
       paint()
     },
     setBroken(next: boolean) {

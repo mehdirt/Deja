@@ -562,6 +562,10 @@ export function attachResurface(
   }
 
   const onKeyDown = (e: KeyboardEvent) => {
+    // The panel and the picker claim Escape when they're open. Honouring that
+    // keeps one keypress from closing two surfaces — and from recording a
+    // "waved away" signal against a suggestion the person wasn't dismissing.
+    if (e.defaultPrevented) return
     if (e.key === 'Escape' && tooltip.isVisible()) {
       // Esc dismisses this match for the current query text.
       dismiss()

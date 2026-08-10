@@ -9,10 +9,25 @@ import { readBlocklist, onBlocklistChange, EMPTY_BLOCKLIST, type Blocklist } fro
 // is the empty blocklist, i.e. capture everything.
 
 let snapshot: Blocklist = { ...EMPTY_BLOCKLIST }
+let loaded = false
 
 /** Synchronous accessor for the current cached blocklist. */
 export function getBlocklist(): Blocklist {
   return snapshot
+}
+
+/**
+ * Has the first read landed (or its 1s fallback fired)?
+ *
+ * Capture is deliberately fail-OPEN on this — never saving is worse than
+ * saving something a rule would have skipped, and the submit hook is armed on
+ * `ready` anyway. The in-page surfaces are the opposite: they *read* the
+ * library out onto the page, so on a domain the person told Deja to stay off,
+ * showing anything before the rules load would break that promise. They gate
+ * on this and stay hidden until it's true.
+ */
+export function isBlocklistLoaded(): boolean {
+  return loaded
 }
 
 /**
@@ -35,6 +50,7 @@ export function startBlocklistSync(): {
     const done = () => {
       if (settled) return
       settled = true
+      loaded = true
       resolve()
     }
 
