@@ -1,21 +1,21 @@
 import { DEFAULT_PREFS, onPrefsChange, readPrefs, writePrefs, type Prefs } from '@/lib/prefs'
 import { isBlocked } from '@/lib/blocklist'
 import { onHealthChange } from '@/lib/health'
-import { relativeTime } from '@/lib/format'
 import { isCapturableField, safeCaptureUrl } from '@/lib/sensitive'
-import {
-  PLATFORM_COLOR,
-  PLATFORM_LABEL,
-  type LibraryRow,
-  type LibrarySearchResponse,
-  type Platform,
-} from '@/lib/types'
+import { type LibraryRow, type LibrarySearchResponse, type Platform } from '@/lib/types'
 import { anchorTo, rectOf, watchAnchor } from './anchor'
 import { getBlocklist, isBlocklistLoaded } from './blocklist'
 import { captureState, surfacesAllowed } from './captureGate'
 import { readText, replaceComposerText } from './editable'
 import { BLANKS_CSS, hasBlanks, renderBlanks } from './blanks'
 import { createOverlayHost, isRealUserEvent } from './overlayTheme'
+import {
+  LIBRARY_ROWS_CSS,
+  renderNote,
+  renderRow,
+  renderSkeleton,
+} from './libraryRows'
+import { sendToWorker as send } from './message'
 import { showActionToast, showSavedToast } from './toast'
 
 // The ambient dot — a small, quiet Deja button anchored to the chat box, and
@@ -102,22 +102,7 @@ const PRESENCE_CSS = `
   background:var(--dj-sunk);padding:9px 12px;font:inherit;font-size:13px;color:var(--dj-text)}
 .dj-search:focus{outline:none;background:var(--dj-surface);border-bottom-color:var(--dj-accent)}
 .dj-search::placeholder{color:var(--dj-text-faint)}
-.dj-list{list-style:none;margin:0;padding:5px;max-height:232px;overflow-y:auto}
-.dj-row{width:100%;display:block;text-align:left;border:none;background:none;cursor:pointer;
-  padding:8px 9px;border-radius:8px;color:inherit;font:inherit}
-.dj-row:hover,.dj-row[data-active="true"]{background:var(--dj-accent-soft)}
-.dj-row-text{font-size:12.5px;line-height:1.45;color:var(--dj-text);
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.dj-row-text b{font-family:var(--dj-mono);font-weight:500;font-size:.92em;color:var(--dj-accent-text)}
-.dj-row-meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:10.5px;
-  color:var(--dj-text-faint);font-variant-numeric:tabular-nums}
-.dj-plat{display:inline-flex;align-items:center;gap:4px}
-.dj-plat i{width:7px;height:7px;border-radius:50%;display:block;
-  box-shadow:inset 0 0 0 1px var(--dj-line)}
-.dj-note{padding:16px 12px;font-size:12.5px;color:var(--dj-text-faint);text-align:center}
-.dj-skel{padding:8px 9px}
-.dj-skel-bar{height:9px;border-radius:5px;background:var(--dj-sunk);margin-bottom:6px}
-.dj-skel-bar:last-child{width:55%;margin-bottom:0}
+.dj-list{max-height:232px}
 .dj-more{width:100%;text-align:left;padding:8px 9px;border-radius:8px;border:none;
   background:none;cursor:pointer;font:inherit;font-size:12px;font-weight:600;
   color:var(--dj-accent-text)}
@@ -135,7 +120,7 @@ const PRESENCE_CSS = `
 .dj-broken p{margin:0;font-size:12px;line-height:1.5;color:var(--dj-text-soft)}
 .dj-broken-draft{font-size:12px;line-height:1.5;background:var(--dj-sunk);border-radius:8px;
   padding:8px 10px;color:var(--dj-text-soft);max-height:64px;overflow:hidden}
-` + BLANKS_CSS
+` + LIBRARY_ROWS_CSS + BLANKS_CSS
 
 interface PresenceOptions {
   /** Called when a prompt is inserted, so the caller can hide its own UI. */
@@ -348,70 +333,15 @@ export function attachPresence(
 
   // ── the list ──────────────────────────────────────────────────────────────
 
-  const showNote = (text: string) => {
-    list.replaceChildren()
-    const li = document.createElement('li')
-    const note = document.createElement('div')
-    note.className = 'dj-note'
-    note.textContent = text
-    li.appendChild(note)
-    list.appendChild(li)
-  }
-
-  const showSkeleton = () => {
-    list.replaceChildren()
-    for (let i = 0; i < 3; i++) {
-      const li = document.createElement('li')
-      li.className = 'dj-skel'
-      li.setAttribute('aria-hidden', 'true')
-      const a = document.createElement('div')
-      a.className = 'dj-skel-bar'
-      const b = document.createElement('div')
-      b.className = 'dj-skel-bar'
-      li.append(a, b)
-      list.appendChild(li)
-    }
-  }
-
-  const rowFor = (row: LibraryRow): HTMLLIElement => {
-    const li = document.createElement('li')
-    const btn = document.createElement('button')
-    btn.type = 'button'
-    btn.className = 'dj-row'
-
-    const text = document.createElement('div')
-    text.className = 'dj-row-text'
-    text.textContent = row.text.replace(/\s+/g, ' ').trim()
-
-    const meta = document.createElement('div')
-    meta.className = 'dj-row-meta'
-    const plat = document.createElement('span')
-    plat.className = 'dj-plat'
-    const swatch = document.createElement('i')
-    swatch.style.background = PLATFORM_COLOR[row.platform]
-    plat.append(swatch, document.createTextNode(PLATFORM_LABEL[row.platform]))
-    meta.appendChild(plat)
-    meta.appendChild(document.createTextNode('·'))
-    meta.appendChild(document.createTextNode(relativeTime(row.lastUsedAt)))
-    if (row.usageCount > 0) {
-      meta.appendChild(document.createTextNode('·'))
-      meta.appendChild(document.createTextNode(`used ${row.usageCount}×`))
-    }
-
-    btn.append(text, meta)
-    btn.addEventListener('mousedown', (e) => e.preventDefault())
-    btn.addEventListener('click', () => choose(row))
-    li.appendChild(btn)
-    return li
-  }
+  const note = (text: string) => renderNote(list, text)
 
   const renderRows = (rows: LibraryRow[], total: number, query: string) => {
     if (!rows.length) {
-      showNote(query ? 'Nothing here matches that yet.' : 'Nothing saved yet — that’s normal.')
+      note(query ? 'Nothing here matches that yet.' : 'Nothing saved yet — that’s normal.')
       return
     }
     list.replaceChildren()
-    for (const row of rows) list.appendChild(rowFor(row))
+    for (const row of rows) list.appendChild(renderRow(row, () => choose(row)))
     // Never silently cap someone's library at six rows with nowhere to go.
     if (total > rows.length) {
       const li = document.createElement('li')
@@ -433,7 +363,7 @@ export function attachPresence(
     const token = ++requestToken
     window.clearTimeout(skeletonTimer)
     skeletonTimer = window.setTimeout(() => {
-      if (token === requestToken) showSkeleton()
+      if (token === requestToken) renderSkeleton(list)
     }, SKELETON_AFTER_MS)
 
     send<LibrarySearchResponse>({ type: 'LIBRARY_SEARCH', query, limit: PANEL_LIMIT })
@@ -441,7 +371,7 @@ export function attachPresence(
         if (token !== requestToken) return // a later keystroke won
         window.clearTimeout(skeletonTimer)
         if (!resp?.ok) {
-          showNote('Couldn’t reach your library just now.')
+          note('Couldn’t reach your library just now.')
           return
         }
         renderRows(resp.rows, resp.total, query)
@@ -450,7 +380,7 @@ export function attachPresence(
       .catch(() => {
         if (token !== requestToken) return
         window.clearTimeout(skeletonTimer)
-        showNote('Couldn’t reach your library just now.')
+        note('Couldn’t reach your library just now.')
       })
   }
 
@@ -512,7 +442,7 @@ export function attachPresence(
       title.textContent = 'Your saved prompts'
       showView('list')
       search.value = ''
-      showSkeleton()
+      renderSkeleton(list)
       runSearch('')
     }
     foot.hidden = broken
@@ -777,12 +707,3 @@ export function attachPresence(
   }
 }
 
-/** sendMessage that never throws into the host page. */
-function send<T = unknown>(message: unknown): Promise<T | undefined> {
-  if (!chrome.runtime?.id) return Promise.resolve(undefined)
-  try {
-    return chrome.runtime.sendMessage(message).catch(() => undefined)
-  } catch {
-    return Promise.resolve(undefined)
-  }
-}

@@ -33,6 +33,32 @@ const SURFACED_MATCHES = 3
 // your library". Six fits the panel's max height without scrolling on a laptop.
 const DEFAULT_SEARCH_LIMIT = 6
 
+// Redaction before storage, shared by both write paths.
+//
+// CLAUDE.md calls this ordering load-bearing: raw personal info must never
+// reach IndexedDB, the search index, or the resurface pool, so it happens
+// before anything else looks at the text. The hand-save path needs exactly the
+// same treatment as a normal capture — someone asking to keep a prompt is not
+// asking to keep their card number — so the sequence lives in one place rather
+// than being copied and drifting.
+async function redactForStorage(
+  text: string,
+  prefs: Prefs,
+): Promise<{ text: string; redacted: number }> {
+  if (!prefs.redactPii) return { text, redacted: 0 }
+  const vault = prefs.rememberHiddenDetails ? await readPiiVault() : {}
+  const redaction = await redactPiiFull(text, prefs.piiKinds, {
+    existingVault: vault,
+    nerNamesPlaces: prefs.nerNamesPlaces,
+  })
+  // The vault is what lets Fill-in offer the original back later. Never
+  // written into the prompt row, and never into a backup.
+  if (prefs.rememberHiddenDetails && redaction.total > 0) {
+    void mergePiiVault(redaction.mappings)
+  }
+  return { text: redaction.text, redacted: redaction.total }
+}
+
 chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResponse) => {
   if (message?.type === 'PROMPT_CAPTURED') {
     void (async () => {
@@ -42,20 +68,10 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         // IndexedDB, the search index, or the resurface pool. We store (and
         // classify) the redacted text. Optional vault keeps originals privately
         // for Fill-in — never written into the prompt row or backups.
-        let text = message.payload.text
-        let redactedTotal = 0
-        if (prefs.redactPii) {
-          const vault = prefs.rememberHiddenDetails ? await readPiiVault() : {}
-          const redaction = await redactPiiFull(message.payload.text, prefs.piiKinds, {
-            existingVault: vault,
-            nerNamesPlaces: prefs.nerNamesPlaces,
-          })
-          text = redaction.text
-          redactedTotal = redaction.total
-          if (prefs.rememberHiddenDetails && redaction.total > 0) {
-            void mergePiiVault(redaction.mappings)
-          }
-        }
+        const { text, redacted: redactedTotal } = await redactForStorage(
+          message.payload.text,
+          prefs,
+        )
 
         // Selective capture: skip storing throwaways at the user's strength.
         // At 'off' nothing is ever skipped. (Legacy rows may still carry
@@ -286,20 +302,10 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
     void (async () => {
       try {
         const prefs = await readPrefs()
-        let text = message.text.trim()
-        let redactedTotal = 0
-        if (prefs.redactPii) {
-          const vault = prefs.rememberHiddenDetails ? await readPiiVault() : {}
-          const redaction = await redactPiiFull(text, prefs.piiKinds, {
-            existingVault: vault,
-            nerNamesPlaces: prefs.nerNamesPlaces,
-          })
-          text = redaction.text
-          redactedTotal = redaction.total
-          if (prefs.rememberHiddenDetails && redaction.total > 0) {
-            void mergePiiVault(redaction.mappings)
-          }
-        }
+        const { text, redacted: redactedTotal } = await redactForStorage(
+          message.text.trim(),
+          prefs,
+        )
 
         const outcome = await db.transaction('rw', db.prompts, async () => {
           const existing = await findExistingPrompt(message.platform, text)
@@ -380,6 +386,14 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         sendResponse({ ok: false, error: String(err) })
       }
     })()
+    return true
+  }
+
+  // Something outside this worker changed the library (the options page writes
+  // straight to Dexie). Drop the cache so the next in-page search is honest.
+  if (message?.type === 'LIBRARY_CHANGED') {
+    invalidatePool()
+    sendResponse({ ok: true })
     return true
   }
 

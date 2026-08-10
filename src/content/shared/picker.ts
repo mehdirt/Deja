@@ -1,20 +1,20 @@
 import { DEFAULT_PREFS, onPrefsChange, readPrefs, type Prefs } from '@/lib/prefs'
 import { isBlocked } from '@/lib/blocklist'
 import { isCapturableField } from '@/lib/sensitive'
-import { relativeTime } from '@/lib/format'
-import {
-  PLATFORM_COLOR,
-  PLATFORM_LABEL,
-  type LibraryRow,
-  type LibrarySearchResponse,
-  type Platform,
-} from '@/lib/types'
+import { type LibraryRow, type LibrarySearchResponse, type Platform } from '@/lib/types'
 import { anchorTo, rectOf, watchAnchor } from './anchor'
 import { getBlocklist, isBlocklistLoaded } from './blocklist'
 import { surfacesAllowed } from './captureGate'
 import { editableFromEvent } from './editable'
 import { BLANKS_CSS, hasBlanks, renderBlanks } from './blanks'
 import { createOverlayHost, isRealUserEvent } from './overlayTheme'
+import {
+  LIBRARY_ROWS_CSS,
+  renderNote,
+  renderRow,
+  renderSkeleton,
+} from './libraryRows'
+import { sendToWorker as send } from './message'
 
 // Type `//` in the chat box to reach anything you've saved.
 //
@@ -52,24 +52,8 @@ const PICKER_CSS = `
 .dj-keys{display:flex;gap:4px;flex:none}
 .dj-key{font-family:var(--dj-mono);font-size:10px;border:1px solid var(--dj-line);
   border-radius:4px;padding:1px 4px;color:var(--dj-text-faint)}
-.dj-list{list-style:none;margin:0;padding:5px;max-height:236px;overflow-y:auto}
-.dj-row{width:100%;display:block;text-align:left;border:none;background:none;cursor:pointer;
-  padding:8px 9px;border-radius:8px;color:inherit;font:inherit}
-.dj-row:hover{background:var(--dj-accent-soft)}
-.dj-row[data-active="true"]{background:var(--dj-accent-soft);
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--dj-accent) 35%,transparent)}
-.dj-row-text{font-size:12.5px;line-height:1.45;color:var(--dj-text);
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.dj-row-meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:10.5px;
-  color:var(--dj-text-faint);font-variant-numeric:tabular-nums}
-.dj-plat{display:inline-flex;align-items:center;gap:4px}
-.dj-plat i{width:7px;height:7px;border-radius:50%;display:block;
-  box-shadow:inset 0 0 0 1px var(--dj-line)}
-.dj-note{padding:16px 12px;font-size:12.5px;color:var(--dj-text-faint);text-align:center}
-.dj-skel{padding:8px 9px}
-.dj-skel-bar{height:9px;border-radius:5px;background:var(--dj-sunk);margin-bottom:6px}
-.dj-skel-bar:last-child{width:55%;margin-bottom:0}
-` + BLANKS_CSS
+.dj-list{max-height:236px}
+` + LIBRARY_ROWS_CSS + BLANKS_CSS
 
 /** Where the `//` token sits in the text before the caret, and what follows it. */
 export interface TriggerMatch {
@@ -260,67 +244,17 @@ export function attachPicker(
     }
   }
 
-  const showNote = (text: string) => {
-    list.replaceChildren()
-    const li = document.createElement('li')
-    const note = document.createElement('div')
-    note.className = 'dj-note'
-    note.textContent = text
-    li.appendChild(note)
-    list.appendChild(li)
-  }
-
-  const showSkeleton = () => {
-    list.replaceChildren()
-    for (let i = 0; i < 3; i++) {
-      const li = document.createElement('li')
-      li.className = 'dj-skel'
-      li.setAttribute('aria-hidden', 'true')
-      const a = document.createElement('div')
-      a.className = 'dj-skel-bar'
-      const b = document.createElement('div')
-      b.className = 'dj-skel-bar'
-      li.append(a, b)
-      list.appendChild(li)
-    }
-  }
-
   const renderRows = () => {
     if (!rows.length) {
-      showNote(query ? 'Nothing here matches that yet.' : 'Nothing saved yet — that’s normal.')
+      renderNote(list, query ? 'Nothing here matches that yet.' : 'Nothing saved yet — that’s normal.')
       return
     }
     list.replaceChildren()
     rows.forEach((row, i) => {
-      const li = document.createElement('li')
+      const li = renderRow(row, () => take(i))
       li.setAttribute('role', 'option')
       li.setAttribute('aria-selected', String(i === active))
-      const btn = document.createElement('button')
-      btn.type = 'button'
-      btn.className = 'dj-row'
-      btn.dataset.active = String(i === active)
-
-      const text = document.createElement('div')
-      text.className = 'dj-row-text'
-      text.textContent = row.text.replace(/\s+/g, ' ').trim()
-
-      const meta = document.createElement('div')
-      meta.className = 'dj-row-meta'
-      const plat = document.createElement('span')
-      plat.className = 'dj-plat'
-      const swatch = document.createElement('i')
-      swatch.style.background = PLATFORM_COLOR[row.platform]
-      plat.append(swatch, document.createTextNode(PLATFORM_LABEL[row.platform]))
-      meta.append(plat, document.createTextNode('·'), document.createTextNode(relativeTime(row.lastUsedAt)))
-      if (row.usageCount > 0) {
-        meta.append(document.createTextNode('·'), document.createTextNode(`used ${row.usageCount}×`))
-      }
-
-      btn.append(text, meta)
-      // Keep the caret in the composer — we're about to write to it.
-      btn.addEventListener('mousedown', (e) => e.preventDefault())
-      btn.addEventListener('click', () => take(i))
-      li.appendChild(btn)
+      ;(li.firstElementChild as HTMLElement).dataset.active = String(i === active)
       list.appendChild(li)
     })
   }
@@ -382,7 +316,7 @@ export function attachPicker(
     const q = query
     window.clearTimeout(skeletonTimer)
     skeletonTimer = window.setTimeout(() => {
-      if (token === requestToken) showSkeleton()
+      if (token === requestToken) renderSkeleton(list)
     }, SKELETON_AFTER_MS)
 
     send<LibrarySearchResponse>({ type: 'LIBRARY_SEARCH', query: q, limit: LIMIT })
@@ -390,7 +324,7 @@ export function attachPicker(
         if (token !== requestToken || !open) return
         window.clearTimeout(skeletonTimer)
         if (!resp?.ok) {
-          showNote('Couldn’t reach your library just now.')
+          renderNote(list, 'Couldn’t reach your library just now.')
           return
         }
         rows = resp.rows
@@ -403,12 +337,17 @@ export function attachPicker(
         // results of a newer keystroke that already landed.
         if (token !== requestToken || !open) return
         window.clearTimeout(skeletonTimer)
-        showNote('Couldn’t reach your library just now.')
+        renderNote(list, 'Couldn’t reach your library just now.')
       })
   }
 
   // ── taking a row ──────────────────────────────────────────────────────────
 
+  // Always inserts, regardless of prefs.resurfaceClick — that setting governs
+  // what clicking a *suggestion* does, and the picker isn't one. Someone who
+  // typed `//`, searched, and chose a row has already said where they want the
+  // text. Copying instead would delete their `//query` and leave the box empty
+  // with the prompt on a clipboard they didn't ask for.
   const insert = (text: string, id: number) => {
     const el = activeEl ?? getInput()
     // Re-measure rather than trusting the length captured when the list was
@@ -501,7 +440,7 @@ export function attachPicker(
     }
     query = next
     show()
-    if (first) showSkeleton()
+    if (first) renderSkeleton(list)
     window.clearTimeout(debounceTimer)
     debounceTimer = window.setTimeout(runSearch, DEBOUNCE_MS)
   }
@@ -598,12 +537,3 @@ export function attachPicker(
   }
 }
 
-/** sendMessage that never throws into the host page. */
-function send<T = unknown>(message: unknown): Promise<T | undefined> {
-  if (!chrome.runtime?.id) return Promise.resolve(undefined)
-  try {
-    return chrome.runtime.sendMessage(message).catch(() => undefined)
-  } catch {
-    return Promise.resolve(undefined)
-  }
-}

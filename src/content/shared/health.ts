@@ -1,5 +1,5 @@
 import type { Platform } from '@/lib/types'
-import { writeHealth } from '@/lib/health'
+import { onHealthChange, writeHealth } from '@/lib/health'
 
 // On every supported page, probe whether we can still find the prompt input.
 // SPA inputs render late, so we poll with backoff on load; then we re-probe
@@ -23,6 +23,8 @@ export function startHealthProbe(
    */
   onChange?: (ok: boolean) => void,
 ): () => void {
+  // What we believe the *stored* health is, so we only write on transitions.
+  // Starts null so the first probe always writes.
   let healthy: boolean | null = null
 
   const report = (ok: boolean) => {
@@ -35,6 +37,20 @@ export function startHealthProbe(
       /* a listener must never break the probe */
     }
   }
+
+  // capture.ts also marks a platform unhealthy when the *message pipeline*
+  // fails, not just when the selector drifts — and it writes straight to
+  // storage, bypassing this module's `healthy` flag. Without hearing about it,
+  // the probe would keep believing the stored value is `true`, so its next
+  // recheck would find the composer, call report(true), see "no transition",
+  // and write nothing. The stored value would stay `false` forever and the dot
+  // would stay amber for the life of the page even though capture recovered.
+  // Syncing on every external change keeps the probe authoritative for
+  // recovery.
+  const unsubHealth = onHealthChange((health) => {
+    const entry = health[platform]
+    if (entry && entry.ok !== healthy) healthy = entry.ok
+  })
 
   // Initial probe: keep looking until the input shows up or we give up.
   let tries = 0
@@ -57,5 +73,6 @@ export function startHealthProbe(
   return () => {
     window.clearInterval(initial)
     window.clearInterval(recheck)
+    unsubHealth()
   }
 }

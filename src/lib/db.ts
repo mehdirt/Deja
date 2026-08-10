@@ -87,6 +87,28 @@ export async function listPrompts(opts: { includeMinor?: boolean } = {}): Promis
   return all.filter((p) => !p.deletedAt && (opts.includeMinor || !p.minor))
 }
 
+// ── Telling the worker its cache went stale ─────────────────────────────────
+//
+// The background worker keeps an in-memory pool of prompts (src/background/
+// pool.ts) so the in-page picker and panel don't re-read the whole table on
+// every keystroke. Writes that happen *inside* the worker invalidate it
+// directly, but the library and settings pages write straight to Dexie from
+// their own context, where that cache isn't reachable. Without a nudge, a
+// prompt you just deleted stays offerable in the chat box until the cache
+// ages out.
+//
+// Fire-and-forget on purpose: nothing here should fail, slow down, or throw
+// because a listener happened to be asleep. Sent from the worker itself it
+// simply finds no receiver, which is correct — the worker already invalidated.
+function announceLibraryChange(): void {
+  try {
+    if (!chrome?.runtime?.id) return
+    void chrome.runtime.sendMessage({ type: 'LIBRARY_CHANGED' }).catch(() => {})
+  } catch {
+    /* no extension context (tests, or an orphaned page) — nothing to tell */
+  }
+}
+
 // Bulk-replace the text of specific prompts — used by the settings "scan &
 // redact existing library" action to retro-clean PII captured before redaction
 // was on. One transaction so it's atomic.
@@ -95,6 +117,7 @@ export async function bulkUpdateText(updates: Array<{ id: number; text: string }
   await db.transaction('rw', db.prompts, async () => {
     for (const u of updates) await db.prompts.update(u.id, { text: u.text })
   })
+  announceLibraryChange()
 }
 
 // Promote a legacy minor (soft-capture) prompt to a normal one, or demote a
@@ -102,20 +125,24 @@ export async function bulkUpdateText(updates: Array<{ id: number; text: string }
 // the old store-but-hide behavior.
 export async function setMinor(id: number, minor: boolean): Promise<void> {
   await db.prompts.update(id, { minor })
+  announceLibraryChange()
 }
 
 export async function softDelete(id: number): Promise<void> {
   await db.prompts.update(id, { deletedAt: Date.now() })
+  announceLibraryChange()
 }
 
 export async function restore(id: number): Promise<void> {
   await db.prompts.update(id, { deletedAt: null })
+  announceLibraryChange()
 }
 
 // Permanent removal — used only to undo a just-captured prompt, where the
 // row was never really wanted, so there's nothing to soft-delete.
 export async function hardDelete(id: number): Promise<void> {
   await db.prompts.delete(id)
+  announceLibraryChange()
 }
 
 // Atomic increment via modify() (not get-then-update) so two near-simultaneous
@@ -127,6 +154,7 @@ export async function touchUsage(id: number): Promise<void> {
     p.usageCount = (p.usageCount ?? 0) + 1
     p.lastUsedAt = now
   })
+  announceLibraryChange()
 }
 
 // The other half of the suggestion signal: the user saw this prompt offered and
@@ -138,6 +166,7 @@ export async function touchDismiss(id: number): Promise<void> {
   await db.prompts.where('id').equals(id).modify((p) => {
     p.dismissCount = (p.dismissCount ?? 0) + 1
   })
+  announceLibraryChange()
 }
 
 // Tags ---------------------------------------------------------------
@@ -158,6 +187,7 @@ export function normalizeTags(raw: string[]): string[] {
 
 export async function setTags(id: number, tags: string[]): Promise<void> {
   await db.prompts.update(id, { tags: normalizeTags(tags) })
+  announceLibraryChange()
 }
 
 export async function addTag(id: number, tag: string): Promise<void> {
@@ -178,6 +208,7 @@ export async function togglePin(id: number): Promise<void> {
   const p = await db.prompts.get(id)
   if (!p) return
   await db.prompts.update(id, { pinned: !(p.pinned ?? false) })
+  announceLibraryChange()
 }
 
 // Bulk soft-delete — reuses the same soft-delete semantics as softDelete so
@@ -185,10 +216,12 @@ export async function togglePin(id: number): Promise<void> {
 export async function bulkSoftDelete(ids: number[]): Promise<void> {
   const now = Date.now()
   await db.prompts.where('id').anyOf(ids).modify({ deletedAt: now })
+  announceLibraryChange()
 }
 
 export async function bulkRestore(ids: number[]): Promise<void> {
   await db.prompts.where('id').anyOf(ids).modify({ deletedAt: null })
+  announceLibraryChange()
 }
 
 export async function exportAll(): Promise<Prompt[]> {
@@ -273,7 +306,10 @@ export async function importPrompts(rows: unknown): Promise<ImportResult> {
     toAdd.push(row)
   }
 
-  if (toAdd.length) await db.prompts.bulkAdd(toAdd)
+  if (toAdd.length) {
+    await db.prompts.bulkAdd(toAdd)
+    announceLibraryChange()
+  }
   return { imported: toAdd.length, skipped }
 }
 
@@ -289,12 +325,14 @@ export const DELETE_GRACE_MS = 60_000
 export async function bulkHardDelete(ids: number[]): Promise<void> {
   if (!ids.length) return
   await db.prompts.where('id').anyOf(ids).delete()
+  announceLibraryChange()
 }
 
 /** Erase a row only if it is still soft-deleted (Undo was not used). */
 export async function finalizeSoftDelete(id: number): Promise<void> {
   const p = await db.prompts.get(id)
   if (p && p.deletedAt != null) await db.prompts.delete(id)
+  announceLibraryChange()
 }
 
 /** Erase many rows only where each is still soft-deleted. */
@@ -306,6 +344,7 @@ export async function finalizeSoftDeletes(ids: number[]): Promise<void> {
       if (p && p.deletedAt != null) await db.prompts.delete(id)
     }
   })
+  announceLibraryChange()
 }
 
 /** Hard-delete soft-deleted rows older than `graceMs`. Returns how many. */
@@ -322,4 +361,5 @@ export async function purgeExpiredDeleted(graceMs = DELETE_GRACE_MS): Promise<nu
 // confirmed destructive action in settings — not the normal soft-delete path.
 export async function clearAllData(): Promise<void> {
   await db.prompts.clear()
+  announceLibraryChange()
 }

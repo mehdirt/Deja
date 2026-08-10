@@ -156,6 +156,18 @@ export type PromptUsedMessage = {
   id: number
 }
 
+/**
+ * Any context → background: the library changed underneath the worker's cache.
+ *
+ * Fired by the shared db helpers (src/lib/db.ts). The options page writes
+ * straight to Dexie from its own context, where the worker's in-memory pool
+ * isn't reachable, so without this a prompt you just deleted stays offerable in
+ * the chat box until the cache ages out.
+ */
+export type LibraryChangedMessage = {
+  type: 'LIBRARY_CHANGED'
+}
+
 /** Content → background: a volunteered suggestion was waved away. */
 export type SuggestionDismissedMessage = {
   type: 'SUGGESTION_DISMISSED'
@@ -173,6 +185,7 @@ export type RuntimeMessage =
   | SaveManualMessage
   | PromptUsedMessage
   | SuggestionDismissedMessage
+  | LibraryChangedMessage
 
 // `filtered` is true when the prompt was classified "minor" and not stored.
 // `notice` is true only the first time that happens, so the content script can
