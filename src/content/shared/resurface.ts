@@ -293,6 +293,16 @@ function createTooltip(onDismiss: () => void): Tooltip {
 
 export interface ResurfaceOptions {
   /**
+   * Stand down while another surface owns the space above the composer.
+   *
+   * The tooltip and the `//` picker anchor to the same place, so without this
+   * they overlap. The picker wins, and the rule generalises: the tooltip is
+   * Deja volunteering, and anything the person opened on purpose outranks it.
+   * The match count is still reported — the dot keeps telling the truth about
+   * the library even while the tooltip is quiet.
+   */
+  isSuppressed?: () => boolean
+  /**
    * Called with the number of prompts that matched, every time a query
    * resolves. This is how the ambient dot gets its badge without running a
    * second query of its own — one debounced SIMILAR_QUERY already carries the
@@ -462,6 +472,10 @@ export function attachResurface(
 
   const runQuery = (text: string) => {
     if (confirming) return
+    if (options.isSuppressed?.()) {
+      hide()
+      return
+    }
     // Stay quiet when capture is paused or this site is switched off — resurface
     // reads the in-progress text, so a paused/private session shouldn't trigger
     // it either.
@@ -503,7 +517,7 @@ export function attachResurface(
           // Report the count before any of the tooltip's own suppression rules
           // apply — the dot reflects the library, the tooltip reflects consent.
           options.onMatchCount?.(resp.total)
-          if (isDismissed(trimmed)) return
+          if (isDismissed(trimmed) || options.isSuppressed?.()) return
           const matches = resp.matches
           if (!matches.length) {
             hide()

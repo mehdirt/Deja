@@ -172,6 +172,12 @@ export interface PickerOptions {
   onUsed?: (id: number) => void
 }
 
+export interface PickerHandle {
+  /** True while the list is on screen — the tooltip uses this to stand down. */
+  isOpen: () => boolean
+  destroy: () => void
+}
+
 /**
  * Arm the `//` picker for one page. Returns a teardown.
  */
@@ -179,7 +185,7 @@ export function attachPicker(
   getInput: () => HTMLElement | null,
   platform: Platform,
   options: PickerOptions = {},
-): () => void {
+): PickerHandle {
   let prefs: Prefs = { ...DEFAULT_PREFS }
   let open = false
   let rows: LibraryRow[] = []
@@ -393,6 +399,9 @@ export function attachPicker(
         position()
       })
       .catch(() => {
+        // Check the token here too — a late failure must not overwrite the
+        // results of a newer keystroke that already landed.
+        if (token !== requestToken || !open) return
         window.clearTimeout(skeletonTimer)
         showNote('Couldn’t reach your library just now.')
       })
@@ -575,14 +584,17 @@ export function attachPicker(
 
   log('armed for', platform)
 
-  return () => {
-    close()
-    unsubPrefs()
-    unwatch()
-    document.removeEventListener('input', onInput, true)
-    document.removeEventListener('keydown', onKeyDown, true)
-    document.removeEventListener('pointerdown', onPointerDown, true)
-    layer.destroy()
+  return {
+    isOpen: () => open,
+    destroy() {
+      close()
+      unsubPrefs()
+      unwatch()
+      document.removeEventListener('input', onInput, true)
+      document.removeEventListener('keydown', onKeyDown, true)
+      document.removeEventListener('pointerdown', onPointerDown, true)
+      layer.destroy()
+    },
   }
 }
 

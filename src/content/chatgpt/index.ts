@@ -2,7 +2,7 @@ import { attachSubmitHook } from '../shared/capture'
 import { startHealthProbe } from '../shared/health'
 import { attachResurface } from '../shared/resurface'
 import { attachPresence } from '../shared/presence'
-import { attachPicker } from '../shared/picker'
+import { attachPicker, type PickerHandle } from '../shared/picker'
 import { startBlocklistSync } from '../shared/blocklist'
 import { startCaptureGate } from '../shared/captureGate'
 
@@ -31,12 +31,18 @@ void Promise.all([blocklistReady, gateReady]).then(() => attachSubmitHook(getInp
 // The dot and the tooltip share one debounced similarity query: resurface
 // runs it, presence just reads the count off the response.
 const presence = attachPresence(getInput, 'chatgpt')
-attachResurface(getInput, 'chatgpt', { onMatchCount: presence.setMatchCount })
+// The picker attaches later (it waits for the blocklist), so the tooltip asks
+// through this holder rather than holding a reference that isn't there yet.
+let picker: PickerHandle | null = null
+attachResurface(getInput, 'chatgpt', {
+  onMatchCount: presence.setMatchCount,
+  isSuppressed: () => picker?.isOpen() ?? false,
+})
 // The picker reads the library, so it waits for the blocklist snapshot the
 // same way capture does — otherwise a "never save from here" domain could
 // briefly offer a search over everything saved before the rules load.
 void blocklistReady.then(() => {
-  attachPicker(getInput, 'chatgpt')
+  picker = attachPicker(getInput, 'chatgpt')
   presence.refresh()
 })
 // The probe already knew when a selector broke; now the dot hears about it

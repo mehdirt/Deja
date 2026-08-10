@@ -448,6 +448,7 @@ export function attachPresence(
         position()
       })
       .catch(() => {
+        if (token !== requestToken) return
         window.clearTimeout(skeletonTimer)
         showNote('Couldn’t reach your library just now.')
       })
