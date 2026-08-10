@@ -23,7 +23,12 @@ Required: at least one at **1280×800** (preferred) or 640×400. Provide 4–5.
 **Status (Jul 2026):** five store-ready PNGs are in this folder —
 `screenshot-{1..5}-1280x800.png`. Re-capture only if the UI drifts.
 
-1. **The resurface moment** ✅ `screenshot-1-resurface-1280x800.png` — on a real
+**All five need retaking.** The current files are dated 2026-07-10, before the
+fonts were bundled and before the plain-language pass, so they show Deja in an
+OS fallback face — the exact bug Phase 6 was about, frozen in the shop window.
+Shots 6 and 7 are new.
+
+1. **The resurface moment** ⚠️ retake `screenshot-1-resurface-1280x800.png` — on a real
    chat site, mid-prompt, with the "You've been here before →" tooltip. Hero shot.
 2. **Search + sort** ✅ `screenshot-2-search-sort-1280x800.png` — query in the
    search box with the sort dropdown open (newest / most useful / most used /
@@ -40,27 +45,40 @@ the `filtered (n)` view revealing a "minor" prompt and its `keep` action.
 
 Caption each with one short line (the store overlays them).
 
+6. **The picker** — `//` typed in a real chat box with the list open and a row
+   highlighted, blanks visible in one of them. This is the single clearest image
+   of what Deja now is; consider making it the first screenshot.
+7. **The dot and its panel** — the panel open above a chat box, showing search
+   results and the "not here" footer. Shoot it on a light host page so the warm
+   card reads against it.
+
 ## Promo tiles (optional but recommended)
 
 - **Small tile:** 440×280 — logo mark + wordmark + one line ("your personal
   prompt library"). Reuse the palette in `site/index.html`.
 - **Marquee:** 1400×560 — the resurface tooltip motif on the warm-paper bg.
 
-## Demo video (~45–60s) — script
+## Demo video (~30s) — script
 
-Short, no voiceover needed (captions instead).
+Short, no voiceover needed (captions instead). **Lead with `//`.** The old
+script opened on a passive save and then waited for a tooltip that may or may
+not appear — a lot of screen time before anything happens. Opening on someone
+reaching for their own saved prompt shows a person in control in the first five
+seconds, and it's the one thing about Deja nobody can picture from words.
 
-1. (0–8s) A chat site. Type a prompt, hit Enter. Toast: "remembered."
-2. (8–20s) Days later, start a *similar* prompt. The tooltip appears — "you've
-   been here before". Step to `2/3`, click (it's copied to the clipboard), then
-   paste it into the chat — Deja never auto-fills. Card: reusing past work in
-   seconds.
-3. (20–35s) Open the library from the toolbar popup ("open full library"): search,
-   filter by platform, tag a prompt, pin one.
-4. (35–50s) Settings: show "capture is working ✓" across all five, the blocklist,
-   and export. End on the privacy line: "no network calls. nothing leaves your
-   machine."
-5. (50–60s) Logo + "Deja — your prompts, every AI, one library." + install CTA.
+1. (0–10s) A chat site, cursor in the message box. Type `//land` — the picker
+   opens with "Write a friendly but firm email to my landlord about {issue}".
+   Enter. The blanks step appears; type "the broken heating". The finished
+   prompt lands in the box. Send it. Toast: "Saved for you ✔ · Undo".
+   Card: *your own words, back in two keystrokes.*
+2. (10–18s) Later, start typing something similar from scratch. The tooltip
+   appears — "you've been here before" — showing why it matched. One click puts
+   the earlier version in the box. Card: *it finds you, too.*
+3. (18–26s) The quiet dot in the corner: click it, search the library, and use
+   the footer to turn saving off for this site. Card: *always there, never in
+   the way.*
+4. (26–30s) Logo + "Deja — your prompts, every AI, one library." + install CTA,
+   over the privacy line: "no network calls. nothing leaves your machine."
 
 ## Landing page
 

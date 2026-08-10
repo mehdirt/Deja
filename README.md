@@ -2,11 +2,11 @@
 
 **Your personal prompt library — organized automatically, always within reach.**
 
-Deja is a Manifest V3 Chrome extension that **passively captures** every prompt you send to ChatGPT, Claude, Gemini, DeepSeek, and Grok and stores it in a local, searchable library. No copy‑paste, no accounts, no cloud — everything lives in IndexedDB on your machine.
+Deja is a Manifest V3 Chrome extension that **quietly saves** every prompt you send to ChatGPT, Claude, Gemini, DeepSeek, and Grok and stores it in a local, searchable library. No copy‑paste, no accounts, no cloud — everything lives in IndexedDB on your machine.
 
 The prompts you write are work. Most of them vanish into a scrolled‑away chat the moment you hit Enter. Deja keeps them, makes them findable, and quietly **resurfaces the right one while you're typing the next**.
 
-> **Status: v0.4.1** — trustworthy capture plus the resurface moment, now with selective capture (short throwaways are filtered but recoverable), capture controls (one‑click pause, per‑site switches, filter strength, blocklist test + dry‑run), on‑device PII redaction, capture deduplication (exact + near‑duplicate), and a built‑in feedback path. Capture is credential‑safe and self‑monitoring, the library is fully featured, and the "you've been here before" in‑context tooltip is live. See [ROADMAP.md](ROADMAP.md) for the phased plan.
+> **Status: v0.5.0** — trustworthy saving plus the resurface moment, and now a set of in‑page surfaces: a quiet Deja button in the chat box, `//` to search everything you've saved without leaving the page, per‑site controls where the annoyance happens, suggestion ordering that follows what you actually reuse, and a hand‑save for when a site changes its layout. Also: selective saving (short throwaways are skipped but recoverable), one‑click pause, on‑device PII redaction, duplicate collapsing, and a built‑in feedback path. See [ROADMAP.md](ROADMAP.md) for the phased plan.
 
 ---
 
@@ -63,6 +63,13 @@ Site DOMs change often, so each platform uses an **ordered list of selector fall
 - **PII redaction (on by default)** — detected personal info (emails, phones, cards, SSNs, IBANs, IPs, API keys/secrets) is replaced with numbered labels like `[email_1]` *before* the prompt is stored, so raw values never sit in your library or backups. Optional “Remember for fill-in” keeps those details in a private list on this computer only. Optional “Also hide names & street addresses” downloads a small on-device helper (~25 MB) once — prompts never leave the device. Per‑category toggles, a live test box, and a scan‑and‑redact for already‑captured prompts live in settings.
 - Multi‑line prompts and code blocks keep their formatting. In the **Library**, prompts that look like markdown (fences, lists, headings, etc.) render as structured prose with sunk mono code blocks; the popup stays plain truncated text. Storage, copy, search, and export still use the raw string.
 
+### Reach for a prompt without leaving the page
+
+- Type **`//`** in any supported chat box to search everything you've saved. Arrow keys to move, Enter to take one, Escape to forget it. It never opens inside a URL.
+- A small **Deja button** sits in the corner of the box. Faint when there's nothing to say, lit when something you saved looks like what you're writing. Click it for the same search — plus "never save from this site" and "pause for an hour", right where you'd want them.
+- If a site changes its layout and Deja loses the box, the button turns amber and offers to **save that one by hand** rather than losing it silently.
+- Prompts with `{blanks}` route through a fill‑in step first, so a saved shape becomes a finished prompt in one pass.
+
 ### The resurface moment — "you've been here before"
 - As you type (debounced ~400 ms), a gentle tooltip floats **above the input** when you've asked something similar before.
 - Powered by **IDF‑weighted trigram similarity** with a length‑aware threshold — distinctive words count more than boilerplate, and short queries are held to a higher bar.
@@ -75,8 +82,8 @@ Site DOMs change often, so each platform uses an **ordered list of selector fall
 - **Filter strength** is a setting: `off` (keep everything) · `balanced` (default — only obvious throwaways) · `strict` (only longer / structured prompts).
 
 ### What gets recorded is yours
-- **Pause capture** from the popup: for **1 hour** or **until you resume**, with a live countdown and a toolbar badge. Capture resumes on its own.
-- **Per‑site switches** in Settings → **Where Deja works**, next to each site's capture‑health status — turn capture off on any site.
+- **Pause saving** from the popup or the in‑page Deja button: for **1 hour** or **until you resume**, with a live countdown and a toolbar badge. It resumes on its own.
+- **Per‑site switches** in Settings → **Where Deja works**, next to each site's status — or straight from the Deja button in that site's chat box.
 - **Auto‑pause in incognito** by default.
 - **Blocklist** of **domains** and **regex patterns** that are never captured — with a live **"test a prompt against your rules"** box and a **"preview impact on saved prompts"** dry‑run, so a too‑broad rule is visible before you trust it.
 
@@ -125,7 +132,7 @@ Send a prompt on any [supported site](#supported-sites), then click the Deja too
 - **When a site changes.** If Deja loses the message box, the dot turns amber and offers to save that prompt by hand rather than letting it vanish.
 - **Browse the popup.** The toolbar icon opens a search box + recent prompts. Hit `library →` for the full page.
 - **Curate the library.** Search, filter by platform/tag, pin favorites, tag prompts, bulk‑delete, and sort by usefulness. Deleted prompts are undoable.
-- **Control capture.** Use **⏸ pause** in the popup before a private session; switch off a site or set filter strength in **settings**; add blocklist rules for anything secret.
+- **Control what's saved.** Use **⏸ pause** in the popup (or the Deja button in the chat box) before a private session; switch off a site or change what Deja saves in **settings**; add never‑save‑from rules for anything secret.
 - **Take your data.** Export JSON or Markdown anytime; import a JSON export back; clear everything from settings.
 
 ---

@@ -541,6 +541,10 @@
       }
       .flow-you .flow-who { color: var(--accent); }
       .flow-step h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.02em; line-height: 1.25; }
+      /* Mono is reserved for things that literally are keys or code — here, the
+         two slashes someone actually types. */
+      .flow-step code { font-family: var(--mono); font-size: 0.92em; background: var(--sunk);
+        border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
       .flow-step p { margin: 0; color: var(--ink-soft); font-size: 14.5px; line-height: 1.55; }
       .flow-echo {
         margin-top: auto; padding-top: 14px;
@@ -1090,6 +1094,18 @@
               <div class="flow-echo" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 1-8.5 6"/><path d="M3 4v4h4"/><path d="m12 8 0 4 3 2"/></svg>
                 Déjà vu, on purpose
+              </div>
+            </li>
+            <li class="flow-step">
+              <span class="flow-mark" aria-hidden="true">4</span>
+              <div>
+                <p class="flow-who">You</p>
+                <h3>Or just reach for it</h3>
+                <p>Type <code>//</code> in the chat box to search everything you&rsquo;ve saved, without leaving the page.</p>
+              </div>
+              <div class="flow-echo" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4 10 20"/><path d="M19 4 15 20"/><path d="M4 9h16M3 15h16"/></svg>
+                Two keystrokes, your own words
               </div>
             </li>
           </ol>

@@ -469,6 +469,8 @@ Placement: replaces the third step's body text in `Welcome.tsx` (the "Later, it 
 
 Shipping M1–M7 changes what Deja *is* in one sentence, so every surface that describes it goes stale at the same moment. Worse, three of them are stale **already** — `ROADMAP.md` Phase 6 flagged this and it was never closed. Doing the two together is cheaper than doing them twice.
 
+**Status (2026-08-11):** H0 done, plus the copy-only parts of H2 — landing page fourth beat, store listing, privacy page, README, and the demo-video script. Screenshots and the video itself still need a human with a browser.
+
 ### H0. What is already wrong today (fix regardless of M1–M7)
 
 1. **The store listing describes behavior the extension no longer has.** `store/listing.md` says of the resurface moment: *"Click to copy it to your clipboard — it never types into the box unless you opt in."* The default flipped to **insert** on 2026-08-05. The file's own header warns *"reviewers compare the listing against behavior"* — this is the exact kind of mismatch that gets a submission bounced, and it is also just untrue to the user.

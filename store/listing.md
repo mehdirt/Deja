@@ -9,8 +9,8 @@ shipped feature set; reviewers compare the listing against behavior.
 
 - **Name:** Deja
 - **Summary (max 132 chars):**
-`Your prompts are work. Deja saves every prompt you send to ChatGPT, Claude, Gemini, DeepSeek & Grok locally, and resurfaces them.`
-*(131 chars — verify after any edit.)*
+`Your prompts are work. Deja saves every prompt you send to ChatGPT, Claude, Gemini, DeepSeek & Grok locally, and brings them back.`
+*(130 chars — verify after any edit.)*
 - **Category:** Productivity
 - **Language:** English
 
@@ -25,15 +25,23 @@ shipped feature set; reviewers compare the listing against behavior.
 > ChatGPT, Claude, Gemini, DeepSeek, and Grok, makes them instantly searchable,
 > and resurfaces the right one while you're typing the next.
 >
-> ▸ AUTOMATIC CAPTURE
+> ▸ SAVED WITHOUT ASKING
 > No copy-paste, no buttons. Prompts you send are saved the moment you submit
 > them — across all five tools. Multi-line prompts and code blocks keep their
 > formatting. Exact and near-duplicate submits collapse into one entry.
 >
 > ▸ "YOU'VE BEEN HERE BEFORE"
 > As you type, Deja floats a gentle reminder when you've asked something similar
-> before, shows why it matched, and lets you step through past versions. Click to
-> copy it to your clipboard — it never types into the box unless you opt in.
+> before, shows why it matched, and lets you step through past versions. One
+> click puts your earlier version back in the box — or set it to copy instead,
+> if you'd rather paste it yourself.
+>
+> ▸ TYPE // TO REACH ANYTHING YOU'VE SAVED
+> Two slashes in the chat box open a search over your whole library, right where
+> you're typing. Arrow keys to move, Enter to take one. If a prompt has blanks in
+> it, you fill them in first. A small Deja button sits quietly in the corner of
+> the box too — it lights up when something you saved looks like what you're
+> writing, and opens the same search.
 >
 > ▸ A LIBRARY THAT ORGANIZES ITSELF
 > Fuzzy search, tags, pins, and a favorites view. Sort by newest, most useful,
@@ -42,13 +50,15 @@ shipped feature set; reviewers compare the listing against behavior.
 > settings (off / balanced / strict) so they never clutter your library.
 >
 > ▸ YOURS TO CONTROL
-> Pause capture with one click, switch off any site, or auto-pause in incognito.
+> Pause saving with one click — from the popup, or straight from the button in
+> the chat box — switch off any site, or auto-pause in incognito.
 > Detected personal info (emails, phone numbers, cards, keys) is redacted to
 > labels like [email] before saving — locally, on by default, tunable.
 >
 > ▸ YOURS TO KEEP
-> Export and import your library as JSON, export as Markdown, blocklist sites or
-> patterns you never want captured, and wipe everything in one click.
+> Download a backup of your library or a plain Markdown copy, restore from a
+> backup later, tell Deja to never save from particular sites or patterns, and
+> wipe everything in one click.
 >
 > ▸ PRIVATE BY DESIGN
 > Deja makes no network calls. No telemetry, no analytics, no accounts, no cloud.
