@@ -1,5 +1,6 @@
 import { DEFAULT_PREFS, onPrefsChange, readPrefs, writePrefs, type Prefs } from '@/lib/prefs'
 import { isBlocked } from '@/lib/blocklist'
+import { onHealthChange } from '@/lib/health'
 import { relativeTime } from '@/lib/format'
 import { safeCaptureUrl } from '@/lib/sensitive'
 import {
@@ -671,6 +672,21 @@ export function attachPresence(
     paint()
   })
 
+  // The DOM probe tells us about selector drift through setBroken(). This
+  // catches the other half: capture.ts also marks a platform unhealthy when the
+  // message pipeline itself fails (worker error, storage rejection), and that
+  // failure is just as invisible to the person typing.
+  const unsubHealth = onHealthChange((health) => {
+    const entry = health[platform]
+    if (entry) {
+      const next = entry.ok === false
+      if (next !== broken) {
+        broken = next
+        paint()
+      }
+    }
+  })
+
   void readPrefs()
     .then((p) => {
       prefs = p
@@ -708,6 +724,7 @@ export function attachPresence(
       window.clearTimeout(searchTimer)
       window.clearTimeout(skeletonTimer)
       unsubPrefs()
+      unsubHealth()
       unwatch()
       document.removeEventListener('keydown', onKeyDown, true)
       document.removeEventListener('pointerdown', onDocPointerDown, true)

@@ -28,9 +28,11 @@ const getInput = (): HTMLElement | null => {
 const { ready: blocklistReady } = startBlocklistSync()
 const { ready: gateReady } = startCaptureGate('gemini')
 void Promise.all([blocklistReady, gateReady]).then(() => attachSubmitHook(getInput, 'gemini'))
-startHealthProbe(getInput, 'gemini')
 // The dot and the tooltip share one debounced similarity query: resurface
 // runs it, presence just reads the count off the response.
 const presence = attachPresence(getInput, 'gemini')
 attachResurface(getInput, 'gemini', { onMatchCount: presence.setMatchCount })
 attachPicker(getInput, 'gemini')
+// The probe already knew when a selector broke; now the dot hears about it
+// too, so the person can keep this one by hand instead of losing it silently.
+startHealthProbe(getInput, 'gemini', (ok) => presence.setBroken(!ok))

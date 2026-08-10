@@ -28,9 +28,11 @@ const getInput = (): HTMLElement | null => {
 const { ready: blocklistReady } = startBlocklistSync()
 const { ready: gateReady } = startCaptureGate('chatgpt')
 void Promise.all([blocklistReady, gateReady]).then(() => attachSubmitHook(getInput, 'chatgpt'))
-startHealthProbe(getInput, 'chatgpt')
 // The dot and the tooltip share one debounced similarity query: resurface
 // runs it, presence just reads the count off the response.
 const presence = attachPresence(getInput, 'chatgpt')
 attachResurface(getInput, 'chatgpt', { onMatchCount: presence.setMatchCount })
 attachPicker(getInput, 'chatgpt')
+// The probe already knew when a selector broke; now the dot hears about it
+// too, so the person can keep this one by hand instead of losing it silently.
+startHealthProbe(getInput, 'chatgpt', (ok) => presence.setBroken(!ok))

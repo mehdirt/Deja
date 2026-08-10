@@ -15,6 +15,13 @@ const RECHECK_INTERVAL_MS = 30_000
 export function startHealthProbe(
   getInput: () => HTMLElement | null,
   platform: Platform,
+  /**
+   * Told about every transition, so the in-page dot can offer a hand-save the
+   * moment capture stops working here. Until now this signal only reached
+   * settings, which meant a broken selector was invisible exactly where the
+   * person was standing.
+   */
+  onChange?: (ok: boolean) => void,
 ): () => void {
   let healthy: boolean | null = null
 
@@ -22,6 +29,11 @@ export function startHealthProbe(
     if (ok === healthy) return // only persist on transitions
     healthy = ok
     void writeHealth(platform, ok)
+    try {
+      onChange?.(ok)
+    } catch {
+      /* a listener must never break the probe */
+    }
   }
 
   // Initial probe: keep looking until the input shows up or we give up.
