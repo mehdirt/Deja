@@ -1,7 +1,7 @@
 # In-context mechanisms (M1–M7) — implementation plan
 
 **Date:** 2026-08-10
-**Status:** approved for build, not started
+**Status:** Phases A–G built and reviewed (2026-08-10/11). Phase H: H0 and the copy-only parts done; screenshots and the demo video still need a human with a browser.
 **Interactive reference:** the evaluation demo built 2026-08-10 (working mock of all seven, Deja tokens, both themes). Treat it as the visual/UX target, not as code to port — it is vanilla JS against a fake library.
 
 ---
