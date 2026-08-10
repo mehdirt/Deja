@@ -291,9 +291,24 @@ function createTooltip(onDismiss: () => void): Tooltip {
 
 // ── Public API ──────────────────────────────────────────────────────────────
 
+export interface ResurfaceOptions {
+  /**
+   * Called with the number of prompts that matched, every time a query
+   * resolves. This is how the ambient dot gets its badge without running a
+   * second query of its own — one debounced SIMILAR_QUERY already carries the
+   * total, and duplicating it would double the cost of every keystroke.
+   *
+   * Note it fires even when the tooltip stays hidden: dismissing the tooltip
+   * means "stop showing me this popup", not "I have nothing saved about this",
+   * so a dot that went dark on dismissal would read as broken.
+   */
+  onMatchCount?: (total: number) => void
+}
+
 export function attachResurface(
   getInput: () => HTMLElement | null,
   platform: Platform,
+  options: ResurfaceOptions = {},
 ): () => void {
   // dismiss() is defined below; the thunk defers the reference so the tooltip's
   // × can trigger per-session dismissal.
@@ -434,15 +449,19 @@ export function attachResurface(
     // reads the in-progress text, so a paused/private session shouldn't trigger
     // it either.
     if (!shouldCapture()) {
+      options.onMatchCount?.(0)
       hide()
       return
     }
     const trimmed = text.trim()
     if (trimmed.length < MIN_CHARS) {
+      options.onMatchCount?.(0)
       hide()
       return
     }
     if (isDismissed(trimmed)) {
+      // The tooltip stays down, but the count still stands: the user said "not
+      // this popup", not "I have nothing saved like this".
       hide()
       return
     }
@@ -458,11 +477,16 @@ export function attachResurface(
       chrome.runtime
         .sendMessage({ type: 'SIMILAR_QUERY', text: trimmed })
         .then((resp: SimilarResponse | undefined) => {
-          if (token !== queryToken || isDismissed(trimmed)) return // stale or dismissed
+          if (token !== queryToken) return // a later keystroke won
           if (!resp?.ok) {
+            options.onMatchCount?.(0)
             hide()
             return
           }
+          // Report the count before any of the tooltip's own suppression rules
+          // apply — the dot reflects the library, the tooltip reflects consent.
+          options.onMatchCount?.(resp.total)
+          if (isDismissed(trimmed)) return
           const matches = resp.matches
           if (!matches.length) {
             hide()

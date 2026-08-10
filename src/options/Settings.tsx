@@ -55,6 +55,26 @@ function extVersion(): string {
 
 const PLATFORMS = Object.keys(PLATFORM_LABEL) as Platform[]
 
+// The three in-page helpers, described by what a person sees rather than by
+// what they're called in the code.
+const IN_PAGE_HELPERS: Array<{ key: 'dot' | 'slash' | 'learn'; label: string; hint: string }> = [
+  {
+    key: 'dot',
+    label: 'Show a small Deja button in the chat box',
+    hint: 'A quiet dot in the corner. It lights up when you’ve asked something similar before, and opens your saved prompts without leaving the page.',
+  },
+  {
+    key: 'slash',
+    label: 'Let me type // to pull up a saved prompt',
+    hint: 'Two slashes in the chat box opens a quick search of everything you’ve saved.',
+  },
+  {
+    key: 'learn',
+    label: 'Offer the ones I actually use',
+    hint: 'Deja notices which saved prompts you reach for and offers those first. This never leaves your computer.',
+  },
+]
+
 const RESURFACE_OPTIONS: Array<{ key: ResurfaceClick; label: string; hint: string }> = [
   {
     key: 'copy',
@@ -347,6 +367,9 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   const [confirmClear, setConfirmClear] = useState(false)
   const [cleared, setCleared] = useState(false)
   const [resurfaceClick, setResurfaceClick] = useState<ResurfaceClick>('insert')
+  const [inPageDot, setInPageDot] = useState(true)
+  const [slashPicker, setSlashPicker] = useState(true)
+  const [learnFromUse, setLearnFromUse] = useState(true)
   const [strength, setStrength] = useState<FilterStrength>('balanced')
   const [sites, setSites] = useState<Record<Platform, boolean>>(
     () => Object.fromEntries(PLATFORMS.map((p) => [p, true])) as Record<Platform, boolean>,
@@ -403,6 +426,9 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   useEffect(() => {
     const apply = (p: Prefs) => {
       setResurfaceClick(p.resurfaceClick)
+      setInPageDot(p.inPageDot)
+      setSlashPicker(p.slashPicker)
+      setLearnFromUse(p.learnFromUse)
       setStrength(p.filterStrength)
       setSites(p.sites)
       setRedactPiiOn(p.redactPii)
@@ -491,6 +517,21 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   const setResurface = async (next: ResurfaceClick) => {
     setResurfaceClick(next)
     await writePrefs({ resurfaceClick: next })
+  }
+
+  const setDot = async (next: boolean) => {
+    setInPageDot(next)
+    await writePrefs({ inPageDot: next })
+  }
+
+  const setSlash = async (next: boolean) => {
+    setSlashPicker(next)
+    await writePrefs({ slashPicker: next })
+  }
+
+  const setLearn = async (next: boolean) => {
+    setLearnFromUse(next)
+    await writePrefs({ learnFromUse: next })
   }
 
   const setFilter = async (next: FilterStrength) => {
@@ -797,6 +838,30 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
               <span className="dj-choice-label text-sm font-medium text-ink">{o.label}</span>
               <span className="text-[12px] leading-snug text-ink-soft">{o.hint}</span>
             </button>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-1 border-t border-line pt-3">
+          {IN_PAGE_HELPERS.map((h) => (
+            <div key={h.key} className="flex items-start justify-between gap-4 py-1.5">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium text-ink">{h.label}</span>
+                <span className="text-[12px] leading-snug text-ink-soft">{h.hint}</span>
+              </div>
+              <div className="pt-0.5">
+                <Switch
+                  checked={h.key === 'dot' ? inPageDot : h.key === 'slash' ? slashPicker : learnFromUse}
+                  onChange={() =>
+                    h.key === 'dot'
+                      ? void setDot(!inPageDot)
+                      : h.key === 'slash'
+                        ? void setSlash(!slashPicker)
+                        : void setLearn(!learnFromUse)
+                  }
+                  label={h.label}
+                />
+              </div>
+            </div>
           ))}
         </div>
       </Section>

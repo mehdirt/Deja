@@ -40,6 +40,33 @@ export function shouldCapture(): boolean {
 }
 
 /**
+ * Why capture isn't running, when it isn't.
+ *
+ * The in-page surfaces need this finer answer than `shouldCapture()` gives,
+ * because **saving off is not reading off**. Pausing Deja, or switching a site
+ * off, means "don't record what I type" — it has never meant "lock me out of my
+ * own library", and reading is the half with no privacy cost. So those states
+ * dim the dot but keep the panel and picker working.
+ *
+ * Incognito is the exception, and it's the same deliberate fail-closed case the
+ * rest of this module already makes: a private window should leave no trace, so
+ * the surfaces don't appear there at all.
+ */
+export type CaptureState = 'on' | 'paused' | 'site-off' | 'incognito'
+
+export function captureState(): CaptureState {
+  if (snapshot.autoPauseIncognito && isIncognito()) return 'incognito'
+  if (platform && snapshot.sites[platform] === false) return 'site-off'
+  if (isPaused(snapshot)) return 'paused'
+  return 'on'
+}
+
+/** May we show an in-page surface that reads the library here at all? */
+export function surfacesAllowed(): boolean {
+  return captureState() !== 'incognito'
+}
+
+/**
  * Load the gate prefs once and subscribe to changes. `platform` scopes the
  * per-site switch. Returns `{ shouldCapture, ready }`; `ready` resolves when the
  * first read lands or after a 1000ms fallback (so capture still arms if storage

@@ -1,6 +1,7 @@
 import { attachSubmitHook } from '../shared/capture'
 import { startHealthProbe } from '../shared/health'
 import { attachResurface } from '../shared/resurface'
+import { attachPresence } from '../shared/presence'
 import { startBlocklistSync } from '../shared/blocklist'
 import { startCaptureGate } from '../shared/captureGate'
 
@@ -27,4 +28,7 @@ const { ready: blocklistReady } = startBlocklistSync()
 const { ready: gateReady } = startCaptureGate('gemini')
 void Promise.all([blocklistReady, gateReady]).then(() => attachSubmitHook(getInput, 'gemini'))
 startHealthProbe(getInput, 'gemini')
-attachResurface(getInput, 'gemini')
+// The dot and the tooltip share one debounced similarity query: resurface
+// runs it, presence just reads the count off the response.
+const presence = attachPresence(getInput, 'gemini')
+attachResurface(getInput, 'gemini', { onMatchCount: presence.setMatchCount })

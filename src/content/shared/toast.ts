@@ -77,6 +77,43 @@ export function showSavedToast(onUndo: () => void, note?: string): void {
   hideTimer = window.setTimeout(dismiss, 5000)
 }
 
+// A toast for an action the user just took in-page (turning saving off here,
+// pausing, keeping a prompt by hand). Same chip, but the message is the whole
+// message — no "Saved for you ✔" prefix, because these aren't saves.
+export function showActionToast(message: string, undoLabel: string, onUndo: () => void): void {
+  const wrap = ensureWrap()
+  wrap.replaceChildren()
+
+  const toast = document.createElement('div')
+  toast.className = 'dj-toast'
+  toast.setAttribute('role', 'status')
+  toast.setAttribute('aria-live', 'polite')
+
+  const dot = document.createElement('span')
+  dot.className = 'dj-dot'
+
+  const msg = document.createElement('span')
+  msg.className = 'dj-msg'
+  msg.textContent = message
+
+  const undo = document.createElement('button')
+  undo.className = 'dj-undo'
+  undo.textContent = undoLabel
+  undo.addEventListener('click', () => {
+    onUndo()
+    msg.textContent = 'Done'
+    undo.remove()
+    window.clearTimeout(hideTimer)
+    hideTimer = window.setTimeout(dismiss, 1200)
+  })
+
+  toast.append(dot, msg, undo)
+  wrap.appendChild(toast)
+
+  window.clearTimeout(hideTimer)
+  hideTimer = window.setTimeout(dismiss, 5000)
+}
+
 // A quiet, button-less toast — used once to explain that a short throwaway
 // prompt was not stored (selective capture), so the skip is never silent.
 // Auto-dismisses; no undo, because nothing was written.
