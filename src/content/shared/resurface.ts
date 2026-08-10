@@ -385,11 +385,28 @@ export function attachResurface(
     tooltip.hide()
   }
 
+  // The × does two things on two different timescales, and they don't replace
+  // each other. It suppresses this tooltip for this exact query text (session
+  // only, so a different prompt can still resurface), AND it tells the worker
+  // this particular saved prompt was waved away, which nudges it down the order
+  // of future suggestions. This is the only place a dismissal signal comes
+  // from: the panel and picker are lists someone opened on purpose, and not
+  // clicking a row there isn't a rejection worth recording.
   const dismiss = () => {
     const el = activeEl ?? getInput()
     const q = lastQueried || (el ? readText(el) : '')
     const n = norm(q)
     if (n) dismissedFor = n
+    const match = currentMatches[currentIndex]
+    if (match && chrome.runtime?.id) {
+      try {
+        void chrome.runtime
+          .sendMessage({ type: 'SUGGESTION_DISMISSED', id: match.id })
+          .catch(() => {})
+      } catch {
+        /* orphaned content script — never throw into the host page */
+      }
+    }
     hide()
   }
 

@@ -15,7 +15,7 @@ import { mergePiiVault, readPiiVault } from '@/lib/piiVault'
 import { loadNerModel, redactPiiFull } from '@/background/nerBridge'
 import { getPool, invalidatePool } from '@/background/pool'
 import { buildIndex, searchPrompts } from '@/lib/search'
-import { usefulnessScore } from '@/lib/ranking'
+import { suggestionRank, usefulnessScore } from '@/lib/ranking'
 import {
   readPrefs,
   writePrefs,
@@ -211,6 +211,15 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         const hits = findSimilar(queryText, pool, 0.4, pool.length || 1).filter(
           (h) => h.item.id != null && norm(h.item.text) !== queryNorm,
         )
+        // Re-rank what already cleared the threshold by how the person has
+        // actually treated each one — used goes up, waved away goes down.
+        // Similarity stays dominant (see suggestionRank), and this can only
+        // reorder candidates, never introduce one. Turning the preference off
+        // leaves the pure similarity order.
+        if (prefs.learnFromUse) {
+          const now = Date.now()
+          hits.sort((a, b) => suggestionRank(b.score, b.item, now) - suggestionRank(a.score, a.item, now))
+        }
         const matches = hits.slice(0, SURFACED_MATCHES).map((h) => ({
           id: h.item.id as number,
           text: h.item.text,
