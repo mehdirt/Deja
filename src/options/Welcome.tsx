@@ -1,4 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Logo } from '@/ui/Logo'
+import { IntentChips } from '@/ui/IntentChips'
+import { WelcomeDemo } from '@/ui/WelcomeDemo'
+import { readPrefs, writePrefs, type Intent } from '@/lib/prefs'
 
 // Shown once, right after install (the background worker opens the options page
 // with ?welcome=1). Deja is a passive tool: the risk isn't that setup is hard,
@@ -23,6 +27,43 @@ const STEPS: Array<{ title: string; body: string }> = [
 ]
 
 export function Welcome({ onDone }: { onDone: () => void }) {
+  const [intents, setIntents] = useState<string[]>([])
+  // The demo autoplays the first time and only the first time; someone who came
+  // back through "show me how this works again" has already seen it move.
+  const [autoPlayDemo, setAutoPlayDemo] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void readPrefs()
+      .then((p) => {
+        if (cancelled) return
+        setIntents(p.intents)
+        setAutoPlayDemo(!p.welcomeDemoSeen)
+        if (!p.welcomeDemoSeen) void writePrefs({ welcomeDemoSeen: true })
+      })
+      .catch(() => {
+        /* storage unavailable — the welcome page still reads fine */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const toggleIntent = (intent: Intent) => {
+    setIntents((current) => {
+      const next = current.includes(intent)
+        ? current.filter((i) => i !== intent)
+        : [...current, intent]
+      void writePrefs({ intents: next })
+      return next
+    })
+  }
+
+  const skipIntents = () => {
+    setIntents([])
+    void writePrefs({ intents: [] })
+  }
+
   return (
     <div className="dj-enter flex flex-col gap-10 py-4">
       <header className="flex flex-col items-center gap-4 text-center">
@@ -44,6 +85,16 @@ export function Welcome({ onDone }: { onDone: () => void }) {
           </p>
         </div>
       </header>
+
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-base font-semibold text-ink">What do you mostly use AI for?</h2>
+          <p className="text-sm leading-relaxed text-ink-soft">
+            Pick as many as you like — it only changes the examples we show you first.
+          </p>
+        </div>
+        <IntentChips selected={intents} onToggle={toggleIntent} onSkip={skipIntents} />
+      </section>
 
       <div className="flex flex-col gap-3">
         <p className="text-sm font-semibold tracking-tight text-ink">
@@ -74,9 +125,16 @@ export function Welcome({ onDone }: { onDone: () => void }) {
               >
                 {i + 1}
               </span>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex min-w-0 flex-col gap-1.5">
                 <h2 className="text-[17px] font-semibold tracking-tight text-ink">{s.title}</h2>
                 <p className="text-[14.5px] leading-relaxed text-ink-soft">{s.body}</p>
+                {/* The third step is the one nobody can picture from words, so
+                    it gets shown instead of only described. */}
+                {i === STEPS.length - 1 && (
+                  <div className="pt-2">
+                    <WelcomeDemo autoPlay={autoPlayDemo} />
+                  </div>
+                )}
               </div>
             </li>
           ))}

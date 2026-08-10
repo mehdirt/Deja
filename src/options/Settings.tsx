@@ -13,7 +13,14 @@ import {
   isBlocked,
   type Blocklist,
 } from '@/lib/blocklist'
-import { readPrefs, writePrefs, onPrefsChange, type ResurfaceClick, type Prefs } from '@/lib/prefs'
+import {
+  readPrefs,
+  writePrefs,
+  onPrefsChange,
+  type Intent,
+  type ResurfaceClick,
+  type Prefs,
+} from '@/lib/prefs'
 import {
   LIBRARY_CAP_CHOICES,
   LIBRARY_CAP_DEFAULT,
@@ -35,6 +42,7 @@ import { buildMarkdown } from '@/lib/markdown'
 import { restoreBackupFromText } from '@/lib/restoreBackup'
 import { feedbackHref } from '@/lib/feedback'
 import { BugIcon, ChevronIcon, IdeaIcon, CheckCircleIcon, CrossCircleIcon } from '@/ui/ActionIcons'
+import { IntentChips } from '@/ui/IntentChips'
 import {
   PLATFORM_LABEL,
   PII_KINDS,
@@ -367,6 +375,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   const [confirmClear, setConfirmClear] = useState(false)
   const [cleared, setCleared] = useState(false)
   const [resurfaceClick, setResurfaceClick] = useState<ResurfaceClick>('insert')
+  const [intents, setIntents] = useState<string[]>([])
   const [inPageDot, setInPageDot] = useState(true)
   const [slashPicker, setSlashPicker] = useState(true)
   const [learnFromUse, setLearnFromUse] = useState(true)
@@ -426,6 +435,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   useEffect(() => {
     const apply = (p: Prefs) => {
       setResurfaceClick(p.resurfaceClick)
+      setIntents(p.intents)
       setInPageDot(p.inPageDot)
       setSlashPicker(p.slashPicker)
       setLearnFromUse(p.learnFromUse)
@@ -517,6 +527,16 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   const setResurface = async (next: ResurfaceClick) => {
     setResurfaceClick(next)
     await writePrefs({ resurfaceClick: next })
+  }
+
+  const toggleIntent = (intent: Intent) => {
+    setIntents((current) => {
+      const next = current.includes(intent)
+        ? current.filter((i) => i !== intent)
+        : [...current, intent]
+      void writePrefs({ intents: next })
+      return next
+    })
   }
 
   const setDot = async (next: boolean) => {
@@ -1061,6 +1081,20 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
           The document is easy to read; the backup is the one to keep if you ever want to bring your
           prompts back.
         </p>
+
+        {/* Only meaningful while the library is empty, which is exactly when
+            someone is least likely to go looking for it — so it lives here,
+            quietly, rather than in the drawer. */}
+        <div className="mt-1 flex flex-col gap-2 border-t border-line pt-4">
+          <div className="flex flex-col gap-0.5">
+            <p className="text-sm font-medium text-ink">Which examples to show</p>
+            <p className="dj-meta">
+              While your library is empty, Deja shows a few example prompts to borrow. Pick the
+              kinds you&apos;d find useful — or leave them all on.
+            </p>
+          </div>
+          <IntentChips selected={intents} onToggle={toggleIntent} />
+        </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-3 border-t border-line pt-4">
           <button
