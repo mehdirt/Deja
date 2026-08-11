@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Logo } from '@/ui/Logo'
 import { IntentChips } from '@/ui/IntentChips'
 import { WelcomeDemo } from '@/ui/WelcomeDemo'
@@ -8,28 +8,31 @@ import { readPrefs, writePrefs, type Intent } from '@/lib/prefs'
 // with ?welcome=1). Deja is a passive tool: the risk isn't that setup is hard,
 // it's that nothing visible happens and the extension is forgotten. So this page
 // has one job — make someone feel at home, then tell them what to expect, in
-// the order they'll experience it. Warm and simple on purpose: everyday users
-// shouldn't feel like they're configuring software.
+// the order they'll experience it.
+//
+// Visual language mirrors the landing flow-steps and Library panels: raised
+// surface cards, soft accent on the step that needs showing, quiet tips.
 
-const STEPS: Array<{ title: string; body: string }> = [
+const STEPS: Array<{ title: string; body: string; who: string }> = [
   {
+    who: 'You',
     title: 'Ask something, like you always do',
-    body: "Open ChatGPT, Claude, Gemini, DeepSeek, or Grok and type your question. Nothing about those sites changes — Deja just listens quietly in the background.",
+    body: 'Open ChatGPT, Claude, Gemini, DeepSeek, or Grok and type your question. Nothing about those sites changes — Deja just listens quietly in the background.',
   },
   {
+    who: 'Deja',
     title: 'It gets saved for you',
     body: 'A small “Saved” note pops up in the corner for a moment. Changed your mind? Hit Undo while it’s still there — no fuss.',
   },
   {
+    who: 'Together',
     title: 'Later, it finds you again',
-    body: "When you start typing something you’ve asked before, your earlier version gently appears above the box. One click replaces what you were typing with that saved version — change your mind with Undo in the chat box.",
+    body: 'When you start typing something you’ve asked before, your earlier version gently appears above the box. One click puts that saved version back — change your mind with Undo in the chat box.',
   },
 ]
 
 export function Welcome({ onDone }: { onDone: () => void }) {
   const [intents, setIntents] = useState<string[]>([])
-  // The demo autoplays the first time and only the first time; someone who came
-  // back through "show me how this works again" has already seen it move.
   const [autoPlayDemo, setAutoPlayDemo] = useState(false)
 
   useEffect(() => {
@@ -39,7 +42,6 @@ export function Welcome({ onDone }: { onDone: () => void }) {
         if (cancelled) return
         setIntents(p.intents)
         setAutoPlayDemo(!p.welcomeDemoSeen)
-        if (!p.welcomeDemoSeen) void writePrefs({ welcomeDemoSeen: true })
       })
       .catch(() => {
         /* storage unavailable — the welcome page still reads fine */
@@ -47,6 +49,11 @@ export function Welcome({ onDone }: { onDone: () => void }) {
     return () => {
       cancelled = true
     }
+  }, [])
+
+  const markDemoSeen = useCallback(() => {
+    setAutoPlayDemo(false)
+    void writePrefs({ welcomeDemoSeen: true })
   }, [])
 
   const toggleIntent = (intent: Intent) => {
@@ -96,55 +103,63 @@ export function Welcome({ onDone }: { onDone: () => void }) {
         <IntentChips selected={intents} onToggle={toggleIntent} onSkip={skipIntents} />
       </section>
 
-      <div className="flex flex-col gap-3">
-        <p className="text-sm font-semibold tracking-tight text-ink">
+      <section className="flex flex-col gap-3">
+        <h2 className="text-base font-semibold tracking-tight text-ink">
           Here&apos;s how it feels in practice
-        </p>
+        </h2>
         <ol className="dj-stagger-auto flex flex-col gap-3">
-          {STEPS.map((s, i) => (
-            <li
-              key={s.title}
-              className="dj-card flex items-start gap-4 p-5"
-              style={
-                i === 0
-                  ? {
-                      background:
-                        'linear-gradient(180deg, color-mix(in srgb, var(--dj-accent-soft) 70%, var(--dj-surface)), var(--dj-surface) 72%)',
-                      borderColor: 'color-mix(in srgb, var(--dj-accent) 22%, var(--dj-line))',
-                    }
-                  : undefined
-              }
-            >
-              <span
-                className={`mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-full text-sm font-semibold tabular-nums ${
-                  i === 0
-                    ? 'bg-accent text-white'
-                    : 'border border-line bg-sunk text-ink-soft'
-                }`}
-                aria-hidden
+          {STEPS.map((s, i) => {
+            const featured = i === STEPS.length - 1
+            return (
+              <li
+                key={s.title}
+                className="dj-card flex flex-col gap-3.5 p-5 sm:p-[22px]"
+                style={
+                  featured
+                    ? {
+                        background:
+                          'linear-gradient(180deg, color-mix(in srgb, var(--dj-accent-soft) 70%, var(--dj-surface)), var(--dj-surface) 72%)',
+                        borderColor: 'color-mix(in srgb, var(--dj-accent) 22%, var(--dj-line))',
+                      }
+                    : undefined
+                }
               >
-                {i + 1}
-              </span>
-              <div className="flex min-w-0 flex-col gap-1.5">
-                <h2 className="text-[17px] font-semibold tracking-tight text-ink">{s.title}</h2>
-                <p className="text-[14.5px] leading-relaxed text-ink-soft">{s.body}</p>
-                {/* The third step is the one nobody can picture from words, so
-                    it gets shown instead of only described. */}
-                {i === STEPS.length - 1 && (
-                  <div className="pt-2">
-                    <WelcomeDemo autoPlay={autoPlayDemo} />
+                <div className="flex items-start gap-3.5">
+                  <span
+                    className={`mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-full text-sm font-semibold tabular-nums ${
+                      featured
+                        ? 'bg-accent text-white shadow-cta'
+                        : 'border border-line bg-sunk text-ink-soft'
+                    }`}
+                    aria-hidden
+                  >
+                    {i + 1}
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-faint">
+                      {s.who}
+                    </p>
+                    <h3 className="text-[17px] font-semibold tracking-tight text-ink sm:text-lg">
+                      {s.title}
+                    </h3>
+                    <p className="text-[14.5px] leading-relaxed text-ink-soft">{s.body}</p>
+                  </div>
+                </div>
+                {featured && (
+                  <div className="sm:pl-[46px]">
+                    <WelcomeDemo autoPlay={autoPlayDemo} onFirstPlayComplete={markDemoSeen} />
                   </div>
                 )}
-              </div>
-            </li>
-          ))}
+              </li>
+            )
+          })}
         </ol>
-      </div>
+      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold text-ink">Two gentle tips</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="dj-card flex flex-col gap-1.5 p-4">
+          <div className="dj-card flex flex-col gap-1.5 p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-ink">
               <span aria-hidden="true">📌 </span>Keep Deja close by
             </h3>
@@ -153,14 +168,14 @@ export function Welcome({ onDone }: { onDone: () => void }) {
               are always one click away.
             </p>
           </div>
-          <div className="dj-card flex flex-col gap-1.5 p-4">
+          <div className="dj-card flex flex-col gap-1.5 p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-ink">
               <span aria-hidden="true">🔒 </span>Your words stay here
             </h3>
             <p className="text-sm leading-relaxed text-ink-soft">
               No account, no cloud, no tracking — nothing leaves this computer. Personal details
-              like emails and phone numbers can be swapped for placeholders before anything is
-              saved, so you can relax.
+              like emails and phone numbers can be hidden before anything is saved, so you can
+              relax.
             </p>
           </div>
         </div>
@@ -173,11 +188,11 @@ export function Welcome({ onDone }: { onDone: () => void }) {
             href="https://chatgpt.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="dj-btn dj-btn-primary px-4 py-2 text-sm"
+            className="dj-btn dj-btn-primary px-4 py-2.5 text-sm"
           >
             Try a question on ChatGPT
           </a>
-          <button onClick={onDone} className="dj-btn px-4 py-2 text-sm">
+          <button onClick={onDone} className="dj-btn px-4 py-2.5 text-sm">
             Take a look around first
           </button>
         </div>

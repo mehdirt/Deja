@@ -35,9 +35,7 @@ export function IntentChips({
               key={intent}
               onClick={() => onToggle(intent)}
               aria-pressed={on}
-              className={`dj-chip transition-colors ${
-                on ? 'border-accent bg-accent-soft font-semibold text-accent' : 'hover:bg-sunk'
-              }`}
+              className={`dj-pill ${on ? 'dj-pill-active' : ''}`}
             >
               {LABELS[intent]}
             </button>
