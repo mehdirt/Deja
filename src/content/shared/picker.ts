@@ -45,14 +45,17 @@ const PICKER_CSS = `
 .dj-picker{position:fixed;width:360px;max-width:calc(100vw - 16px);
   display:flex;flex-direction:column;overflow:hidden;padding:0}
 .dj-picker[hidden]{display:none}
-.dj-picker-head{display:flex;align-items:center;gap:8px;padding:8px 11px;
-  border-bottom:1px solid var(--dj-line);font-size:11.5px;color:var(--dj-text-faint)}
-.dj-picker-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dj-picker-q{color:var(--dj-text);font-weight:600}
-.dj-keys{display:flex;gap:4px;flex:none}
+.dj-picker-head{display:flex;align-items:center;gap:9px;padding:11px 12px;
+  border-bottom:1px solid var(--dj-line);
+  background:color-mix(in srgb,var(--dj-bg) 70%,var(--dj-surface))}
+.dj-picker-title{flex:1;min-width:0;font-size:13.5px;font-weight:600;letter-spacing:-0.015em;
+  color:var(--dj-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dj-picker-q{color:var(--dj-accent-text)}
+.dj-keys{display:flex;gap:5px;flex:none}
+.dj-keys[hidden]{display:none}
 .dj-key{font-family:var(--dj-mono);font-size:10px;border:1px solid var(--dj-line);
-  border-radius:4px;padding:1px 4px;color:var(--dj-text-faint)}
-.dj-list{max-height:236px}
+  border-radius:6px;padding:2px 6px;color:var(--dj-text-faint);background:var(--dj-sunk)}
+.dj-list{max-height:252px;background:var(--dj-bg)}
 ` + LIBRARY_ROWS_CSS + BLANKS_CSS
 
 /** Where the `//` token sits in the text before the caret, and what follows it. */
@@ -180,6 +183,8 @@ export function attachPicker(
   let debounceTimer: number | undefined
   let skeletonTimer: number | undefined
   let requestToken = 0
+  /** Back out of the blanks step without closing the picker. */
+  let leaveFill: (() => void) | null = null
 
   const layer = createOverlayHost('picker', PICKER_CSS)
 
@@ -195,7 +200,7 @@ export function attachPicker(
   title.className = 'dj-picker-title'
   const keys = document.createElement('span')
   keys.className = 'dj-keys'
-  for (const k of ['↑↓', '↵', 'esc']) {
+  for (const k of ['↑↓', 'Enter', 'Esc']) {
     const kbd = document.createElement('span')
     kbd.className = 'dj-key'
     kbd.textContent = k
@@ -234,13 +239,13 @@ export function attachPicker(
   const setTitle = () => {
     title.replaceChildren()
     if (query) {
-      title.appendChild(document.createTextNode('Saved prompts matching '))
+      title.appendChild(document.createTextNode('Matching “'))
       const q = document.createElement('span')
       q.className = 'dj-picker-q'
       q.textContent = query
-      title.appendChild(q)
+      title.append(q, document.createTextNode('”'))
     } else {
-      title.appendChild(document.createTextNode('Insert a saved prompt — keep typing to narrow it'))
+      title.appendChild(document.createTextNode('Your saved prompts'))
     }
   }
 
@@ -289,6 +294,8 @@ export function attachPicker(
       card.hidden = false
       fillView.hidden = true
       list.hidden = false
+      keys.hidden = false
+      leaveFill = null
     }
     setTitle()
     position()
@@ -300,6 +307,8 @@ export function attachPicker(
     card.hidden = true
     fillView.hidden = true
     list.hidden = false
+    keys.hidden = false
+    leaveFill = null
     rows = []
     active = 0
     query = ''
@@ -382,17 +391,21 @@ export function attachPicker(
     if (hasBlanks(row.text)) {
       list.hidden = true
       fillView.hidden = false
+      keys.hidden = true
       title.textContent = 'Fill in the blanks'
+      leaveFill = () => {
+        fillView.hidden = true
+        list.hidden = false
+        keys.hidden = false
+        leaveFill = null
+        setTitle()
+        position()
+        ;(activeEl ?? getInput())?.focus()
+      }
       const handle = renderBlanks(fillView, {
         text: row.text,
         onDone: (filled) => insert(filled, row.id),
-        onCancel: () => {
-          fillView.hidden = true
-          list.hidden = false
-          setTitle()
-          position()
-          ;(activeEl ?? getInput())?.focus()
-        },
+        onCancel: () => leaveFill?.(),
       })
       position()
       handle.focus()
@@ -453,12 +466,12 @@ export function attachPicker(
     // script could drive the selection and read what we type back.
     if (!isRealUserEvent(e)) return
     if (!fillView.hidden) {
-      // The blanks step owns its own keys; only Escape backs out of it.
+      // Same as the Back button: leave the blanks step, keep the list open.
+      // A second Escape (now on the list) closes the picker.
       if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
-        close()
-        ;(activeEl ?? getInput())?.focus()
+        leaveFill?.()
       }
       return
     }

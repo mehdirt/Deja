@@ -38,17 +38,13 @@ function log(...args: unknown[]) {
   if (DEBUG) console.log('[Deja:resurface]', ...args)
 }
 
-// A small rotation of openers so the moment doesn't feel robotic — one is
-// picked at random each time the tooltip appears (not while stepping through
-// candidates). Keep them calm and short; the trailing arrow is part of the copy.
+// A small set of calm openers — picked at random each time the tooltip appears
+// (not while stepping through candidates). Keep them short so they wrap cleanly
+// on a narrow composer.
 const LEAD_PHRASES = [
   "You've asked something like this before →",
-  "You've been here before →",
-  'This looks familiar — here you go →',
-  'Déjà vu — you saved one like this →',
   'Your earlier version is right here →',
-  "Looks like you've written this before →",
-  'Wait — you’ve done this before →',
+  "You've been here before →",
 ]
 
 function randomLead(): string {
@@ -88,27 +84,26 @@ interface Tooltip {
 // ring, reduced-motion escape) come from overlayTheme.ts — see that file for
 // why the tokens live on :host rather than being hardcoded per rule here.
 const TOOLTIP_CSS = `
-.dj-rs{display:flex;align-items:flex-start;gap:10px;
-  max-width:min(440px,calc(100vw - 16px));padding:8px 10px;transition:opacity .1s ease}
+.dj-rs{display:flex;align-items:flex-start;gap:12px;
+  max-width:min(440px,calc(100vw - 16px));padding:11px 13px}
 .dj-rs[hidden]{display:none}
-.dj-rs:hover{background:var(--dj-card-hover)}
-.dj-rs-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;
-  background:none;border:none;padding:0;margin:0;cursor:pointer;text-align:left;
-  color:inherit;font:inherit;border-radius:6px}
+.dj-rs-main{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;
+  background:none;border:none;padding:4px 6px;margin:-4px -6px;cursor:pointer;text-align:left;
+  color:inherit;font:inherit;border-radius:var(--dj-radius-row);
+  transition:background-color .15s ease}
+.dj-rs-main:hover{background:var(--dj-bg)}
 .dj-rs-main:focus-visible{outline:2px solid var(--dj-accent);outline-offset:1px}
-.dj-rs-lead{display:flex;align-items:center;gap:6px;color:var(--dj-accent-text);
-  font-weight:600;white-space:nowrap}
-.dj-rs-dot{width:6px;height:6px;border-radius:50%;background:var(--dj-accent);flex:none}
-.dj-rs-preview{color:var(--dj-text-soft);font-size:12px;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;max-width:min(400px,calc(100vw - 80px))}
-.dj-rs-meta{color:var(--dj-text-faint);font-size:10px;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;max-width:min(400px,calc(100vw - 80px))}
-.dj-rs-meta:empty{display:none}
-.dj-rs-ctl{display:flex;align-items:center;gap:4px;flex:none;align-self:flex-start}
-.dj-rs-count{color:var(--dj-text-faint);font-weight:600;font-size:10px;line-height:1;
+.dj-rs-lead{display:flex;align-items:flex-start;gap:7px;color:var(--dj-accent-text);
+  font-weight:600;font-size:13px;line-height:1.35;letter-spacing:-0.01em}
+.dj-rs-dot{width:7px;height:7px;border-radius:50%;background:var(--dj-accent);flex:none;
+  margin-top:5px}
+.dj-rs-preview{color:var(--dj-text-soft);font-size:12.5px;line-height:1.4;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:min(400px,calc(100vw - 80px))}
+.dj-rs-ctl{display:flex;align-items:center;gap:4px;flex:none;align-self:flex-start;padding-top:1px}
+.dj-rs-count{color:var(--dj-text-faint);font-weight:600;font-size:11px;line-height:1;
   white-space:nowrap;font-variant-numeric:tabular-nums}
-.dj-rs-all{color:var(--dj-accent-text);font-weight:600;font-size:11px;line-height:1;
-  white-space:nowrap;flex:none}
+.dj-rs-all{color:var(--dj-accent-text);font-weight:600;font-size:11.5px;line-height:1;
+  white-space:nowrap;flex:none;padding:5px 8px;border-radius:8px}
 .dj-rs-all:hover{background:var(--dj-accent-soft)}
 `
 
@@ -117,7 +112,6 @@ function createTooltip(onDismiss: () => void): Tooltip {
   let card: HTMLElement | null = null
   let leadEl: HTMLSpanElement | null = null
   let previewEl: HTMLSpanElement | null = null
-  let metaEl: HTMLSpanElement | null = null
   let ctlEl: HTMLElement | null = null
   let countEl: HTMLSpanElement | null = null
   let nextEl: HTMLButtonElement | null = null
@@ -166,10 +160,7 @@ function createTooltip(onDismiss: () => void): Tooltip {
     previewEl = document.createElement('span')
     previewEl.className = 'dj-rs-preview'
 
-    metaEl = document.createElement('span')
-    metaEl.className = 'dj-rs-meta'
-
-    main.append(lead, previewEl, metaEl)
+    main.append(lead, previewEl)
 
     ctlEl = document.createElement('div')
     ctlEl.className = 'dj-rs-ctl'
@@ -177,7 +168,7 @@ function createTooltip(onDismiss: () => void): Tooltip {
     seeAllEl = document.createElement('button')
     seeAllEl.type = 'button'
     seeAllEl.className = 'dj-rs-all'
-    seeAllEl.textContent = 'See all →'
+    seeAllEl.textContent = 'See all in your library →'
     seeAllEl.addEventListener('mousedown', (e) => e.preventDefault())
     seeAllEl.addEventListener('click', (e) => {
       e.stopPropagation()
@@ -217,8 +208,6 @@ function createTooltip(onDismiss: () => void): Tooltip {
 
   const render = (view: CandidateView) => {
     if (previewEl) previewEl.textContent = view.preview
-    if (metaEl)
-      metaEl.textContent = view.terms.length ? `Because you mentioned ${view.terms.join(', ')}` : ''
     const multi = view.total > 1
     if (countEl) {
       countEl.textContent = multi ? `${view.index + 1}/${view.total}` : ''
@@ -235,9 +224,8 @@ function createTooltip(onDismiss: () => void): Tooltip {
       nextHandler = handlers.onNext
       seeAllHandler = handlers.onSeeAll
       // Restore the normal layout in case the card was last left in a "copied"
-      // confirmation state (which hides the preview/meta/controls).
+      // confirmation state (which hides the preview/controls).
       if (previewEl) previewEl.style.display = ''
-      if (metaEl) metaEl.style.display = ''
       if (ctlEl) ctlEl.style.display = ''
       // Pick a fresh opener each time the tooltip appears (kept stable while
       // the user steps through candidates via update()).
@@ -252,11 +240,10 @@ function createTooltip(onDismiss: () => void): Tooltip {
     },
     confirm(message) {
       if (!visible) return
-      // Collapse to a single confirmation line ("copied to clipboard ✓"); the
-      // caller hides the tooltip shortly after.
+      // Collapse to a single confirmation line ("Copied — paste it anywhere ✓");
+      // the caller hides the tooltip shortly after.
       if (leadEl) leadEl.textContent = message
       if (previewEl) previewEl.style.display = 'none'
-      if (metaEl) metaEl.style.display = 'none'
       if (ctlEl) ctlEl.style.display = 'none'
     },
     hide() {
@@ -276,7 +263,6 @@ function createTooltip(onDismiss: () => void): Tooltip {
       card = null
       leadEl = null
       previewEl = null
-      metaEl = null
       ctlEl = null
       countEl = null
       nextEl = null
