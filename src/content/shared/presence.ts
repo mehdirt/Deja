@@ -36,7 +36,7 @@ const DEBUG = false
 const PANEL_LIMIT = 6
 // Small enough to sit inside a message box without crowding the text, big
 // enough to be a comfortable click target.
-const DOT_SIZE = 24
+const DOT_SIZE = 26
 const DOT_GAP = 8
 // Show placeholder rows only if the worker is actually slow to answer. A cold
 // MV3 worker takes a moment; a warm one answers in ~20ms, and flashing
@@ -75,63 +75,105 @@ const MARK_SVG = `<svg viewBox="0 0 32 32" fill="none" aria-hidden="true" focusa
 <rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity=".95"/>
 <rect x="15" y="17" width="2.4" height="3.6" rx=".6" fill="var(--dj-accent)"/></svg>`
 
+const SEARCH_SVG = `<svg viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+<circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+<path d="M10.5 10.5L13.5 13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`
+
+const CLOSE_SVG = `<svg viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+<path d="M4.5 4.5l7 7M11.5 4.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`
+
+// Panel chrome mirrors the popup: brand header, rounded search well, card stack
+// on paper, quiet footer. Same tokens as Library — denser, not different.
 const PRESENCE_CSS = `
-.dj-dot{position:fixed;pointer-events:auto;width:24px;height:24px;border-radius:50%;
-  border:1px solid var(--dj-line);background:var(--dj-card);cursor:pointer;padding:0;
-  display:grid;place-items:center;opacity:.55;
-  transition:opacity .2s ease,box-shadow .2s ease,border-color .2s ease}
+.dj-dot{position:fixed;pointer-events:auto;width:26px;height:26px;border-radius:9px;
+  border:1px solid var(--dj-line);background:var(--dj-surface);cursor:pointer;padding:0;
+  display:grid;place-items:center;opacity:.62;box-shadow:var(--dj-shadow-sm);
+  transition:opacity .2s ease,box-shadow .2s ease,border-color .2s ease,transform .15s cubic-bezier(0.16,1,0.3,1)}
 .dj-dot[hidden]{display:none}
-.dj-dot:hover{opacity:1}
+.dj-dot:hover{opacity:1;transform:translateY(-1px);
+  border-color:color-mix(in srgb,var(--dj-accent) 28%,var(--dj-line))}
 .dj-dot:focus-visible{opacity:1;outline:2px solid var(--dj-accent);outline-offset:2px}
-.dj-dot svg{width:14px;height:14px;border-radius:4px;display:block}
+.dj-dot svg{width:15px;height:15px;border-radius:4px;display:block}
 .dj-dot[data-state="matches"]{opacity:1;border-color:var(--dj-accent);
-  box-shadow:0 0 0 3px color-mix(in srgb,var(--dj-accent) 16%,transparent)}
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--dj-accent) 16%,transparent),var(--dj-shadow-sm)}
 .dj-dot[data-state="broken"]{opacity:1;border-color:var(--dj-warn);
-  box-shadow:0 0 0 3px color-mix(in srgb,var(--dj-warn) 20%,transparent)}
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--dj-warn) 20%,transparent),var(--dj-shadow-sm)}
 .dj-dot[data-state="off"]{opacity:.4;filter:grayscale(1)}
-/* The count sits on the dot's shoulder. Which shoulder depends on where the
-   dot landed: it must lean into the message box, never out over its edge,
-   or on a corner-hugging dot it reads as a stray pixel outside the field. */
-.dj-badge{position:absolute;min-width:14px;height:14px;padding:0 3px;
+.dj-badge{position:absolute;min-width:15px;height:15px;padding:0 4px;
   border-radius:999px;background:var(--dj-accent);color:#fff;font-size:9.5px;font-weight:700;
-  line-height:14px;text-align:center;font-variant-numeric:tabular-nums;
-  box-shadow:0 0 0 1.5px var(--dj-card);pointer-events:none}
+  line-height:15px;text-align:center;font-variant-numeric:tabular-nums;
+  box-shadow:0 0 0 1.5px var(--dj-surface);pointer-events:none}
 .dj-badge[hidden]{display:none}
 .dj-badge-warn{background:var(--dj-warn)}
-.dj-dot[data-corner="bottom-right"] .dj-badge{top:-4px;left:-4px}
-.dj-dot[data-corner="top-right"] .dj-badge{bottom:-4px;left:-4px}
-.dj-dot[data-corner="top-left"] .dj-badge{bottom:-4px;right:-4px}
-.dj-dot[data-corner="outside-right"] .dj-badge{top:-4px;right:-4px}
+.dj-dot[data-corner="bottom-right"] .dj-badge{top:-5px;left:-5px}
+.dj-dot[data-corner="top-right"] .dj-badge{bottom:-5px;left:-5px}
+.dj-dot[data-corner="top-left"] .dj-badge{bottom:-5px;right:-5px}
+.dj-dot[data-corner="outside-right"] .dj-badge{top:-5px;right:-5px}
 
-.dj-panel{position:fixed;width:340px;max-width:calc(100vw - 16px);
-  display:flex;flex-direction:column;overflow:hidden;padding:0}
+.dj-panel{position:fixed;width:372px;max-width:calc(100vw - 16px);
+  display:flex;flex-direction:column;overflow:hidden;padding:0;
+  border-radius:16px}
 .dj-panel[hidden]{display:none}
-.dj-panel-head{display:flex;align-items:center;gap:8px;padding:9px 11px;
-  border-bottom:1px solid var(--dj-line)}
-.dj-panel-title{flex:1;min-width:0;font-size:12px;font-weight:600;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dj-search{width:100%;border:none;border-bottom:1px solid var(--dj-line);
-  background:var(--dj-sunk);padding:9px 12px;font:inherit;font-size:13px;color:var(--dj-text)}
-.dj-search:focus{outline:none;background:var(--dj-surface);border-bottom-color:var(--dj-accent)}
+
+/* Popup-style header: mark + wordmark, quiet close. */
+.dj-panel-head{display:flex;align-items:center;gap:10px;padding:12px 14px;
+  border-bottom:1px solid var(--dj-line);background:var(--dj-bg)}
+.dj-panel-mark{width:22px;height:22px;border-radius:6px;flex:none;display:block}
+.dj-panel-mark svg{width:22px;height:22px;display:block;border-radius:6px}
+.dj-panel-brand{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.dj-wordmark{font-size:15px;font-weight:700;letter-spacing:-0.02em;line-height:1.1;color:var(--dj-text)}
+.dj-wordmark .ja{color:var(--dj-accent-text)}
+.dj-panel-title{font-size:13.5px;font-weight:600;letter-spacing:-0.015em;line-height:1.2;
+  color:var(--dj-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dj-panel-sub{font-size:11px;color:var(--dj-text-faint);line-height:1.2}
+.dj-close{flex:none;width:28px;height:28px;padding:0;border-radius:8px;color:var(--dj-text-faint);
+  display:grid;place-items:center}
+.dj-close svg{width:14px;height:14px;display:block}
+.dj-close:hover{background:var(--dj-sunk);color:var(--dj-text)}
+
+/* Search sits in a padded tools band — rounded well like popup/library. */
+.dj-tools{padding:12px 14px 10px;background:var(--dj-bg);border-bottom:1px solid var(--dj-line)}
+.dj-search-wrap{position:relative}
+.dj-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  width:14px;height:14px;color:var(--dj-text-faint);pointer-events:none;display:block}
+.dj-search-icon svg{width:14px;height:14px;display:block}
+.dj-search{width:100%;border:1px solid var(--dj-line);border-radius:var(--dj-radius-btn);
+  background:var(--dj-sunk);padding:10px 12px 10px 34px;font:inherit;font-size:13.5px;
+  color:var(--dj-text);transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease}
+.dj-search:focus{outline:none;background:var(--dj-surface);border-color:var(--dj-accent);
+  box-shadow:0 0 0 1px var(--dj-accent)}
 .dj-search::placeholder{color:var(--dj-text-faint)}
-.dj-list{max-height:232px}
-.dj-more{width:100%;text-align:left;padding:8px 9px;border-radius:8px;border:none;
-  background:none;cursor:pointer;font:inherit;font-size:12px;font-weight:600;
-  color:var(--dj-accent-text)}
-.dj-more:hover{background:var(--dj-accent-soft)}
-.dj-foot{border-top:1px solid var(--dj-line);padding:6px;display:flex;flex-direction:column;
-  gap:2px;background:var(--dj-sunk)}
+.dj-search::-webkit-search-cancel-button{appearance:none}
+
+.dj-list{max-height:268px;background:var(--dj-bg);padding:10px 10px 8px;gap:8px}
+.dj-more{width:100%;text-align:center;padding:10px 12px;border-radius:var(--dj-radius-btn);
+  border:1px dashed color-mix(in srgb,var(--dj-accent) 28%,var(--dj-line));
+  background:var(--dj-surface);cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;
+  color:var(--dj-accent-text);transition:background-color .15s ease,border-color .15s ease}
+.dj-more:hover{background:var(--dj-accent-soft);border-style:solid}
+
+.dj-foot{border-top:1px solid var(--dj-line);padding:8px 10px;display:flex;gap:6px;
+  background:var(--dj-surface)}
 .dj-foot[hidden]{display:none}
-.dj-foot-btn{display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:none;
-  background:none;cursor:pointer;padding:7px 9px;border-radius:8px;font:inherit;font-size:12px;
-  color:var(--dj-text-soft)}
-.dj-foot-btn:hover{background:var(--dj-card);color:var(--dj-text)}
-.dj-broken{padding:12px;display:flex;flex-direction:column;gap:9px}
-.dj-broken h4{margin:0;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
+.dj-foot-btn{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;
+  text-align:center;border:1px solid var(--dj-line);background:var(--dj-bg);cursor:pointer;
+  padding:7px 8px;border-radius:8px;font:inherit;font-size:11.5px;font-weight:500;
+  color:var(--dj-text-soft);line-height:1.25;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease}
+.dj-foot-btn:hover{background:var(--dj-sunk);color:var(--dj-text);
+  border-color:color-mix(in srgb,var(--dj-accent) 18%,var(--dj-line))}
+.dj-foot-btn .dj-mono{font-size:10.5px}
+
+.dj-broken{padding:16px 16px 18px;display:flex;flex-direction:column;gap:11px;background:var(--dj-bg)}
+.dj-broken h4{margin:0;font-size:14.5px;font-weight:600;letter-spacing:-0.015em;
+  display:flex;align-items:center;gap:8px}
 .dj-broken h4 i{width:8px;height:8px;border-radius:50%;background:var(--dj-warn);flex:none}
-.dj-broken p{margin:0;font-size:12px;line-height:1.5;color:var(--dj-text-soft)}
-.dj-broken-draft{font-size:12px;line-height:1.5;background:var(--dj-sunk);border-radius:8px;
-  padding:8px 10px;color:var(--dj-text-soft);max-height:64px;overflow:hidden}
+.dj-broken p{margin:0;font-size:13px;line-height:1.55;color:var(--dj-text-soft)}
+.dj-broken-draft{font-size:13.5px;line-height:1.5;background:var(--dj-surface);border:1px solid var(--dj-line);
+  border-radius:12px;padding:11px 13px;color:var(--dj-text-soft);max-height:76px;overflow:hidden;
+  box-shadow:var(--dj-shadow-sm)}
 ` + LIBRARY_ROWS_CSS + BLANKS_CSS
 
 interface PresenceOptions {
@@ -200,26 +242,56 @@ export function attachPresence(
 
   const head = document.createElement('div')
   head.className = 'dj-panel-head'
-  const title = document.createElement('span')
-  title.className = 'dj-panel-title'
-  title.textContent = 'Your saved prompts'
-  // A real close button, not just Escape. Most people here are mouse-first and
-  // the panel traps focus while it's open — leaving them only a keyboard exit
-  // would strand exactly the audience Deja is for.
+  const mark = document.createElement('span')
+  mark.className = 'dj-panel-mark'
+  mark.innerHTML = MARK_SVG
+  mark.setAttribute('aria-hidden', 'true')
+  const brand = document.createElement('div')
+  brand.className = 'dj-panel-brand'
   const closeBtn = document.createElement('button')
   closeBtn.type = 'button'
-  closeBtn.className = 'dj-btn dj-x'
-  closeBtn.textContent = '×'
+  closeBtn.className = 'dj-btn dj-close'
+  closeBtn.innerHTML = CLOSE_SVG
   closeBtn.setAttribute('aria-label', 'Close')
-  head.append(title, closeBtn)
+  head.append(mark, brand, closeBtn)
+
+  /** Home = mark + deja wordmark (like the popup). Other modes = plain title. */
+  const paintHead = (mode: 'home' | 'fill' | 'broken') => {
+    brand.replaceChildren()
+    if (mode === 'home') {
+      const word = document.createElement('span')
+      word.className = 'dj-wordmark'
+      word.innerHTML = 'de<span class="ja">ja</span>'
+      const sub = document.createElement('span')
+      sub.className = 'dj-panel-sub'
+      sub.textContent = 'Your saved prompts'
+      brand.append(word, sub)
+      return
+    }
+    const title = document.createElement('span')
+    title.className = 'dj-panel-title'
+    title.textContent = mode === 'fill' ? 'Fill in the blanks' : 'Deja'
+    brand.appendChild(title)
+  }
+  paintHead('home')
 
   const body = document.createElement('div')
 
+  const tools = document.createElement('div')
+  tools.className = 'dj-tools'
+  const searchWrap = document.createElement('div')
+  searchWrap.className = 'dj-search-wrap'
+  const searchIcon = document.createElement('span')
+  searchIcon.className = 'dj-search-icon'
+  searchIcon.innerHTML = SEARCH_SVG
+  searchIcon.setAttribute('aria-hidden', 'true')
   const search = document.createElement('input')
   search.type = 'search'
   search.className = 'dj-search'
-  search.placeholder = 'Search what you’ve saved…'
-  search.setAttribute('aria-label', 'Search what you’ve saved')
+  search.placeholder = 'Find a prompt…'
+  search.setAttribute('aria-label', 'Find a prompt')
+  searchWrap.append(searchIcon, search)
+  tools.appendChild(searchWrap)
 
   const list = document.createElement('ul')
   list.className = 'dj-list'
@@ -236,7 +308,7 @@ export function attachPresence(
   pauseBtn.className = 'dj-foot-btn'
 
   foot.append(offBtn, pauseBtn)
-  body.append(search, list, foot)
+  body.append(tools, list, foot)
 
   // Alternate views the panel can show instead of the list.
   const fillView = document.createElement('div')
@@ -318,20 +390,15 @@ export function attachPresence(
       dot.setAttribute('aria-label', 'Deja — your saved prompts')
     }
 
-    // Footer copy follows the current state: offering "pause" to someone who is
-    // already paused would be nonsense.
+    // Footer stays short — detail lives in the undo toast after they click.
     const s = saving
     offBtn.replaceChildren()
     if (s === 'site-off') {
-      offBtn.append(document.createTextNode('Start saving here again'))
+      offBtn.textContent = 'Save here again'
     } else {
-      offBtn.append(document.createTextNode('Not here — never save from '))
-      const hostSpan = document.createElement('span')
-      hostSpan.className = 'dj-mono'
-      hostSpan.textContent = location.hostname
-      offBtn.appendChild(hostSpan)
+      offBtn.textContent = 'Never save here'
     }
-    pauseBtn.textContent = s === 'paused' ? 'Resume saving now' : 'Pause saving for an hour'
+    pauseBtn.textContent = s === 'paused' ? 'Resume now' : 'Pause 1 hour'
 
     position()
   }
@@ -393,12 +460,15 @@ export function attachPresence(
 
   const renderRows = (rows: LibraryRow[], total: number, query: string) => {
     if (!rows.length) {
-      note(query ? 'Nothing here matches that yet.' : 'Nothing saved yet — that’s normal.')
+      note(
+        query
+          ? 'No matches this time — try a different word?'
+          : 'Nothing saved yet — that’s normal. Ask something on this site and it’ll land here.',
+      )
       return
     }
     list.replaceChildren()
     for (const row of rows) list.appendChild(renderRow(row, () => choose(row)))
-    // Never silently cap someone's library at six rows with nowhere to go.
     if (total > rows.length) {
       const li = document.createElement('li')
       const more = document.createElement('button')
@@ -461,12 +531,12 @@ export function attachPresence(
   const choose = (row: LibraryRow) => {
     if (hasBlanks(row.text)) {
       showView('fill')
-      title.textContent = 'Fill in the blanks'
+      paintHead('fill')
       const handle = renderBlanks(fillView, {
         text: row.text,
         onDone: (filled) => insert(filled, row.id),
         onCancel: () => {
-          title.textContent = 'Your saved prompts'
+          paintHead('home')
           showView('list')
           search.focus()
         },
@@ -491,11 +561,11 @@ export function attachPresence(
     panelOpen = true
     panel.hidden = false
     if (broken) {
-      title.textContent = 'Deja'
+      paintHead('broken')
       renderBroken()
       showView('broken')
     } else {
-      title.textContent = 'Your saved prompts'
+      paintHead('home')
       showView('list')
       search.value = ''
       renderSkeleton(list)
@@ -514,7 +584,7 @@ export function attachPresence(
     window.clearTimeout(searchTimer)
     window.clearTimeout(skeletonTimer)
     requestToken++
-    title.textContent = 'Your saved prompts'
+    paintHead('home')
     showView('list')
   }
 
@@ -585,7 +655,9 @@ export function attachPresence(
         .then((resp) => {
           if (!resp?.ok || resp.id == null) return
           const id = resp.id
-          showSavedToast(() => void send({ type: 'UNDO_CAPTURE', id }), 'kept by hand')
+          showSavedToast(() => void send({ type: 'UNDO_CAPTURE', id }), {
+            full: 'Kept this one by hand ✓',
+          })
         })
         .catch(() => {
           /* worker asleep — fail silently, never disturb the host page */
@@ -653,14 +725,18 @@ export function attachPresence(
   })
 
   // Escape closes; clicking anywhere outside closes. Both return focus to the
-  // composer so the person is exactly where they were.
+  // composer so the person is exactly where they were. During fill-in, Escape
+  // matches the Back button instead of nuking the whole panel.
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && panelOpen) {
-      // Claim the key. resurface.ts also listens for Escape in the capture
-      // phase; without this, one press closes the panel *and* dismisses the
-      // tooltip, recording a "waved away" signal the person never gave.
       e.preventDefault()
       e.stopPropagation()
+      if (!fillView.hidden) {
+        paintHead('home')
+        showView('list')
+        search.focus()
+        return
+      }
       closePanel()
       returnFocus()
     }
