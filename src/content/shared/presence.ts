@@ -3,7 +3,7 @@ import { isBlocked } from '@/lib/blocklist'
 import { onHealthChange } from '@/lib/health'
 import { isCapturableField, safeCaptureUrl } from '@/lib/sensitive'
 import { type LibraryRow, type LibrarySearchResponse, type Platform } from '@/lib/types'
-import { anchorTo, rectOf, watchAnchor } from './anchor'
+import { anchorTo, pickSpot, rectOf, watchAnchor, type DotCorner, type Spot } from './anchor'
 import { getBlocklist, isBlocklistLoaded } from './blocklist'
 import { captureState, surfacesAllowed } from './captureGate'
 import { readText, replaceComposerText } from './editable'
@@ -34,6 +34,10 @@ import { showActionToast, showSavedToast } from './toast'
 
 const DEBUG = false
 const PANEL_LIMIT = 6
+// Small enough to sit inside a message box without crowding the text, big
+// enough to be a comfortable click target.
+const DOT_SIZE = 24
+const DOT_GAP = 8
 // Show placeholder rows only if the worker is actually slow to answer. A cold
 // MV3 worker takes a moment; a warm one answers in ~20ms, and flashing
 // skeletons for that long reads as a bug rather than as loading.
@@ -72,24 +76,32 @@ const MARK_SVG = `<svg viewBox="0 0 32 32" fill="none" aria-hidden="true" focusa
 <rect x="15" y="17" width="2.4" height="3.6" rx=".6" fill="var(--dj-accent)"/></svg>`
 
 const PRESENCE_CSS = `
-.dj-dot{position:fixed;pointer-events:auto;width:26px;height:26px;border-radius:50%;
+.dj-dot{position:fixed;pointer-events:auto;width:24px;height:24px;border-radius:50%;
   border:1px solid var(--dj-line);background:var(--dj-card);cursor:pointer;padding:0;
   display:grid;place-items:center;opacity:.55;
   transition:opacity .2s ease,box-shadow .2s ease,border-color .2s ease}
 .dj-dot[hidden]{display:none}
 .dj-dot:hover{opacity:1}
 .dj-dot:focus-visible{opacity:1;outline:2px solid var(--dj-accent);outline-offset:2px}
-.dj-dot svg{width:15px;height:15px;border-radius:4px;display:block}
+.dj-dot svg{width:14px;height:14px;border-radius:4px;display:block}
 .dj-dot[data-state="matches"]{opacity:1;border-color:var(--dj-accent);
   box-shadow:0 0 0 3px color-mix(in srgb,var(--dj-accent) 16%,transparent)}
 .dj-dot[data-state="broken"]{opacity:1;border-color:var(--dj-warn);
   box-shadow:0 0 0 3px color-mix(in srgb,var(--dj-warn) 20%,transparent)}
 .dj-dot[data-state="off"]{opacity:.4;filter:grayscale(1)}
-.dj-badge{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 4px;
-  border-radius:999px;background:var(--dj-accent);color:#fff;font-size:10px;font-weight:700;
-  line-height:16px;text-align:center;font-variant-numeric:tabular-nums}
+/* The count sits on the dot's shoulder. Which shoulder depends on where the
+   dot landed: it must lean into the message box, never out over its edge,
+   or on a corner-hugging dot it reads as a stray pixel outside the field. */
+.dj-badge{position:absolute;min-width:14px;height:14px;padding:0 3px;
+  border-radius:999px;background:var(--dj-accent);color:#fff;font-size:9.5px;font-weight:700;
+  line-height:14px;text-align:center;font-variant-numeric:tabular-nums;
+  box-shadow:0 0 0 1.5px var(--dj-card);pointer-events:none}
 .dj-badge[hidden]{display:none}
 .dj-badge-warn{background:var(--dj-warn)}
+.dj-dot[data-corner="bottom-right"] .dj-badge{top:-4px;left:-4px}
+.dj-dot[data-corner="top-right"] .dj-badge{bottom:-4px;left:-4px}
+.dj-dot[data-corner="top-left"] .dj-badge{bottom:-4px;right:-4px}
+.dj-dot[data-corner="outside-right"] .dj-badge{top:-4px;right:-4px}
 
 .dj-panel{position:fixed;width:340px;max-width:calc(100vw - 16px);
   display:flex;flex-direction:column;overflow:hidden;padding:0}
@@ -125,6 +137,16 @@ const PRESENCE_CSS = `
 interface PresenceOptions {
   /** Called when a prompt is inserted, so the caller can hide its own UI. */
   onInsert?: () => void
+  /**
+   * Pin the dot to a particular corner of the message box on this site.
+   *
+   * Placement is automatic by default and usually right. This exists for the
+   * case where a site's own layout makes the automatic answer look wrong, and
+   * it lives next to that site's selectors for the same reason they do: when a
+   * site redesigns, everything that needs re-tuning is in one file. A pin is
+   * still collision-checked, so it can never park the dot on a send button.
+   */
+  dotCorner?: DotCorner
 }
 
 /**
@@ -254,9 +276,6 @@ export function attachPresence(
   let painted = ''
 
   const paint = () => {
-    // Single-page apps sometimes replace large parts of the document; put our
-    // layer back if that took it with them. No-op when still attached.
-    layer.reattach()
     if (!allowedHere()) {
       dot.hidden = true
       painted = ''
@@ -317,17 +336,54 @@ export function attachPresence(
     position()
   }
 
+  // Is the host page already using this square for something of its own?
+  //
+  // elementFromPoint gives us the topmost element the *user* would hit there.
+  // Our own layer is pointer-events:none, so we never find ourselves. Anything
+  // clickable belonging to the site — its send button, an attach control, a
+  // model picker — means "not here". Sampling the centre plus the corners
+  // catches a control we'd only partly overlap.
+  const isOccupied = (spot: Spot): boolean => {
+    const pts: Array<[number, number]> = [
+      [spot.left + DOT_SIZE / 2, spot.top + DOT_SIZE / 2],
+      [spot.left + 2, spot.top + 2],
+      [spot.left + DOT_SIZE - 2, spot.top + 2],
+      [spot.left + 2, spot.top + DOT_SIZE - 2],
+      [spot.left + DOT_SIZE - 2, spot.top + DOT_SIZE - 2],
+    ]
+    for (const [x, y] of pts) {
+      if (x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight) return true
+      let el: Element | null = null
+      try {
+        el = document.elementFromPoint(x, y)
+      } catch {
+        return false // can't tell — don't refuse the spot on that basis
+      }
+      if (!el) continue
+      if (el.closest('button, a[href], [role="button"], input, select, [contenteditable="false"]')) {
+        return true
+      }
+    }
+    return false
+  }
+
   const position = () => {
+    // Host-page SPA navigations detach injected nodes; put ours back first.
+    layer.reattach()
     const rect = rectOf(getInput())
     if (!rect) {
       dot.hidden = true
       if (panelOpen) closePanel()
       return
     }
-    // Outside the composer's right edge first. Every supported site puts its own
-    // send button inside the bottom-right of the box; overlapping it would be
-    // the fastest possible way to make someone uninstall.
-    anchorTo(dot, rect, 'right-outside', 8)
+    // Inside the box, hugging whichever corner the site isn't already using.
+    // Inside is what makes it read as part of the message box rather than as
+    // something floating near it.
+    const spot = pickSpot(rect, DOT_SIZE, DOT_GAP, isOccupied, options.dotCorner)
+    dot.style.position = 'fixed'
+    dot.style.left = `${Math.round(spot.left)}px`
+    dot.style.top = `${Math.round(spot.top)}px`
+    dot.dataset.corner = spot.corner
     if (panelOpen) anchorTo(panel, rect, 'above', 9)
   }
 

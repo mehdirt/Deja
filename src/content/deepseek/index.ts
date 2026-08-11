@@ -32,6 +32,9 @@ const { ready: gateReady } = startCaptureGate('deepseek')
 void Promise.all([blocklistReady, gateReady]).then(() => attachSubmitHook(getInput, 'deepseek'))
 // The dot and the tooltip share one debounced similarity query: resurface
 // runs it, presence just reads the count off the response.
+// Placement is automatic (it avoids whatever control this site already has
+// in the corner). If it ever looks wrong here, pin it with
+// `{ dotCorner: 'top-right' }` — that's tuned per site, like the selectors.
 const presence = attachPresence(getInput, 'deepseek')
 // The picker attaches later (it waits for the blocklist), so the tooltip asks
 // through this holder rather than holding a reference that isn't there yet.

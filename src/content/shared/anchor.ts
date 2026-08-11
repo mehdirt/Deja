@@ -112,6 +112,73 @@ export function watchAnchor(getRect: () => DOMRect | null, onMove: () => void): 
   }
 }
 
+// ── Where the ambient dot sits ───────────────────────────────────────────────
+//
+// The dot should look like it belongs to the message box, which means sitting
+// *inside* it, hugging a corner — the way every in-field affordance people
+// already know does. An earlier version placed it outside the right edge to
+// dodge each site's send button, and the result looked homeless: the selectors
+// resolve to the editable itself, so "outside its right edge" is the wrapper's
+// chrome, and every site leaves a different amount of it.
+//
+// Inside is right, but the corner can't be fixed: some sites overlay their own
+// controls on the editable, and all five redesign regularly. So we try corners
+// in order and take the first one that isn't sitting on something the site
+// owns. That survives a redesign without anyone editing a constant.
+
+export type DotCorner = 'bottom-right' | 'top-right' | 'top-left' | 'outside-right'
+
+/** Corner order. Bottom-right first: it's the least-used part of a text box. */
+const CORNERS: DotCorner[] = ['bottom-right', 'top-right', 'top-left', 'outside-right']
+
+export interface Spot {
+  left: number
+  top: number
+  corner: DotCorner
+}
+
+/** The top-left pixel for the dot in a given corner of `rect`. */
+export function spotFor(rect: DOMRect, size: number, gap: number, corner: DotCorner): Spot {
+  switch (corner) {
+    case 'top-right':
+      return { left: rect.right - size - gap, top: rect.top + gap, corner }
+    case 'top-left':
+      return { left: rect.left + gap, top: rect.top + gap, corner }
+    case 'outside-right':
+      return { left: rect.right + gap, top: rect.top + rect.height / 2 - size / 2, corner }
+    case 'bottom-right':
+    default:
+      return { left: rect.right - size - gap, top: rect.bottom - size - gap, corner }
+  }
+}
+
+/**
+ * Pick the first corner whose square is free.
+ *
+ * `isOccupied` answers "is the host page already using this pixel for something
+ * interactive?" — kept as a parameter so the geometry is pure and testable
+ * without a DOM. `preferred` lets a site pin a corner outright when the
+ * automatic answer is wrong there; it is tried first and still has to pass the
+ * same check, so a pin can't put the dot on top of a send button.
+ *
+ * Falls back to the last candidate rather than returning nothing: a dot in a
+ * slightly awkward place beats a dot that vanishes.
+ */
+export function pickSpot(
+  rect: DOMRect,
+  size: number,
+  gap: number,
+  isOccupied: (spot: Spot) => boolean,
+  preferred?: DotCorner,
+): Spot {
+  const order = preferred ? [preferred, ...CORNERS.filter((c) => c !== preferred)] : CORNERS
+  for (const corner of order) {
+    const spot = spotFor(rect, size, gap, corner)
+    if (!isOccupied(spot)) return spot
+  }
+  return spotFor(rect, size, gap, order[order.length - 1])
+}
+
 /** The anchor's box, or null when it's gone / collapsed to nothing. */
 export function rectOf(el: HTMLElement | null): DOMRect | null {
   if (!el) return null
