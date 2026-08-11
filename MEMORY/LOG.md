@@ -4,6 +4,20 @@ Append-only log of decisions and context from nontrivial work sessions. Read bef
 
 ## 2026-08-11
 
+**Second UI pass — overlays now speak Library / landing.** First polish fixed voice/flow; owner said visuals still felt foreign. Reference: Library `PromptCard` + landing flow-steps / tooltip mock.
+
+`overlayTheme` rewritten: raised `--dj-surface` cards (not paper), 14px radius, landing `shadow-pop`, btn 11px, CTA shadow on primary, shared `.dj-chip` / `.dj-meta`. Rows became mini cards (sunk platform chip, accent border hover, paper list well). Dot → rounded square mark tile. Panel/picker heads mix paper+surface like popup chrome. Resurface tooltip matches landing tooltip spacing. Welcome steps use `.dj-card` + landing `flow-you` gradient on the demo step, `You/Deja/Together` labels. Demo tooltip mirrors landing mock (lead + preview).
+
+**UI/UX polish pass on Phases A–H in-page + welcome surfaces.** Owner reported the new mechanisms worked but felt out of sync with the notebook identity. Critique against `DESIGN.md`, then one refinement pass (not a redesign).
+
+Shared: overlay enter motion matches `dj-enter` curve; row type ~13px; drop `used N×` from in-page rows (grades reuse); `blankLabel` Title Cases plain tokens; blanks labels sans (mono only on preview tokens); toast pip renamed (was colliding with ambient `.dj-dot`); checkmark unified to `✓`; hand-save toast one sentence (`Kept this one by hand ✓`).
+
+Panel/picker: same 360 width; Deja mark in panel head; quieter footer; picker title matches panel (not command-palette chrome); key chips `Enter`/`Esc`; hide keys + Esc→Back during fill. Resurface: calm 3-phrase leads, no “Because you mentioned…”, hover only on main action, warmer “See all in your library →”.
+
+Welcome: intent chips → `.dj-pill` / `.dj-pill-active`; demo plays once (no loop), marks `welcomeDemoSeen` after finish not on mount; demo lead matches live resurface; steps are wells not nested `.dj-card`; tip copy uses “hidden” not “swapped for placeholders”.
+
+Screenshots/video for Phase H still need a human.
+
 **Reviewed M1–M7 (`ce-code-review`, 10 reviewers) and cleared the findings.** 19 findings; 17 applied across three commits, the rest were judgement calls the owner then asked me to take.
 
 The one that matters most: **switching the overlays to `mode:'closed'` silently broke both new surfaces.** `composedPath()` stops at the shadow host for a closed root, so `path.includes(panel)` / `path.includes(card)` from a document listener are *always* false — the panel closed itself the instant `openPanel()` focused its own search box, and every click on a picker row closed the picker before the click landed. Both were one-liners (`layer.host`). **happy-dom does not implement this retargeting** — I wrote a throwaway test that proves it returns the inner node where Chrome returns the host — so no test in this stack could have caught it; the reviewer that confirmed it did so by driving real headless Chrome over CDP. Treat happy-dom as unreliable for anything shadow-DOM-boundary-shaped.
