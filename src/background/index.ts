@@ -12,7 +12,7 @@ import { findSimilar } from '@/lib/similarity'
 import { classifyPrompt } from '@/lib/classify'
 import { trimLibraryToCap } from '@/lib/libraryCap'
 import { mergePiiVault, readPiiVault } from '@/lib/piiVault'
-import { loadNerModel, redactPiiFull } from '@/background/nerBridge'
+import { redactPii } from '@/lib/pii'
 import { getIndex, getPool, invalidatePool } from '@/background/pool'
 import { searchPrompts } from '@/lib/search'
 import { suggestionRank, usefulnessScore } from '@/lib/ranking'
@@ -47,9 +47,8 @@ async function redactForStorage(
 ): Promise<{ text: string; redacted: number }> {
   if (!prefs.redactPii) return { text, redacted: 0 }
   const vault = prefs.rememberHiddenDetails ? await readPiiVault() : {}
-  const redaction = await redactPiiFull(text, prefs.piiKinds, {
+  const redaction = redactPii(text, prefs.piiKinds, {
     existingVault: vault,
-    nerNamesPlaces: prefs.nerNamesPlaces,
   })
   // The vault is what lets Fill-in offer the original back later. Never
   // written into the prompt row, and never into a backup.
@@ -215,12 +214,9 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         // in-progress text matches the placeholders in the pool (and never even
         // gets scored raw).
         const queryText = prefs.redactPii
-          ? (
-              await redactPiiFull(message.text, prefs.piiKinds, {
-                existingVault: prefs.rememberHiddenDetails ? await readPiiVault() : {},
-                nerNamesPlaces: prefs.nerNamesPlaces,
-              })
-            ).text
+          ? redactPii(message.text, prefs.piiKinds, {
+              existingVault: prefs.rememberHiddenDetails ? await readPiiVault() : {},
+            }).text
           : message.text
         const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase()
         const queryNorm = norm(queryText)
@@ -426,11 +422,6 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
     return true
   }
 
-  if (message?.type === 'NER_LOAD') {
-    void loadNerModel({ force: message.force === true }).then((result) => sendResponse(result))
-    return true
-  }
-
   if (message?.type === 'REDACT_PREVIEW') {
     void (async () => {
       try {
@@ -449,9 +440,8 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           ...(prefs.rememberHiddenDetails ? await readPiiVault() : {}),
           ...(message.existingVault ?? {}),
         }
-        const r = await redactPiiFull(message.text, prefs.piiKinds, {
+        const r = redactPii(message.text, prefs.piiKinds, {
           existingVault: vault,
-          nerNamesPlaces: prefs.nerNamesPlaces,
         })
         sendResponse({
           ok: true,

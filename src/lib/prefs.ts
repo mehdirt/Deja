@@ -16,7 +16,6 @@ import {
   PLATFORM_LABEL,
   PII_KINDS,
   PII_NER_KINDS,
-  PII_STRUCTURED_KINDS,
   type FilterStrength,
   type Platform,
   type PiiKind,
@@ -59,10 +58,6 @@ export interface Prefs {
   // When true, remember the original values behind [email_1] etc. in a private
   // local vault (never in backups) so Fill-in can offer them again. On by default.
   rememberHiddenDetails: boolean
-  // Opt-in on-device NER for names / street-like places. Off by default; turning
-  // it on downloads a small model once (see nerStatus / offscreen). Prompt text
-  // never leaves the device.
-  nerNamesPlaces: boolean
   // Soft size cap on live prompts. 0 = no limit; default 5000. When over,
   // least-used (then oldest) are removed; favorites are never touched.
   // See libraryCap.ts.
@@ -94,10 +89,12 @@ function allSitesEnabled(): Record<Platform, boolean> {
   return Object.fromEntries(ALL_PLATFORMS.map((p) => [p, true])) as Record<Platform, boolean>
 }
 
-/** Structured kinds on; NER kinds off until the user opts in. */
+/** Structured kinds on; deferred NER kinds stay off. */
 function defaultPiiKinds(): Record<PiiKind, boolean> {
-  const out = Object.fromEntries(PII_KINDS.map((k) => [k, false])) as Record<PiiKind, boolean>
-  for (const k of PII_STRUCTURED_KINDS) out[k] = true
+  const out = Object.fromEntries(
+    [...PII_KINDS, ...PII_NER_KINDS].map((k) => [k, false]),
+  ) as Record<PiiKind, boolean>
+  for (const k of PII_KINDS) out[k] = true
   return out
 }
 
@@ -111,7 +108,6 @@ export const DEFAULT_PREFS: Prefs = {
   redactPii: true,
   piiKinds: defaultPiiKinds(),
   rememberHiddenDetails: true,
-  nerNamesPlaces: false,
   libraryCap: LIBRARY_CAP_DEFAULT,
   inPageDot: true,
   slashPicker: true,
@@ -148,10 +144,8 @@ function coercePiiKinds(raw: unknown): Record<PiiKind, boolean> {
     if (obj[k] === false) out[k] = false
     if (obj[k] === true) out[k] = true
   }
-  // Legacy installs had no person/place keys — keep NER kinds off unless set.
-  for (const k of PII_NER_KINDS) {
-    if (obj[k] !== true) out[k] = false
-  }
+  // NER postponed — never enable person/place/city from storage.
+  for (const k of PII_NER_KINDS) out[k] = false
   return out
 }
 
@@ -187,7 +181,6 @@ function coerce(raw: unknown): Prefs {
     redactPii: obj.redactPii !== false,
     piiKinds: coercePiiKinds(obj.piiKinds),
     rememberHiddenDetails: obj.rememberHiddenDetails !== false,
-    nerNamesPlaces: obj.nerNamesPlaces === true,
     libraryCap: coerceLibraryCap(obj.libraryCap),
     // On-by-default booleans use `!== false` so an install predating the key
     // gets the new behaviour, and only an explicit opt-out turns it off.

@@ -8,5 +8,5 @@ dist
 coverage
 deja-*.zip
 .tmp/
-# Copied from node_modules on prebuild/predev (see scripts/copy-onnx.mjs).
-public/onnx/
+screenshots/
+public/fonts/

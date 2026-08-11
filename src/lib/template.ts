@@ -15,9 +15,9 @@
 //
 // Pure and dependency-free; the UI layer owns all the state.
 
-import { PII_KINDS, type PiiKind } from './types'
+import { PII_KINDS, PII_NER_KINDS, type PiiKind } from './types'
 
-const PII_KIND_SET = new Set<string>(PII_KINDS)
+const PII_KIND_SET = new Set<string>([...PII_KINDS, ...PII_NER_KINDS])
 
 // {topic} or {{topic}}: letters, numbers, spaces, dashes and underscores only,
 // kept short. This is tight on purpose — JSON, code snippets and CSS all live

@@ -14,8 +14,7 @@
 // Detection is high-precision regex + checksums (Presidio-style recognizers),
 // tuned to UNDER-detect rather than mangle good prompts. Same raw value in one
 // prompt (or already in the optional local vault) reuses the same numbered
-// placeholder. Optional on-device NER (see nerPii.ts) adds names / street-like
-// places after the structured pass — never replaces checksums.
+// placeholder. On-device NER for names / streets is postponed — see ROADMAP.
 // Pure + unit-tested; runs in the background worker at capture time.
 
 import type { PiiKind } from './types'
@@ -188,7 +187,7 @@ function collectHits(text: string, enabled: Record<PiiKind, boolean>): Hit[] {
   const hits: Hit[] = []
 
   // Order: greedier / more specific first so a card isn't half-eaten as a phone.
-  // person/place have no regex — optional NER adds those hits separately.
+  // person/place/city have no regex — on-device NER postponed.
   if (enabled.secret) pushRegexHits(text, claimed, hits, 'secret', SECRET_RES)
   if (enabled.email) pushRegexHits(text, claimed, hits, 'email', [EMAIL_RE])
   if (enabled.card) {
@@ -206,7 +205,7 @@ function collectHits(text: string, enabled: Record<PiiKind, boolean>): Hit[] {
   return hits
 }
 
-/** Merge extra hits (e.g. NER) that don't overlap existing structured hits. */
+/** Merge extra hits that don't overlap existing structured hits. */
 export function mergeHits(base: Hit[], extra: Hit[]): Hit[] {
   if (extra.length === 0) return base
   const claimed = new Array<boolean>(
@@ -228,7 +227,7 @@ export function mergeHits(base: Hit[], extra: Hit[]): Hit[] {
   return out
 }
 
-/** Apply an already-collected hit list to `input` (structured and/or NER). */
+/** Apply an already-collected hit list to `input`. */
 export function redactFromHits(
   input: string,
   hits: Hit[],
@@ -254,7 +253,7 @@ export function redactFromHits(
   return { text: out, counts, total, mappings }
 }
 
-/** Structured regex hits only (for combining with NER). */
+/** Structured regex hits only. */
 export function collectStructuredHits(
   text: string,
   enabled: Record<PiiKind, boolean> = ALL_ON,
@@ -319,8 +318,8 @@ export interface RedactOptions {
 }
 
 /**
- * Redact enabled structured PII from `input`. Does not run NER — use
- * `redactPiiFull` in the background for names/places.
+ * Redact enabled structured PII from `input`. Names / street addresses are not
+ * covered here (on-device NER postponed).
  */
 export function redactPii(
   input: string,

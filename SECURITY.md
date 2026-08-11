@@ -109,12 +109,9 @@ and known API-key/token shapes — is replaced with numbered labels (`[email_1]`
 `[card_1]`, `[secret_1]`, …) **before** the row is written. On by default;
 per-category toggles in settings. An optional private vault (separate storage
 key, never in backups) can remember originals for Fill-in only. Names and
-street-like addresses are covered only when the user opts into the on-device NER
-helper (download on demand; Transformers.js in an offscreen document; high
-confidence; PERSON + street-like LOC only). The same redaction runs on the
-resurface query so matches stay consistent.
-→ `src/lib/pii.ts` + `src/lib/piiVault.ts` + `src/lib/nerPii.ts` +
-`src/background/nerBridge.ts`, applied first in the background
+street-like addresses are not covered yet (on-device NER postponed). The same
+redaction runs on the resurface query so matches stay consistent.
+→ `src/lib/pii.ts` + `src/lib/piiVault.ts`, applied first in the background
 `PROMPT_CAPTURED` handler.
 
 ---

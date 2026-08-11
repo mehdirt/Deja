@@ -147,7 +147,7 @@ The content hot path reads all of this through a synchronous, fail-open cache (`
 
 **PII redaction — built.** Detected personal info is stripped from a prompt *before* it's stored, so the local library and any shared JSON export never accumulate raw emails/cards/secrets (`src/lib/pii.ts`).
 - **Redaction, not hashing/encryption** — hashing low-entropy PII is brute-forceable and unusable; encryption breaks search and adds key management for little gain (IndexedDB is origin-isolated). Redaction is deterministic, local, and turns prompts into safe *reusable templates* (`[email_1]`, `[card_1]`, `[secret_1]`).
-- **High-precision regex + checksums** — email, Luhn-checked cards, structurally valid SSN, mod-97 IBAN, IPv4/6, phone, and known secret/token shapes (OpenAI/Anthropic/Stripe/AWS/GitHub/GitLab/npm/Shopify/Slack/Google/JWT/PEM). Tuned to under-detect rather than mangle. Same value → same number; optional private vault remembers originals for Fill-in only (never in backups). Optional on-device NER (opt-in download) covers names + street-like places only.
+- **High-precision regex + checksums** — email, Luhn-checked cards, structurally valid SSN, mod-97 IBAN, IPv4/6, phone, and known secret/token shapes (OpenAI/Anthropic/Stripe/AWS/GitHub/GitLab/npm/Shopify/Slack/Google/JWT/PEM). Tuned to under-detect rather than mangle. Same value → same number; optional private vault remembers originals for Fill-in only (never in backups). Names / street addresses via on-device NER are postponed.
 - **On by default**, per-category toggles, remember-for-fill-in toggle, a live test box, and a "scan library & redact" action to retro-clean prompts captured before it was on. Redaction runs first in the background capture handler and on the resurface query so both sides match. Surfaced honestly ("remembered · N redacted").
 
 **Capture deduplication — built (v0.4.1).** Exact matches and near-duplicates (≥75% similar) collapse into one row with usage bumped, so edit-resubmits and retries no longer flood the library past the 2 s debounce window.
@@ -222,14 +222,15 @@ Likely feature candidates, in rough order of value:
 1. **Optional LLM features** (bring-your-own-key)
    - "Improve this prompt" button on a card (on-demand, not automatic)
    - Auto-tag suggestion (one-tap accept, never silent)
-2. **Semantic resurface via local embeddings** — the real fix for the one thing trigram similarity can't do: catch paraphrases ("write a poem about cats" ↔ "compose verse about felines"). Run a small quantized embedding model fully on-device (e.g. transformers.js / ONNX-WASM), embed each prompt once at capture, cosine-match at query time. This is a genuine architectural decision, not a tweak: ~20–30 MB model bundle, a first-load init cost, and the "is the extension allowed to get that heavy" tradeoff. The clean design is a **hybrid** — keep the instant lexical path as-is and fall back to embeddings only when lexical finds nothing — so we keep today's speed and gain paraphrase recall, all still local ($0, no network).
+2. **On-device NER for names / street addresses** — postponed. Was briefly shipped as an opt-in Transformers.js download; removed from the tree until the download/UX cost is worth revisiting. Structured regex PII stays.
+3. **Semantic resurface via local embeddings** — the real fix for the one thing trigram similarity can't do: catch paraphrases ("write a poem about cats" ↔ "compose verse about felines"). Run a small quantized embedding model fully on-device (e.g. transformers.js / ONNX-WASM), embed each prompt once at capture, cosine-match at query time. This is a genuine architectural decision, not a tweak: ~20–30 MB model bundle, a first-load init cost, and the "is the extension allowed to get that heavy" tradeoff. The clean design is a **hybrid** — keep the instant lexical path as-is and fall back to embeddings only when lexical finds nothing — so we keep today's speed and gain paraphrase recall, all still local ($0, no network).
 
    Phase 6 shipped the cheap half of this instead: spelling/plural folding and everyday synonym expansion in `search.ts`, which costs bytes rather than megabytes and handles the vocabulary drift that shows up in ordinary use. That buys time to find out whether real libraries are actually losing good matches to paraphrase — the only thing that justifies a 20–30 MB model. **Decide with usage, not appetite.** Note the audience change cuts both ways here: everyday users phrase the same request more loosely than engineers do, so the case for embeddings may turn out stronger than it looked in June.
-3. **Activity heatmap** — pure visualization on existing data, low risk
-4. **Prompt chaining** — link prompts into named sequences for repeatable workflows
-5. **Encrypted cloud sync** — E2EE only; never plaintext on a server
-6. **Team / shared vaults** — likely a paid tier; only after individual product is great
-7. **Mobile companion** — read-only browse + copy on the go
+4. **Activity heatmap** — pure visualization on existing data, low risk
+5. **Prompt chaining** — link prompts into named sequences for repeatable workflows
+6. **Encrypted cloud sync** — E2EE only; never plaintext on a server
+7. **Team / shared vaults** — likely a paid tier; only after individual product is great
+8. **Mobile companion** — read-only browse + copy on the go
 
 Explicitly **not** on the roadmap unless someone shows a clear reason:
 

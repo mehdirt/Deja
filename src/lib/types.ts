@@ -10,9 +10,12 @@ export type PiiKind =
   | 'ssn'
   | 'phone'
   | 'ip'
+  // Legacy placeholders from the postponed on-device NER helper. Still recognised
+  // in Fill-in for prompts already saved with [person_N] / [place_N] / [city_N].
   | 'person'
   | 'place'
   | 'city'
+/** Kinds the regex redactor can hide (Settings toggles). */
 export const PII_KINDS: PiiKind[] = [
   'secret',
   'email',
@@ -21,21 +24,10 @@ export const PII_KINDS: PiiKind[] = [
   'ssn',
   'phone',
   'ip',
-  'person',
-  'place',
-  'city',
 ]
-/** Structured (regex) kinds — always available. */
-export const PII_STRUCTURED_KINDS: PiiKind[] = [
-  'secret',
-  'email',
-  'card',
-  'iban',
-  'ssn',
-  'phone',
-  'ip',
-]
-/** Fuzzy kinds filled only by the optional on-device NER model. */
+/** @deprecated Alias — structured-only; NER postponed. */
+export const PII_STRUCTURED_KINDS: PiiKind[] = PII_KINDS
+/** Deferred NER kinds — kept off in prefs; Fill-in still labels legacy tokens. */
 export const PII_NER_KINDS: PiiKind[] = ['person', 'place', 'city']
 
 // How aggressively selective capture skips storing "minor" (throwaway) prompts:
@@ -94,20 +86,7 @@ export type OpenLibraryMessage = {
   query: string
 }
 
-/** Settings → background: download / load the optional NER helper. */
-export type NerLoadMessage = {
-  type: 'NER_LOAD'
-  /** Clear a hung prior load and start fresh. */
-  force?: boolean
-}
-
-/** Offscreen → Settings: live download fraction (0–1). */
-export type NerDownloadProgressMessage = {
-  type: 'NER_DOWNLOAD_PROGRESS'
-  progress: number
-}
-
-/** Settings → background: preview redaction (structured + NER when ready). */
+/** Settings → background: preview redaction with current prefs. */
 export type RedactPreviewMessage = {
   type: 'REDACT_PREVIEW'
   text: string
@@ -179,7 +158,6 @@ export type RuntimeMessage =
   | UndoCaptureMessage
   | SimilarQueryMessage
   | OpenLibraryMessage
-  | NerLoadMessage
   | RedactPreviewMessage
   | LibrarySearchMessage
   | SaveManualMessage

@@ -96,7 +96,7 @@ describe('redactPii', () => {
     expect(r.counts.email).toBe(0)
   })
 
-  it('mergeHits adds non-overlapping NER spans', () => {
+  it('mergeHits adds non-overlapping extra spans', () => {
     const base = [{ start: 0, end: 7, kind: 'email' as const, value: 'a@b.com' }]
     const extra = [{ start: 12, end: 17, kind: 'person' as const, value: 'Sarah' }]
     const merged = mergeHits(base, extra)

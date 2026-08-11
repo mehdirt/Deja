@@ -17,7 +17,6 @@ import {
   readPrefs,
   writePrefs,
   onPrefsChange,
-  type Intent,
   type ResurfaceClick,
   type Prefs,
 } from '@/lib/prefs'
@@ -29,25 +28,13 @@ import {
 import { readHealth, onHealthChange, type CaptureHealth } from '@/lib/health'
 import { PII_LABEL } from '@/lib/pii'
 import { clearPiiVault, mergePiiVault, readPiiVault } from '@/lib/piiVault'
-import { NER_SIZE_HINT } from '@/lib/nerPii'
-import {
-  DEFAULT_NER_STATUS,
-  mergeNerStatusUi,
-  onNerStatusChange,
-  readNerStatus,
-  writeNerStatus,
-  type NerStatus,
-} from '@/lib/nerStatus'
 import { buildMarkdown } from '@/lib/markdown'
 import { restoreBackupFromText } from '@/lib/restoreBackup'
 import { feedbackHref } from '@/lib/feedback'
-import { BugIcon, ChevronIcon, IdeaIcon, CheckCircleIcon, CrossCircleIcon } from '@/ui/ActionIcons'
-import { IntentChips } from '@/ui/IntentChips'
+import { BugIcon, ChevronIcon, IdeaIcon, CheckCircleIcon } from '@/ui/ActionIcons'
 import {
   PLATFORM_LABEL,
   PII_KINDS,
-  PII_NER_KINDS,
-  PII_STRUCTURED_KINDS,
   type Platform,
   type FilterStrength,
   type PiiKind,
@@ -176,170 +163,6 @@ function Switch({
   )
 }
 
-/** Progress ring — fills with real download progress. */
-function NerProgressRing({ progress }: { progress: number }) {
-  const size = 16
-  const stroke = 1.75
-  const r = (size - stroke) / 2
-  const c = 2 * Math.PI * r
-  const clamped = Math.min(1, Math.max(0, progress))
-  // Latch out of the indeterminate spinner once bytes arrive — never flip back
-  // mid-download when a stale 0% status briefly wins a race.
-  const sawBytesRef = useRef(false)
-  if (clamped < 0.005) sawBytesRef.current = false
-  else sawBytesRef.current = true
-  const awaiting = !sawBytesRef.current
-  const fill = awaiting ? 0.22 : clamped
-  const offset = c * (1 - fill)
-  const mid = size / 2
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      className={awaiting ? 'dj-spin' : undefined}
-      aria-hidden="true"
-    >
-      <circle
-        cx={mid}
-        cy={mid}
-        r={r}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={stroke}
-        className="text-line"
-      />
-      {/* Rotate via <g> — CSS transform on SVG circle is unreliable in Chromium. */}
-      <g transform={`rotate(-90 ${mid} ${mid})`}>
-        <circle
-          cx={mid}
-          cy={mid}
-          r={r}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={`${c} ${c}`}
-          strokeDashoffset={offset}
-          className="text-accent"
-        />
-      </g>
-    </svg>
-  )
-}
-
-/** Title-aligned glyph: progress · check · cross. */
-function NerStatusGlyph({ active, status }: { active: boolean; status: NerStatus }) {
-  if (!active) return null
-  if (status.state === 'ready') {
-    return (
-      <span className="inline-flex shrink-0 text-accent" title="Ready" aria-label="Helper ready">
-        <CheckCircleIcon size={16} />
-      </span>
-    )
-  }
-  if (status.state === 'error') {
-    return (
-      <span
-        className="inline-flex shrink-0 text-danger"
-        title="Couldn’t finish"
-        aria-label="Download failed"
-      >
-        <CrossCircleIcon size={16} />
-      </span>
-    )
-  }
-  const pct = Math.round(Math.min(1, Math.max(0, status.progress)) * 100)
-  return (
-    <span
-      className="inline-flex shrink-0 items-center gap-1.5 text-accent"
-      title={pct > 0 ? `Downloading… ${pct}%` : 'Getting ready…'}
-      aria-label={pct > 0 ? `Downloading, ${pct} percent` : 'Getting the helper ready'}
-      role="status"
-    >
-      <NerProgressRing progress={status.progress} />
-      <span className="min-w-[2.25ch] text-[11px] font-medium tabular-nums leading-none tracking-tight">
-        {pct}%
-      </span>
-    </span>
-  )
-}
-
-/** Follow-up under the helper: error retry, or a calm note when the download stalls. */
-function NerStatusFollowUp({
-  active,
-  status,
-  onRetry,
-}: {
-  active: boolean
-  status: NerStatus
-  onRetry: () => void
-}) {
-  const [showDetails, setShowDetails] = useState(false)
-  const [stalled, setStalled] = useState(false)
-  const lastProgressRef = useRef({ progress: status.progress, at: Date.now() })
-
-  useEffect(() => {
-    if (!active || status.state !== 'downloading') {
-      setStalled(false)
-      lastProgressRef.current = { progress: status.progress, at: Date.now() }
-      return
-    }
-    const prev = lastProgressRef.current
-    if (status.progress > prev.progress + 0.005) {
-      lastProgressRef.current = { progress: status.progress, at: Date.now() }
-      setStalled(false)
-    }
-    const id = window.setInterval(() => {
-      if (Date.now() - lastProgressRef.current.at > 25_000) setStalled(true)
-    }, 2_000)
-    return () => window.clearInterval(id)
-  }, [active, status.state, status.progress])
-
-  if (!active) return null
-
-  if (status.state === 'downloading' && stalled) {
-    return (
-      <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1" aria-live="polite">
-        <p className="text-xs text-ink-soft">Still working — large file, may take a few minutes.</p>
-        <button type="button" onClick={onRetry} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-          Start over
-        </button>
-      </div>
-    )
-  }
-
-  if (status.state !== 'error') return null
-
-  return (
-    <div className="mt-2 flex flex-col gap-1.5" aria-live="polite">
-      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-        <p className="text-xs text-danger">
-          {status.error ?? 'Couldn\u2019t finish downloading.'}
-        </p>
-        <button type="button" onClick={onRetry} className="dj-btn dj-btn-ghost px-2 py-1 text-xs">
-          Try again
-        </button>
-        {status.errorDetail ? (
-          <button
-            type="button"
-            onClick={() => setShowDetails((v) => !v)}
-            aria-expanded={showDetails}
-            className="dj-meta underline-offset-2 hover:text-ink hover:underline"
-          >
-            {showDetails ? 'Hide details' : 'What went wrong?'}
-          </button>
-        ) : null}
-      </div>
-      {showDetails && status.errorDetail ? (
-        <p className="rounded-btn bg-sunk px-2.5 py-2 text-[11px] leading-relaxed text-ink-soft">
-          {status.errorDetail}
-        </p>
-      ) : null}
-    </div>
-  )
-}
-
 function Section({
   title,
   description,
@@ -375,7 +198,6 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   const [confirmClear, setConfirmClear] = useState(false)
   const [cleared, setCleared] = useState(false)
   const [resurfaceClick, setResurfaceClick] = useState<ResurfaceClick>('insert')
-  const [intents, setIntents] = useState<string[]>([])
   const [inPageDot, setInPageDot] = useState(true)
   const [slashPicker, setSlashPicker] = useState(true)
   const [learnFromUse, setLearnFromUse] = useState(true)
@@ -392,11 +214,9 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   } | null>(null)
   const [redactPiiOn, setRedactPiiOn] = useState(true)
   const [rememberHidden, setRememberHidden] = useState(true)
-  const [nerNamesPlaces, setNerNamesPlaces] = useState(false)
-  const [nerStatus, setNerStatus] = useState<NerStatus>(DEFAULT_NER_STATUS)
   const [piiKinds, setPiiKinds] = useState<Record<PiiKind, boolean>>(() => {
     const out = Object.fromEntries(PII_KINDS.map((k) => [k, false])) as Record<PiiKind, boolean>
-    for (const k of PII_STRUCTURED_KINDS) out[k] = true
+    for (const k of PII_KINDS) out[k] = true
     return out
   })
   const [piiTest, setPiiTest] = useState('')
@@ -435,7 +255,6 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   useEffect(() => {
     const apply = (p: Prefs) => {
       setResurfaceClick(p.resurfaceClick)
-      setIntents(p.intents)
       setInPageDot(p.inPageDot)
       setSlashPicker(p.slashPicker)
       setLearnFromUse(p.learnFromUse)
@@ -443,7 +262,6 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
       setSites(p.sites)
       setRedactPiiOn(p.redactPii)
       setRememberHidden(p.rememberHiddenDetails)
-      setNerNamesPlaces(p.nerNamesPlaces)
       setPiiKinds(p.piiKinds)
       setLibraryCap(p.libraryCap)
     }
@@ -451,55 +269,12 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
     return onPrefsChange(apply)
   }, [])
 
-  useEffect(() => {
-    void readNerStatus().then((s) => setNerStatus((prev) => mergeNerStatusUi(prev, s)))
-    return onNerStatusChange((s) => setNerStatus((prev) => mergeNerStatusUi(prev, s)))
-  }, [])
-
-  // Live progress from the offscreen downloader (storage is the durable backup).
-  useEffect(() => {
-    const onMsg = (message: { type?: string; progress?: number }) => {
-      if (message?.type !== 'NER_DOWNLOAD_PROGRESS') return
-      if (typeof message.progress !== 'number' || !Number.isFinite(message.progress)) return
-      const progress = Math.min(1, Math.max(0, message.progress))
-      setNerStatus((s) =>
-        mergeNerStatusUi(s, {
-          ...s,
-          state: 'downloading',
-          progress,
-          error: undefined,
-          errorDetail: undefined,
-        }),
-      )
-    }
-    try {
-      chrome.runtime.onMessage.addListener(onMsg)
-    } catch {
-      return () => {}
-    }
-    return () => {
-      try {
-        chrome.runtime.onMessage.removeListener(onMsg)
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [])
-
-  // Poll while downloading — backstop if a progress message is missed.
-  useEffect(() => {
-    if (!nerNamesPlaces || nerStatus.state !== 'downloading') return
-    const id = window.setInterval(() => {
-      void readNerStatus().then((s) => setNerStatus((prev) => mergeNerStatusUi(prev, s)))
-    }, 800)
-    return () => window.clearInterval(id)
-  }, [nerNamesPlaces, nerStatus.state])
 
   useEffect(() => {
     void readPiiVault().then((v) => setVaultCount(Object.keys(v).length))
   }, [cleared, piiScan])
 
-  // Live “Try it out” via background so NER is included when ready.
+  // Live “Try it out” via background with current prefs.
   useEffect(() => {
     const sample = piiTest.trim()
     if (!sample) {
@@ -522,21 +297,11 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
       cancelled = true
       window.clearTimeout(t)
     }
-  }, [piiTest, piiKinds, redactPiiOn, nerNamesPlaces, nerStatus.state])
+  }, [piiTest, piiKinds, redactPiiOn])
 
   const setResurface = async (next: ResurfaceClick) => {
     setResurfaceClick(next)
     await writePrefs({ resurfaceClick: next })
-  }
-
-  const toggleIntent = (intent: Intent) => {
-    setIntents((current) => {
-      const next = current.includes(intent)
-        ? current.filter((i) => i !== intent)
-        : [...current, intent]
-      void writePrefs({ intents: next })
-      return next
-    })
   }
 
   const setDot = async (next: boolean) => {
@@ -591,74 +356,6 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   const forgetRemembered = async () => {
     await clearPiiVault()
     setVaultCount(0)
-  }
-
-  const setNer = async (next: boolean) => {
-    setNerNamesPlaces(next)
-    if (next) {
-      // Names + streets on with the helper; cities stay off until the extra toggle.
-      const kinds = { ...piiKinds, person: true, place: true }
-      setPiiKinds(kinds)
-      // Optimistic busy state so the ring appears the moment the switch flips.
-      // Force a fresh load so a hung prior attempt can't leave the ring at 0%.
-      setNerStatus((s) =>
-        s.state === 'ready'
-          ? s
-          : mergeNerStatusUi(
-              s,
-              {
-                ...s,
-                state: 'downloading',
-                progress: 0,
-                error: undefined,
-                errorDetail: undefined,
-              },
-              { reset: true },
-            ),
-      )
-      await writePrefs({ nerNamesPlaces: true, piiKinds: kinds })
-      void chrome.runtime
-        .sendMessage({ type: 'NER_LOAD', force: true })
-        .catch(() => {})
-    } else {
-      await writePrefs({ nerNamesPlaces: false })
-    }
-    setPiiScan(null)
-  }
-
-  const setNerCities = async (next: boolean) => {
-    const kinds = { ...piiKinds, city: next }
-    setPiiKinds(kinds)
-    await writePrefs({ piiKinds: kinds })
-    setPiiScan(null)
-  }
-
-  const retryNerDownload = () => {
-    setNerStatus((s) =>
-      mergeNerStatusUi(
-        s,
-        {
-          ...s,
-          state: 'downloading',
-          progress: 0,
-          error: undefined,
-          errorDetail: undefined,
-        },
-        { reset: true },
-      ),
-    )
-    void writeNerStatus(
-      {
-        state: 'downloading',
-        progress: 0,
-        error: undefined,
-        errorDetail: undefined,
-      },
-      { resetProgress: true },
-    )
-    void chrome.runtime
-      .sendMessage({ type: 'NER_LOAD', force: true })
-      .catch(() => {})
   }
 
   const togglePiiKind = async (k: PiiKind) => {
@@ -969,8 +666,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
           <>
             Before anything is saved, Deja can swap out personal details — emails, phone numbers,
             card numbers, keys — for placeholders like{' '}
-            <span className="font-mono text-xs">[email_1]</span>. The prompt stays reusable. Names
-            and street addresses need an optional helper you can turn on below.
+            <span className="font-mono text-xs">[email_1]</span>. The prompt stays reusable.
           </>
         }
       >
@@ -1002,45 +698,6 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
                 checked={rememberHidden}
                 onChange={() => setRemember(!rememberHidden)}
                 label="Remember hidden details for fill-in"
-              />
-            </div>
-          )}
-          {redactPiiOn && (
-            <div className="dj-row items-start">
-              <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 items-center gap-2">
-                  <p className="text-sm font-medium text-ink">Also hide names &amp; street addresses</p>
-                  <NerStatusGlyph active={nerNamesPlaces} status={nerStatus} />
-                </div>
-                <p className="dj-meta mt-0.5">
-                  Downloads a small helper ({NER_SIZE_HINT}) that runs only on this computer. Your
-                  prompts never leave the device.
-                </p>
-                <NerStatusFollowUp
-                  active={nerNamesPlaces}
-                  status={nerStatus}
-                  onRetry={retryNerDownload}
-                />
-              </div>
-              <Switch
-                checked={nerNamesPlaces}
-                onChange={() => setNer(!nerNamesPlaces)}
-                label="Also hide names and street addresses"
-              />
-            </div>
-          )}
-          {redactPiiOn && nerNamesPlaces && (
-            <div className="dj-row">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-ink">Also hide cities &amp; countries</p>
-                <p className="dj-meta mt-0.5">
-                  Uses the same helper. Try it on trip plans — if it hides too much, turn it off.
-                </p>
-              </div>
-              <Switch
-                checked={piiKinds.city === true}
-                onChange={() => setNerCities(!piiKinds.city)}
-                label="Also hide cities and countries"
               />
             </div>
           )}
@@ -1081,20 +738,6 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
           The document is easy to read; the backup is the one to keep if you ever want to bring your
           prompts back.
         </p>
-
-        {/* Only meaningful while the library is empty, which is exactly when
-            someone is least likely to go looking for it — so it lives here,
-            quietly, rather than in the drawer. */}
-        <div className="mt-1 flex flex-col gap-2 border-t border-line pt-4">
-          <div className="flex flex-col gap-0.5">
-            <p className="text-sm font-medium text-ink">Which examples to show</p>
-            <p className="dj-meta">
-              While your library is empty, Deja shows a few example prompts to borrow. Pick the
-              kinds you&apos;d find useful — or leave them all on.
-            </p>
-          </div>
-          <IntentChips selected={intents} onToggle={toggleIntent} />
-        </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-3 border-t border-line pt-4">
           <button
@@ -1144,7 +787,7 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
             {redactPiiOn ? (
               <>
                 <div className="flex flex-wrap gap-2">
-                  {(nerNamesPlaces ? PII_KINDS : PII_STRUCTURED_KINDS).map((k) => (
+                  {PII_KINDS.map((k) => (
                     <button
                       key={k}
                       onClick={() => togglePiiKind(k)}
@@ -1156,14 +799,6 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
                     </button>
                   ))}
                 </div>
-                {nerNamesPlaces && nerStatus.state !== 'ready' && (
-                  <p className="dj-meta">
-                    Names and street addresses turn on after the helper finishes downloading.
-                    {PII_NER_KINDS.every((k) => !piiKinds[k])
-                      ? ''
-                      : ' Structured details (email, phone, …) still hide as usual.'}
-                  </p>
-                )}
 
                 <div className="flex flex-col gap-2">
                   <label className="text-xs text-ink-soft" htmlFor="pii-test">

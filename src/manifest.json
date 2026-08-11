@@ -11,17 +11,7 @@
     "service_worker": "src/background/index.ts",
     "type": "module"
   },
-  "permissions": ["storage", "alarms", "offscreen"],
-  "host_permissions": [
-    "https://huggingface.co/*",
-    "https://*.huggingface.co/*",
-    "https://*.hf.co/*",
-    "https://*.aws.cdn.hf.co/*",
-    "https://*.xethub.hf.co/*"
-  ],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
-  },
+  "permissions": ["storage", "alarms"],
   "content_scripts": [
     {
       "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"],
@@ -53,5 +43,18 @@
     "16": "src/assets/icon-16.png",
     "48": "src/assets/icon-48.png",
     "128": "src/assets/icon-128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["fonts/*.woff2"],
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://chat.deepseek.com/*",
+        "https://grok.com/*"
+      ]
+    }
+  ]
 }
