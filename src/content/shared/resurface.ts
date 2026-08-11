@@ -206,9 +206,17 @@ function createTooltip(onDismiss: () => void): Tooltip {
     shadow.appendChild(card)
   }
 
+  const lockWidth = (multi: boolean) => {
+    if (!card) return
+    // Multi-match: lock shell width so › stays put while previews change length.
+    // Single: content-size — no next control to miss.
+    card.style.width = multi ? 'min(440px, calc(100vw - 16px))' : ''
+  }
+
   const render = (view: CandidateView) => {
     if (previewEl) previewEl.textContent = view.preview
     const multi = view.total > 1
+    lockWidth(multi)
     if (countEl) {
       countEl.textContent = multi ? `${view.index + 1}/${view.total}` : ''
       countEl.style.display = multi ? '' : 'none'
@@ -245,9 +253,13 @@ function createTooltip(onDismiss: () => void): Tooltip {
       if (leadEl) leadEl.textContent = message
       if (previewEl) previewEl.style.display = 'none'
       if (ctlEl) ctlEl.style.display = 'none'
+      if (card) card.style.width = ''
     },
     hide() {
-      if (card) card.hidden = true
+      if (card) {
+        card.hidden = true
+        card.style.width = ''
+      }
       visible = false
     },
     reposition(anchor) {
