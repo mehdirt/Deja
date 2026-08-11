@@ -9,28 +9,32 @@ import { blankLabel, fillTemplate, findPlaceholders } from '@/lib/template'
 // management in one place (the surface that owns the dialog) and means the
 // blanks step inherits the same palette and closed root as its host.
 //
-// The reuse pattern for everyday users is "same shape, different details", so
-// this is the step that turns a saved prompt into a reusable one. It is skipped
-// entirely for prompts with no blanks — never show someone an empty form.
+// Visual language mirrors Library TemplateFill: sunk preview, bordered inputs
+// with btn radius, primary + ghost actions.
 
 export const BLANKS_CSS = `
-.dj-fill{padding:11px 12px;display:flex;flex-direction:column;gap:9px}
-.dj-fill-lead{margin:0;font-size:12px;color:var(--dj-text-soft)}
-.dj-fill-preview{font-size:12.5px;line-height:1.5;background:var(--dj-sunk);
-  border-radius:8px;padding:8px 10px;color:var(--dj-text-soft);
-  max-height:78px;overflow:hidden}
-.dj-fill-preview b{font-family:var(--dj-mono);font-weight:500;font-size:.92em;color:var(--dj-accent-text)}
-.dj-fill-field{display:flex;flex-direction:column;gap:3px}
-.dj-fill-field label{font-family:var(--dj-mono);font-size:11px;color:var(--dj-text-faint)}
-.dj-input{border:1px solid var(--dj-line);border-radius:8px;padding:7px 9px;
-  font:inherit;font-size:12.5px;background:var(--dj-bg);color:var(--dj-text);width:100%}
-.dj-input:focus{outline:none;border-color:var(--dj-accent)}
+.dj-fill{padding:14px;display:flex;flex-direction:column;gap:11px;background:var(--dj-bg)}
+.dj-fill-lead{margin:0;font-size:12.5px;line-height:1.45;color:var(--dj-text-soft)}
+.dj-fill-preview{font-size:13.5px;line-height:1.55;background:var(--dj-surface);
+  border:1px solid var(--dj-line);border-radius:var(--dj-radius-row);padding:10px 12px;
+  color:var(--dj-text-soft);max-height:84px;overflow:hidden;box-shadow:var(--dj-shadow-sm)}
+.dj-fill-preview b{font-family:var(--dj-mono);font-weight:500;font-size:.92em;color:var(--dj-accent-text);
+  background:var(--dj-accent-soft);border-radius:4px;padding:0 3px}
+.dj-fill-field{display:flex;flex-direction:column;gap:4px}
+.dj-fill-field label{font-size:11px;font-weight:500;color:var(--dj-text-faint)}
+.dj-input{border:1px solid var(--dj-line);border-radius:var(--dj-radius-btn);padding:8px 11px;
+  font:inherit;font-size:13.5px;background:var(--dj-surface);color:var(--dj-text);width:100%;
+  transition:border-color .15s ease,box-shadow .15s ease}
+.dj-input:focus{outline:none;border-color:var(--dj-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--dj-accent) 18%,transparent)}
 .dj-input:focus-visible{outline:2px solid var(--dj-accent);outline-offset:1px}
-.dj-fill-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:2px}
-.dj-mini{border:1px solid var(--dj-line);background:var(--dj-surface);border-radius:8px;
-  padding:5px 11px;font:inherit;font-size:12px;font-weight:500;cursor:pointer;color:var(--dj-text)}
+.dj-fill-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.dj-mini{border:1px solid var(--dj-line);background:var(--dj-surface);border-radius:var(--dj-radius-btn);
+  padding:7px 13px;font:inherit;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--dj-text);
+  transition:background-color .15s ease,border-color .15s ease,transform .12s ease,box-shadow .15s ease}
 .dj-mini:hover{background:var(--dj-sunk)}
-.dj-mini-primary{background:var(--dj-accent);border-color:var(--dj-accent);color:#fff;font-weight:600}
+.dj-mini:active{transform:scale(.98)}
+.dj-mini-primary{background:var(--dj-accent);border-color:transparent;color:#fff;font-weight:600;
+  box-shadow:var(--dj-shadow-cta)}
 .dj-mini-primary:hover{background:var(--dj-accent-hover)}
 `
 
@@ -69,7 +73,7 @@ export function renderBlanks(container: HTMLElement, opts: BlanksOptions): Blank
 
   const lead = document.createElement('p')
   lead.className = 'dj-fill-lead'
-  lead.textContent = 'Fill these in and Deja puts the finished prompt in the box.'
+  lead.textContent = 'Change only what you need — empty ones stay as they are.'
   wrap.appendChild(lead)
 
   // Preview with the blanks called out, built by splitting on the tokens —

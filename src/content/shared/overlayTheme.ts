@@ -16,24 +16,27 @@
 // cascade into the shadow tree normally — so one media query covers the whole
 // surface and light/dark can never disagree.
 //
-// MIRRORS src/styles/globals.css. When a token changes there, change it here in
-// the same commit. There is no build-time link between the two files; there
-// can't be one, because this string has to be injectable into a page we don't
-// control.
+// MIRRORS src/styles/globals.css *and* the library / landing card language
+// (surface cards, 14–16px radii, soft pop shadow, accent-border hover). When a
+// token changes there, change it here in the same commit. There is no build-time
+// link between the two files; there can't be one, because this string has to be
+// injectable into a page we don't control.
+//
+// Fonts stay the system UI stack on purpose: an overlay on chatgpt.com should
+// sit quietly on that page. Shape, colour, and component language are what make
+// it read as Deja — not a foreign face.
 
 /**
  * The palette, as `:host` custom properties, light + dark.
  *
- * `--dj-card` / `--dj-card-hover` are overlay-specific: an overlay floating on
- * someone else's page reads better on warm paper than on pure white, so light
- * mode uses the page-background token where the extension's own pages would use
- * `surface`. Dark mode uses surface, because the paper metaphor inverts.
+ * Cards use `--dj-surface` (raised white / night surface), matching Library
+ * `.dj-card` and the landing flow-steps — not warm paper. Paper is the page
+ * behind the cards; floating on someone else's site, the raised card is the
+ * right metaphor.
  */
 export const OVERLAY_TOKENS = `
 :host{all:initial}
 :host{
-  --dj-card:#faf8f3;
-  --dj-card-hover:#ebe6db;
   --dj-bg:#faf8f3;
   --dj-surface:#ffffff;
   --dj-sunk:#ebe6db;
@@ -43,22 +46,23 @@ export const OVERLAY_TOKENS = `
   --dj-accent:#5b54f0;
   --dj-accent-soft:#ecebfe;
   --dj-accent-hover:#4a43e0;
-  /* Accent used as *text* on the card. Light mode can use the accent straight;
-     dark mode needs the lighter step to stay readable on a dark card, which is
-     why this is its own token rather than an alias of --dj-accent. */
   --dj-accent-text:#5b54f0;
   --dj-line:#d0caba;
   --dj-danger:#c0392b;
   --dj-ok:#2f9e63;
   --dj-warn:#935f16;
-  --dj-shadow:0 8px 28px rgba(0,0,0,.18);
-  --dj-font:13px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* Match landing --shadow-pop / library overlays, not a harsh drop. */
+  --dj-shadow:0 1px 2px rgba(28,27,25,.04),0 16px 44px rgba(28,27,25,.14);
+  --dj-shadow-sm:0 1px 2px rgba(28,27,25,.04),0 1px 3px rgba(28,27,25,.06);
+  --dj-shadow-cta:0 8px 22px rgba(91,84,240,.22);
+  --dj-radius-card:16px;
+  --dj-radius-btn:11px;
+  --dj-radius-row:12px;
+  --dj-font:13.5px/1.45 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --dj-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){
   :host{
-    --dj-card:#1e1d28;
-    --dj-card-hover:#0c0b12;
     --dj-bg:#12111a;
     --dj-surface:#1e1d28;
     --dj-sunk:#0c0b12;
@@ -73,45 +77,56 @@ export const OVERLAY_TOKENS = `
     --dj-danger:#e06c5d;
     --dj-ok:#56c98a;
     --dj-warn:#cf9550;
-    --dj-shadow:0 8px 28px rgba(0,0,0,.4);
+    --dj-shadow:0 1px 2px rgba(0,0,0,.2),0 16px 44px rgba(0,0,0,.45);
+    --dj-shadow-sm:0 1px 2px rgba(0,0,0,.2),0 1px 3px rgba(0,0,0,.28);
+    --dj-shadow-cta:0 8px 22px rgba(137,131,245,.28);
   }
 }
 `
 
 /**
- * Primitives every overlay composes: the floating card, rows, buttons, the
- * focus ring, and the reduced-motion escape.
+ * Primitives every overlay composes — shaped like Library / landing, denser.
  *
- * Radii are deliberately tighter than DESIGN.md's 16px/11px pair — those are
- * for Deja's own pages, which can breathe. An overlay sitting on top of
- * somebody else's chat UI should read as a small utility, not a second app.
+ * `.dj-card` ≈ library card + landing flow-step (surface, soft shadow, accent
+ * border on hover). `.dj-btn` / `.dj-mini` ≈ `.dj-btn` / primary. `.dj-chip`
+ * matches platform chips on PromptCard.
  */
 export const OVERLAY_BASE = `
 .dj-card{
-  pointer-events:auto;background:var(--dj-card);color:var(--dj-text);
-  border:1px solid var(--dj-line);border-radius:10px;box-shadow:var(--dj-shadow);
-  font:var(--dj-font);text-align:left;box-sizing:border-box;
-  animation:dj-in .14s ease-out;
+  pointer-events:auto;background:var(--dj-surface);color:var(--dj-text);
+  border:1px solid var(--dj-line);border-radius:var(--dj-radius-card);
+  box-shadow:var(--dj-shadow);font:var(--dj-font);text-align:left;box-sizing:border-box;
+  animation:dj-in .2s cubic-bezier(0.16,1,0.3,1);
 }
 .dj-card *,.dj-card *::before,.dj-card *::after{box-sizing:border-box}
 .dj-btn{
-  background:none;border:none;margin:0;cursor:pointer;color:inherit;font:inherit;
-  border-radius:6px;padding:2px 5px;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  background:none;border:1px solid transparent;margin:0;cursor:pointer;color:inherit;
+  font:inherit;border-radius:var(--dj-radius-btn);padding:4px 8px;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease,transform .12s ease;
 }
-.dj-btn:hover{background:var(--dj-card-hover)}
-.dj-btn:focus-visible,.dj-row:focus-visible,.dj-input:focus-visible{
+.dj-btn:hover{background:var(--dj-sunk)}
+.dj-btn:active{transform:scale(.98)}
+.dj-btn:focus-visible,.dj-row:focus-visible,.dj-input:focus-visible,.dj-search:focus-visible{
   outline:2px solid var(--dj-accent);outline-offset:1px;
 }
 .dj-x{
-  flex:none;color:var(--dj-text-faint);font-weight:600;font-size:14px;line-height:1;
-  padding:2px 5px;
+  flex:none;color:var(--dj-text-faint);font-weight:600;font-size:15px;line-height:1;
+  padding:4px 7px;border-radius:8px;
 }
-.dj-x:hover{background:var(--dj-line);color:var(--dj-text)}
+.dj-x:hover{background:var(--dj-sunk);color:var(--dj-text)}
+.dj-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  border-radius:999px;padding:2px 8px;font-size:11px;font-weight:500;
+  background:var(--dj-accent-soft);color:var(--dj-accent-text);
+}
 .dj-mono{font-family:var(--dj-mono);font-size:.92em}
 .dj-nums{font-variant-numeric:tabular-nums}
-@keyframes dj-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.dj-meta{font-size:11px;color:var(--dj-text-faint);font-variant-numeric:tabular-nums}
+@keyframes dj-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){
   .dj-card{animation:none}
+  .dj-btn:active{transform:none}
 }
 `
 
@@ -141,7 +156,7 @@ export interface OverlayHost {
  * null` — that is expected, not a bug.
  *
  * The layer itself is `pointer-events:none` so the host page stays fully
- * clickable; only `.dj-card` opts back in.
+ * clickable; only `.dj-card` (and the ambient dot) opts back in.
  */
 export function createOverlayHost(label: string, extraCss: string): OverlayHost {
   const host = document.createElement('div')

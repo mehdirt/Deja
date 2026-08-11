@@ -15,12 +15,13 @@ const TOAST_CSS = `
 .dj-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
 .dj-toast{pointer-events:auto;display:flex;align-items:center;gap:12px;
   background:#1e1d28;color:#f3f1ea;font:var(--dj-font);
-  padding:10px 12px;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);
-  border:1px solid #3f3c4a;animation:dj-in .14s ease-out}
-.dj-dot{width:7px;height:7px;border-radius:50%;background:#8983f5;flex:none}
-.dj-msg{white-space:nowrap}
+  padding:11px 14px;border-radius:var(--dj-radius-btn);box-shadow:0 16px 44px rgba(0,0,0,.4);
+  border:1px solid #3f3c4a;animation:dj-in .2s cubic-bezier(0.16,1,0.3,1)}
+.dj-pip{width:7px;height:7px;border-radius:50%;background:#8983f5;flex:none}
+.dj-msg{white-space:nowrap;font-size:13.5px;letter-spacing:-0.01em}
 .dj-undo{pointer-events:auto;background:none;border:none;color:#9c97f7;
-  font:600 13px system-ui,-apple-system,'Segoe UI',sans-serif;cursor:pointer;padding:2px 4px;border-radius:6px}
+  font:600 13px system-ui,-apple-system,'Segoe UI',sans-serif;cursor:pointer;
+  padding:4px 8px;border-radius:8px;transition:background-color .15s ease}
 .dj-undo:hover{background:#2a2740}
 .dj-undo:focus-visible{outline:2px solid #8983f5;outline-offset:1px}
 `
@@ -42,7 +43,15 @@ function ensureWrap(): HTMLElement {
   return wrapEl
 }
 
-export function showSavedToast(onUndo: () => void, note?: string): void {
+/**
+ * @param note  Extra clause after "Saved for you ✓" (e.g. redaction count), OR
+ *              `{ full }` for a whole message when the save isn't a normal one
+ *              (hand-save: "Kept this one by hand ✓").
+ */
+export function showSavedToast(
+  onUndo: () => void,
+  note?: string | { full: string },
+): void {
   const wrap = ensureWrap()
   wrap.replaceChildren()
 
@@ -51,13 +60,18 @@ export function showSavedToast(onUndo: () => void, note?: string): void {
   toast.setAttribute('role', 'status')
   toast.setAttribute('aria-live', 'polite')
 
-  const dot = document.createElement('span')
-  dot.className = 'dj-dot'
+  const pip = document.createElement('span')
+  pip.className = 'dj-pip'
 
   const msg = document.createElement('span')
   msg.className = 'dj-msg'
-  // `note` (e.g. "2 details hidden") is appended so redaction is never silent.
-  msg.textContent = note ? `Saved for you ✔ · ${note}` : 'Saved for you ✔'
+  if (typeof note === 'object' && note?.full) {
+    msg.textContent = note.full
+  } else if (typeof note === 'string' && note) {
+    msg.textContent = `Saved for you ✓ · ${note}`
+  } else {
+    msg.textContent = 'Saved for you ✓'
+  }
 
   const undo = document.createElement('button')
   undo.className = 'dj-undo'
@@ -70,7 +84,7 @@ export function showSavedToast(onUndo: () => void, note?: string): void {
     hideTimer = window.setTimeout(dismiss, 1200)
   })
 
-  toast.append(dot, msg, undo)
+  toast.append(pip, msg, undo)
   wrap.appendChild(toast)
 
   window.clearTimeout(hideTimer)
@@ -78,8 +92,8 @@ export function showSavedToast(onUndo: () => void, note?: string): void {
 }
 
 // A toast for an action the user just took in-page (turning saving off here,
-// pausing, keeping a prompt by hand). Same chip, but the message is the whole
-// message — no "Saved for you ✔" prefix, because these aren't saves.
+// pausing). Same chip, but the message is the whole message — no "Saved for
+// you ✓" prefix, because these aren't saves.
 export function showActionToast(message: string, undoLabel: string, onUndo: () => void): void {
   const wrap = ensureWrap()
   wrap.replaceChildren()
@@ -89,8 +103,8 @@ export function showActionToast(message: string, undoLabel: string, onUndo: () =
   toast.setAttribute('role', 'status')
   toast.setAttribute('aria-live', 'polite')
 
-  const dot = document.createElement('span')
-  dot.className = 'dj-dot'
+  const pip = document.createElement('span')
+  pip.className = 'dj-pip'
 
   const msg = document.createElement('span')
   msg.className = 'dj-msg'
@@ -101,13 +115,13 @@ export function showActionToast(message: string, undoLabel: string, onUndo: () =
   undo.textContent = undoLabel
   undo.addEventListener('click', () => {
     onUndo()
-    msg.textContent = 'Done'
+    msg.textContent = 'Okay, undone'
     undo.remove()
     window.clearTimeout(hideTimer)
     hideTimer = window.setTimeout(dismiss, 1200)
   })
 
-  toast.append(dot, msg, undo)
+  toast.append(pip, msg, undo)
   wrap.appendChild(toast)
 
   window.clearTimeout(hideTimer)
@@ -126,14 +140,14 @@ export function showInfoToast(message: string): void {
   toast.setAttribute('role', 'status')
   toast.setAttribute('aria-live', 'polite')
 
-  const dot = document.createElement('span')
-  dot.className = 'dj-dot'
+  const pip = document.createElement('span')
+  pip.className = 'dj-pip'
 
   const msg = document.createElement('span')
   msg.className = 'dj-msg'
   msg.textContent = message
 
-  toast.append(dot, msg)
+  toast.append(pip, msg)
   wrap.appendChild(toast)
 
   window.clearTimeout(hideTimer)

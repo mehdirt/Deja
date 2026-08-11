@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { findPlaceholders, isTemplate, fillTemplate } from './template'
+import { blankLabel, findPlaceholders, isTemplate, fillTemplate } from './template'
 
 describe('findPlaceholders', () => {
   it('finds single- and double-brace blanks', () => {
@@ -112,5 +112,18 @@ describe('fillTemplate', () => {
 
   it('returns the original when there is nothing to fill', () => {
     expect(fillTemplate('plain prompt', { a: 'b' })).toBe('plain prompt')
+  })
+})
+
+describe('blankLabel', () => {
+  it('title-cases everyday template tokens', () => {
+    expect(blankLabel('topic')).toBe('Topic')
+    expect(blankLabel('audience_name')).toBe('Audience Name')
+  })
+
+  it('keeps friendly names for PII placeholders', () => {
+    expect(blankLabel('email')).toBe('Email')
+    expect(blankLabel('email_1')).toBe('Email 1')
+    expect(blankLabel('person')).toBe('Name')
   })
 })

@@ -49,7 +49,13 @@ export function blankLabel(name: string): string {
             : kind.charAt(0).toUpperCase() + kind.slice(1)
     return m[2] ? `${title} ${m[2]}` : title
   }
+  // Plain template tokens (`topic`, `audience_name`) should read as words, not
+  // as code — Title Case the pieces so the fill-in form stays everyday.
   return name
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ')
 }
 
 /** Blank out fenced + inline code (same length) so brace scans skip them. */

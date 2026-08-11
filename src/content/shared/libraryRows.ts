@@ -2,33 +2,39 @@ import { relativeTime } from '@/lib/format'
 import { PLATFORM_COLOR, PLATFORM_LABEL, type LibraryRow } from '@/lib/types'
 
 // One saved prompt, drawn as a row — shared by the dot's panel and the `//`
-// picker, which are otherwise quite different surfaces.
-//
-// They started with a copy each, which was fine at two and would not be at
-// three: Phase H adds more places that list prompts, and three near-identical
-// row renderers is how the platform dot ends up a different size in one of
-// them. The state machines stay separate (a panel with footer controls and an
-// arrow-key-driven inline list are genuinely different things); only the
-// drawing is shared.
+// picker. Shaped like a miniature Library PromptCard: always-visible border,
+// platform chip, readable body, quiet meta.
 
 export const LIBRARY_ROWS_CSS = `
-.dj-list{list-style:none;margin:0;padding:5px;overflow-y:auto}
-.dj-row{width:100%;display:block;text-align:left;border:none;background:none;cursor:pointer;
-  padding:8px 9px;border-radius:8px;color:inherit;font:inherit}
-.dj-row:hover{background:var(--dj-accent-soft)}
-.dj-row[data-active="true"]{background:var(--dj-accent-soft);
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--dj-accent) 35%,transparent)}
-.dj-row-text{font-size:12.5px;line-height:1.45;color:var(--dj-text);
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.dj-row-meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:10.5px;
-  color:var(--dj-text-faint);font-variant-numeric:tabular-nums}
-.dj-plat{display:inline-flex;align-items:center;gap:4px}
-.dj-plat i{width:7px;height:7px;border-radius:50%;display:block;
-  box-shadow:inset 0 0 0 1px var(--dj-line)}
-.dj-note{padding:16px 12px;font-size:12.5px;color:var(--dj-text-faint);text-align:center}
-.dj-skel{padding:8px 9px}
-.dj-skel-bar{height:9px;border-radius:5px;background:var(--dj-sunk);margin-bottom:6px}
-.dj-skel-bar:last-child{width:55%;margin-bottom:0}
+.dj-list{list-style:none;margin:0;padding:6px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.dj-row{width:100%;display:flex;flex-direction:column;gap:8px;text-align:left;
+  border:1px solid var(--dj-line);background:var(--dj-surface);cursor:pointer;
+  padding:12px 13px;border-radius:12px;color:inherit;font:inherit;
+  box-shadow:var(--dj-shadow-sm);
+  transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s cubic-bezier(0.16,1,0.3,1)}
+.dj-row:hover{border-color:color-mix(in srgb,var(--dj-accent) 22%,var(--dj-line));
+  transform:translateY(-1px);
+  box-shadow:0 1px 2px rgba(28,27,25,.04),0 8px 20px rgba(28,27,25,.08)}
+.dj-row[data-active="true"]{background:color-mix(in srgb,var(--dj-accent-soft) 70%,var(--dj-surface));
+  border-color:color-mix(in srgb,var(--dj-accent) 35%,var(--dj-line));transform:none}
+.dj-row-text{font-size:14px;line-height:1.55;color:var(--dj-text);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  letter-spacing:-0.01em}
+.dj-row-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-size:11px;color:var(--dj-text-faint);font-variant-numeric:tabular-nums}
+.dj-plat{display:inline-flex;align-items:center;gap:5px;
+  border-radius:999px;padding:2px 8px;font-size:11px;font-weight:500;
+  background:var(--dj-accent-soft);color:var(--dj-accent-text)}
+.dj-plat i{width:6px;height:6px;border-radius:50%;display:block;flex:none;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--dj-line) 70%,transparent)}
+.dj-note{padding:28px 18px;font-size:13.5px;line-height:1.55;color:var(--dj-text-soft);text-align:center}
+.dj-note strong{display:block;margin-bottom:4px;font-weight:600;color:var(--dj-text)}
+.dj-skel{padding:12px 13px;border-radius:12px;border:1px solid var(--dj-line);background:var(--dj-surface)}
+.dj-skel-bar{height:10px;border-radius:6px;background:var(--dj-sunk);margin-bottom:8px}
+.dj-skel-bar:last-child{width:48%;margin-bottom:0;height:8px}
+@media (prefers-reduced-motion: reduce){
+  .dj-row:hover{transform:none}
+}
 `
 
 /** A clickable row for one saved prompt. */
@@ -47,42 +53,41 @@ export function renderRow(row: LibraryRow, onChoose: () => void): HTMLLIElement 
   const plat = document.createElement('span')
   plat.className = 'dj-plat'
   const swatch = document.createElement('i')
-  swatch.style.background = PLATFORM_COLOR[row.platform]
-  plat.append(swatch, document.createTextNode(PLATFORM_LABEL[row.platform]))
-  meta.append(
-    plat,
-    document.createTextNode('·'),
-    document.createTextNode(relativeTime(row.lastUsedAt)),
-  )
-  if (row.usageCount > 0) {
-    meta.append(document.createTextNode('·'), document.createTextNode(`used ${row.usageCount}×`))
+  const color = PLATFORM_COLOR[row.platform]
+  swatch.style.background = color
+  if (color.toLowerCase() === '#fff' || color.toLowerCase() === '#ffffff') {
+    swatch.style.boxShadow = 'inset 0 0 0 1px var(--dj-line)'
   }
+  plat.append(swatch, document.createTextNode(PLATFORM_LABEL[row.platform]))
+  meta.append(plat, document.createTextNode(relativeTime(row.lastUsedAt)))
 
   btn.append(text, meta)
-  // Keep the caret where it is — we're about to write to that field.
   btn.addEventListener('mousedown', (e) => e.preventDefault())
   btn.addEventListener('click', onChoose)
   li.appendChild(btn)
   return li
 }
 
-/** Replace the list with a single quiet line (empty state, or a failure). */
+/** Replace the list with a quiet empty / error state. */
 export function renderNote(list: HTMLElement, text: string): void {
   list.replaceChildren()
   const li = document.createElement('li')
   const note = document.createElement('div')
   note.className = 'dj-note'
-  note.textContent = text
+  // Two-line empty states read warmer when the first sentence is the lead.
+  const parts = text.split(' — ')
+  if (parts.length === 2) {
+    const strong = document.createElement('strong')
+    strong.textContent = parts[0]
+    note.append(strong, document.createTextNode(parts[1]))
+  } else {
+    note.textContent = text
+  }
   li.appendChild(note)
   list.appendChild(li)
 }
 
-/**
- * Placeholder rows while the worker wakes up.
- *
- * Only worth showing if the wait is real — see the callers' delay before this
- * is called. A skeleton that flashes for 20ms reads as a glitch, not as loading.
- */
+/** Placeholder rows while the worker wakes up. */
 export function renderSkeleton(list: HTMLElement, count = 3): void {
   list.replaceChildren()
   for (let i = 0; i < count; i++) {
