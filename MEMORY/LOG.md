@@ -4,6 +4,30 @@ Append-only log of decisions and context from nontrivial work sessions. Read bef
 
 ## 2026-08-11
 
+**NER PII postponed — removed from tree.** Opt-in “Also hide names & street addresses” (Transformers.js / offscreen / onnx / HF host perms) stripped. Structured regex PII + vault stay. Legacy `[person_N]` / `[place_N]` / `[city_N]` still fill-in via template labels; prefs force those kinds off. Revisit later as a separate opt-in download.
+
+**Resurface tooltip width lock.** Cycling multi-match suggestions resized the shell horizontally (content-sized under `max-width`), so `›` jumped. Lock `width: min(440px, 100vw - 16px)` while `total > 1`; clear on single / hide. Preview still ellipsizes inside.
+
+**Ambient dot — size, badge, short-box placement.** Owner: composer mark too small, badge messy, placement wrong on search boxes. Dot is now the **32px mark tile** itself (no double surface ring); badge always NE shoulder, capped `9+`. Short composers (`height < size + 2×gap + 16`) auto-prefer `outside-right`, bottom-aligned near send. Tall boxes still hug an inside corner via `pickSpot`.
+
+**Ambient dot placement fix.** 32→**28px**. Root cause of “wrong on every site”: `isOccupied` treated ProseMirror `contenteditable="false"` widgets as blockers, so every inside corner failed; short-box `outside-right` preference made it worse. Now: dock to `composerDock` (form/card), 44px end clearance left of send, only real controls block a spot.
+
+**Ambient dot → Grammarly field model.** Form-climbing still misplaced the mark (toolbar / next to Send). Match Grammarly: **field rect only**, bottom-right inset, slide left if occupied, `ResizeObserver` on the field. Dropped `composerDock` / `END_CLEARANCE`.
+
+**Ambient dot accuracy + 26px.** Client box (`clientWidth`/`Height`, border excluded) so mark isn’t half on scrollbar; rAF reposition; size **26**.
+
+**Drop intent chips UI.** Removed welcome “What do you mostly use AI for?” and Settings “Which examples to show”. Empty library always shows full starter list. `prefs.intents` kept for coercion/compat only.
+
+**Dot placement: field-first (DeepSeek was right).** `beside-send` on ChatGPT parked the mark next to Voice *outside* the text cell. All sites now `mode: 'field'`; beside-send only when Send overlaps the editable.
+
+**Dot placement from screenshots.** Field hug put mark at text-row BR (= card top-right on Claude/DeepSeek). Restore **left-of-Send on shell** for all five; end-action heuristic skips upper/left chrome.
+
+**Claude/Gemini/Grok alignment.** Model chips (Sonnet/Flash) were treated as end actions; Grok shell was full-bleed `<form>`. Skip chrome controls; prefer tight pill; end action must hug shell’s right edge.
+
+**Ambient composer mark postponed.** Placement still wrong on Claude/Gemini/Grok after several passes; owner asked to stop for now. `PRESENCE_ENABLED = false` in `presence.ts` — noop handle, no DOM. Code + placement work kept. Capture / resurface / `//` picker unchanged. Re-enable by flipping the flag when placement resumes.
+
+**Still wrong on Claude/Gemini/Grok — live DOM.** Gemini mic label is `Dictate (⌘⇧D)` (not Microphone). Model chip is `Open mode picker, currently Flash-Lite`. Claude mic often not a `<button>` → beside failed → `pickSpot` slid left of Sonnet. Grok real pill is `.query-bar` (~800px); form is full-bleed. Fix: Dictate selectors, non-button aria end-actions, no shell-end slide, tighter max shell + Grok `getShell`.
+
 **Second UI pass — overlays now speak Library / landing.** First polish fixed voice/flow; owner said visuals still felt foreign. Reference: Library `PromptCard` + landing flow-steps / tooltip mock.
 
 `overlayTheme` rewritten: raised `--dj-surface` cards (not paper), 14px radius, landing `shadow-pop`, btn 11px, CTA shadow on primary, shared `.dj-chip` / `.dj-meta`. Rows became mini cards (sunk platform chip, accent border hover, paper list well). Dot → rounded square mark tile. Panel/picker heads mix paper+surface like popup chrome. Resurface tooltip matches landing tooltip spacing. Welcome steps use `.dj-card` + landing `flow-you` gradient on the demo step, `You/Deja/Together` labels. Demo tooltip mirrors landing mock (lead + preview).

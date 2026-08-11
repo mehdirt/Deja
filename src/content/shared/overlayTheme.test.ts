@@ -1,16 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { OVERLAY_TOKENS, createOverlayHost, isRealUserEvent } from './overlayTheme'
-
-// These two are security invariants, not styling details: a closed root is what
-// stops a host page reading the library rows we render, and isTrusted is what
-// stops it driving the surfaces that show them. Both are one keyword each, and
-// a refactor could drop either without any other test noticing.
+import {
+  OVERLAY_TOKENS,
+  OVERLAY_BASE,
+  brandFontFaces,
+  createOverlayHost,
+  isRealUserEvent,
+} from './overlayTheme'
 
 describe('createOverlayHost', () => {
   it('mounts a closed root the host page cannot reach into', () => {
     const layer = createOverlayHost('test', '')
-    // The observable consequence of mode:'closed' — a page script that finds
-    // our element still gets nothing from it.
     expect(layer.host.shadowRoot).toBeNull()
     expect(layer.shadow).toBeTruthy()
     layer.destroy()
@@ -34,14 +33,24 @@ describe('createOverlayHost', () => {
 
   it('defines the palette for both themes', () => {
     expect(OVERLAY_TOKENS).toContain('prefers-color-scheme: dark')
-    // Declared on :host, which is what lets them cascade past all:initial.
     expect(OVERLAY_TOKENS).toContain(':host{all:initial}')
+  })
+
+  it('styles the wordmark with the brand face stack', () => {
+    expect(OVERLAY_BASE).toContain('.dj-wordmark')
+    expect(OVERLAY_TOKENS).toContain("--dj-font-brand:'Literata'")
+  })
+})
+
+describe('brandFontFaces', () => {
+  it('is empty without an extension runtime (tests / orphaned scripts)', () => {
+    // happy-dom has no chrome.runtime.id — Georgia fallback still applies.
+    expect(brandFontFaces()).toBe('')
   })
 })
 
 describe('isRealUserEvent', () => {
   it('rejects an event a page script synthesised', () => {
-    // dispatchEvent() cannot forge isTrusted — this is the whole gate.
     expect(isRealUserEvent(new Event('click'))).toBe(false)
   })
 })

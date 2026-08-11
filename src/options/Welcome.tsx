@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Logo } from '@/ui/Logo'
-import { IntentChips } from '@/ui/IntentChips'
 import { WelcomeDemo } from '@/ui/WelcomeDemo'
-import { readPrefs, writePrefs, type Intent } from '@/lib/prefs'
+import { readPrefs, writePrefs } from '@/lib/prefs'
 
 // Shown once, right after install (the background worker opens the options page
 // with ?welcome=1). Deja is a passive tool: the risk isn't that setup is hard,
@@ -32,7 +31,6 @@ const STEPS: Array<{ title: string; body: string; who: string }> = [
 ]
 
 export function Welcome({ onDone }: { onDone: () => void }) {
-  const [intents, setIntents] = useState<string[]>([])
   const [autoPlayDemo, setAutoPlayDemo] = useState(false)
 
   useEffect(() => {
@@ -40,7 +38,6 @@ export function Welcome({ onDone }: { onDone: () => void }) {
     void readPrefs()
       .then((p) => {
         if (cancelled) return
-        setIntents(p.intents)
         setAutoPlayDemo(!p.welcomeDemoSeen)
       })
       .catch(() => {
@@ -55,21 +52,6 @@ export function Welcome({ onDone }: { onDone: () => void }) {
     setAutoPlayDemo(false)
     void writePrefs({ welcomeDemoSeen: true })
   }, [])
-
-  const toggleIntent = (intent: Intent) => {
-    setIntents((current) => {
-      const next = current.includes(intent)
-        ? current.filter((i) => i !== intent)
-        : [...current, intent]
-      void writePrefs({ intents: next })
-      return next
-    })
-  }
-
-  const skipIntents = () => {
-    setIntents([])
-    void writePrefs({ intents: [] })
-  }
 
   return (
     <div className="dj-enter flex flex-col gap-10 py-4">
@@ -92,16 +74,6 @@ export function Welcome({ onDone }: { onDone: () => void }) {
           </p>
         </div>
       </header>
-
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-base font-semibold text-ink">What do you mostly use AI for?</h2>
-          <p className="text-sm leading-relaxed text-ink-soft">
-            Pick as many as you like — it only changes the examples we show you first.
-          </p>
-        </div>
-        <IntentChips selected={intents} onToggle={toggleIntent} onSkip={skipIntents} />
-      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold tracking-tight text-ink">

@@ -3,7 +3,17 @@ import { isBlocked } from '@/lib/blocklist'
 import { onHealthChange } from '@/lib/health'
 import { isCapturableField, safeCaptureUrl } from '@/lib/sensitive'
 import { type LibraryRow, type LibrarySearchResponse, type Platform } from '@/lib/types'
-import { anchorTo, pickSpot, rectOf, watchAnchor, type DotCorner, type Spot } from './anchor'
+import {
+  anchorTo,
+  fieldBox,
+  pickComposerSpot,
+  rectOf,
+  resolveComposerShell,
+  watchAnchor,
+  type DotCorner,
+  type DotPlacement,
+  type Spot,
+} from './anchor'
 import { getBlocklist, isBlocklistLoaded } from './blocklist'
 import { captureState, surfacesAllowed } from './captureGate'
 import { readText, replaceComposerText } from './editable'
@@ -34,10 +44,8 @@ import { showActionToast, showSavedToast } from './toast'
 
 const DEBUG = false
 const PANEL_LIMIT = 6
-// Small enough to sit inside a message box without crowding the text, big
-// enough to be a comfortable click target.
+// Mark tile *is* the control. 26px matches the earlier polished size.
 const DOT_SIZE = 26
-const DOT_GAP = 8
 // Show placeholder rows only if the worker is actually slow to answer. A cold
 // MV3 worker takes a moment; a warm one answers in ~20ms, and flashing
 // skeletons for that long reads as a bug rather than as loading.
@@ -87,30 +95,27 @@ const CLOSE_SVG = `<svg viewBox="0 0 16 16" fill="none" aria-hidden="true" focus
 // Panel chrome mirrors the popup: brand header, rounded search well, card stack
 // on paper, quiet footer. Same tokens as Library — denser, not different.
 const PRESENCE_CSS = `
-.dj-dot{position:fixed;pointer-events:auto;width:26px;height:26px;border-radius:9px;
-  border:1px solid var(--dj-line);background:var(--dj-surface);cursor:pointer;padding:0;
-  display:grid;place-items:center;opacity:.62;box-shadow:var(--dj-shadow-sm);
-  transition:opacity .2s ease,box-shadow .2s ease,border-color .2s ease,transform .15s cubic-bezier(0.16,1,0.3,1)}
+.dj-dot{position:fixed;pointer-events:auto;width:26px;height:26px;border-radius:8px;
+  border:none;background:transparent;cursor:pointer;padding:0;
+  display:grid;place-items:center;opacity:.78;box-shadow:var(--dj-shadow-sm);
+  transition:opacity .2s ease,box-shadow .2s ease,transform .15s cubic-bezier(0.16,1,0.3,1)}
 .dj-dot[hidden]{display:none}
-.dj-dot:hover{opacity:1;transform:translateY(-1px);
-  border-color:color-mix(in srgb,var(--dj-accent) 28%,var(--dj-line))}
+.dj-dot:hover{opacity:1;transform:translateY(-1px);box-shadow:var(--dj-shadow)}
 .dj-dot:focus-visible{opacity:1;outline:2px solid var(--dj-accent);outline-offset:2px}
-.dj-dot svg{width:15px;height:15px;border-radius:4px;display:block}
-.dj-dot[data-state="matches"]{opacity:1;border-color:var(--dj-accent);
-  box-shadow:0 0 0 3px color-mix(in srgb,var(--dj-accent) 16%,transparent),var(--dj-shadow-sm)}
-.dj-dot[data-state="broken"]{opacity:1;border-color:var(--dj-warn);
-  box-shadow:0 0 0 3px color-mix(in srgb,var(--dj-warn) 20%,transparent),var(--dj-shadow-sm)}
-.dj-dot[data-state="off"]{opacity:.4;filter:grayscale(1)}
-.dj-badge{position:absolute;min-width:15px;height:15px;padding:0 4px;
+.dj-dot svg{width:26px;height:26px;border-radius:8px;display:block}
+.dj-dot[data-state="matches"]{opacity:1;
+  box-shadow:0 0 0 2px var(--dj-bg),0 0 0 3.5px var(--dj-accent),var(--dj-shadow-sm)}
+.dj-dot[data-state="broken"]{opacity:1;
+  box-shadow:0 0 0 2px var(--dj-bg),0 0 0 3.5px var(--dj-warn),var(--dj-shadow-sm)}
+.dj-dot[data-state="off"]{opacity:.42;filter:grayscale(1)}
+/* Always the button's NE shoulder — not corner-dependent flips that looked messy. */
+.dj-badge{position:absolute;top:-3px;right:-3px;z-index:1;
+  min-width:15px;height:15px;padding:0 4px;box-sizing:border-box;
   border-radius:999px;background:var(--dj-accent);color:#fff;font-size:9.5px;font-weight:700;
   line-height:15px;text-align:center;font-variant-numeric:tabular-nums;
-  box-shadow:0 0 0 1.5px var(--dj-surface);pointer-events:none}
+  box-shadow:0 0 0 1.5px var(--dj-bg);pointer-events:none}
 .dj-badge[hidden]{display:none}
 .dj-badge-warn{background:var(--dj-warn)}
-.dj-dot[data-corner="bottom-right"] .dj-badge{top:-5px;left:-5px}
-.dj-dot[data-corner="top-right"] .dj-badge{bottom:-5px;left:-5px}
-.dj-dot[data-corner="top-left"] .dj-badge{bottom:-5px;right:-5px}
-.dj-dot[data-corner="outside-right"] .dj-badge{top:-5px;right:-5px}
 
 .dj-panel{position:fixed;width:372px;max-width:calc(100vw - 16px);
   display:flex;flex-direction:column;overflow:hidden;padding:0;
@@ -123,8 +128,6 @@ const PRESENCE_CSS = `
 .dj-panel-mark{width:22px;height:22px;border-radius:6px;flex:none;display:block}
 .dj-panel-mark svg{width:22px;height:22px;display:block;border-radius:6px}
 .dj-panel-brand{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
-.dj-wordmark{font-size:15px;font-weight:700;letter-spacing:-0.02em;line-height:1.1;color:var(--dj-text)}
-.dj-wordmark .ja{color:var(--dj-accent-text)}
 .dj-panel-title{font-size:13.5px;font-weight:600;letter-spacing:-0.015em;line-height:1.2;
   color:var(--dj-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dj-panel-sub{font-size:11px;color:var(--dj-text-faint);line-height:1.2}
@@ -154,17 +157,15 @@ const PRESENCE_CSS = `
   color:var(--dj-accent-text);transition:background-color .15s ease,border-color .15s ease}
 .dj-more:hover{background:var(--dj-accent-soft);border-style:solid}
 
-.dj-foot{border-top:1px solid var(--dj-line);padding:8px 10px;display:flex;gap:6px;
-  background:var(--dj-surface)}
+/* Quiet secondary actions — not a second toolbar competing with the cards. */
+.dj-foot{border-top:1px solid var(--dj-line);padding:6px 12px 8px;display:flex;align-items:center;
+  justify-content:center;gap:4px;flex-wrap:wrap;background:var(--dj-bg)}
 .dj-foot[hidden]{display:none}
-.dj-foot-btn{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;
-  text-align:center;border:1px solid var(--dj-line);background:var(--dj-bg);cursor:pointer;
-  padding:7px 8px;border-radius:8px;font:inherit;font-size:11.5px;font-weight:500;
-  color:var(--dj-text-soft);line-height:1.25;
-  transition:background-color .15s ease,border-color .15s ease,color .15s ease}
-.dj-foot-btn:hover{background:var(--dj-sunk);color:var(--dj-text);
-  border-color:color-mix(in srgb,var(--dj-accent) 18%,var(--dj-line))}
-.dj-foot-btn .dj-mono{font-size:10.5px}
+.dj-foot-btn{border:none;background:none;cursor:pointer;padding:5px 8px;border-radius:6px;
+  font:inherit;font-size:11.5px;font-weight:500;color:var(--dj-text-faint);line-height:1.3;
+  transition:background-color .15s ease,color .15s ease}
+.dj-foot-btn:hover{background:var(--dj-sunk);color:var(--dj-text-soft)}
+.dj-foot-sep{color:var(--dj-line);font-size:11px;user-select:none;padding:0 2px}
 
 .dj-broken{padding:16px 16px 18px;display:flex;flex-direction:column;gap:11px;background:var(--dj-bg)}
 .dj-broken h4{margin:0;font-size:14.5px;font-weight:600;letter-spacing:-0.015em;
@@ -180,14 +181,11 @@ interface PresenceOptions {
   /** Called when a prompt is inserted, so the caller can hide its own UI. */
   onInsert?: () => void
   /**
-   * Pin the dot to a particular corner of the message box on this site.
-   *
-   * Placement is automatic by default and usually right. This exists for the
-   * case where a site's own layout makes the automatic answer look wrong, and
-   * it lives next to that site's selectors for the same reason they do: when a
-   * site redesigns, everything that needs re-tuning is in one file. A pin is
-   * still collision-checked, so it can never park the dot on a send button.
+   * Per-site placement — composers use different flex/grid shells.
+   * Lives next to that site's selectors for the same reason they do.
    */
+  placement?: DotPlacement
+  /** @deprecated Prefer `placement.corner`. Still honored if placement omitted. */
   dotCorner?: DotCorner
 }
 
@@ -207,11 +205,27 @@ export interface PresenceHandle {
   destroy: () => void
 }
 
+/**
+ * Composer ambient mark + panel. Placement still unfinished across sites
+ * (Claude / Gemini / Grok) — off until that ships. Flip to `true` to reopen.
+ * `//` picker, capture, resurface toast stay on.
+ */
+export const PRESENCE_ENABLED = false
+
+const NOOP_PRESENCE: PresenceHandle = {
+  setMatchCount: () => {},
+  setBroken: () => {},
+  refresh: () => {},
+  destroy: () => {},
+}
+
 export function attachPresence(
   getInput: () => HTMLElement | null,
   platform: Platform,
   options: PresenceOptions = {},
 ): PresenceHandle {
+  if (!PRESENCE_ENABLED) return NOOP_PRESENCE
+
   let prefs: Prefs = { ...DEFAULT_PREFS }
   let matchCount = 0
   let broken = false
@@ -307,7 +321,12 @@ export function attachPresence(
   pauseBtn.type = 'button'
   pauseBtn.className = 'dj-foot-btn'
 
-  foot.append(offBtn, pauseBtn)
+  foot.append(offBtn)
+  const footSep = document.createElement('span')
+  footSep.className = 'dj-foot-sep'
+  footSep.textContent = '·'
+  footSep.setAttribute('aria-hidden', 'true')
+  foot.append(footSep, pauseBtn)
   body.append(tools, list, foot)
 
   // Alternate views the panel can show instead of the list.
@@ -370,7 +389,8 @@ export function attachPresence(
     badge.classList.toggle('dj-badge-warn', state === 'broken')
     if (state === 'matches') {
       badge.hidden = false
-      badge.textContent = String(matchCount)
+      // Cap so a two-digit pile doesn't stretch the pill into a sausage.
+      badge.textContent = matchCount > 9 ? '9+' : String(matchCount)
       dot.setAttribute(
         'aria-label',
         `Deja — ${matchCount} saved ${matchCount === 1 ? 'prompt looks' : 'prompts look'} like this`,
@@ -403,14 +423,17 @@ export function attachPresence(
     position()
   }
 
-  // Is the host page already using this square for something of its own?
+  // Is the host page already using this square for a real control?
   //
-  // elementFromPoint gives us the topmost element the *user* would hit there.
-  // Our own layer is pointer-events:none, so we never find ourselves. Anything
-  // clickable belonging to the site — its send button, an attach control, a
-  // model picker — means "not here". Sampling the centre plus the corners
-  // catches a control we'd only partly overlap.
-  const isOccupied = (spot: Spot): boolean => {
+  // elementFromPoint gives the topmost element the user would hit. Our layer
+  // is pointer-events:none, so we never find ourselves. ProseMirror puts
+  // `contenteditable="false"` on trailing breaks and widgets — those are NOT
+  // controls; treating them as occupied pushed the mark out of every composer.
+  // Only refuse buttons / links / form controls (and only when they aren't
+  // just the typing surface itself).
+  const CONTROL_SEL =
+    'button, a[href], [role="button"], [role="combobox"], input, select, textarea'
+  const isOccupied = (spot: Spot, field: HTMLElement): boolean => {
     const pts: Array<[number, number]> = [
       [spot.left + DOT_SIZE / 2, spot.top + DOT_SIZE / 2],
       [spot.left + 2, spot.top + 2],
@@ -427,9 +450,12 @@ export function attachPresence(
         return false // can't tell — don't refuse the spot on that basis
       }
       if (!el) continue
-      if (el.closest('button, a[href], [role="button"], input, select, [contenteditable="false"]')) {
-        return true
-      }
+      const control = el.closest(CONTROL_SEL)
+      if (!control) continue
+      // A textarea field matches `textarea` in CONTROL_SEL — that's the surface,
+      // not a blocker. Real controls (send, attach, …) still refuse the spot.
+      if (control === field) continue
+      return true
     }
     return false
   }
@@ -437,21 +463,28 @@ export function attachPresence(
   const position = () => {
     // Host-page SPA navigations detach injected nodes; put ours back first.
     layer.reattach()
-    const rect = rectOf(getInput())
-    if (!rect) {
+    const field = getInput()
+    if (!field) {
       dot.hidden = true
       if (panelOpen) closePanel()
       return
     }
-    // Inside the box, hugging whichever corner the site isn't already using.
-    // Inside is what makes it read as part of the message box rather than as
-    // something floating near it.
-    const spot = pickSpot(rect, DOT_SIZE, DOT_GAP, isOccupied, options.dotCorner)
+    const placement: DotPlacement = {
+      ...options.placement,
+      corner: options.placement?.corner ?? options.dotCorner,
+    }
+    // Left of Send/Voice on the composer shell (screenshot-driven).
+    const spot = pickComposerSpot(field, DOT_SIZE, (s) => isOccupied(s, field), placement)
+    const dpr = window.devicePixelRatio || 1
+    const snap = (n: number) => Math.round(n * dpr) / dpr
     dot.style.position = 'fixed'
-    dot.style.left = `${Math.round(spot.left)}px`
-    dot.style.top = `${Math.round(spot.top)}px`
-    dot.dataset.corner = spot.corner
-    if (panelOpen) anchorTo(panel, rect, 'above', 9)
+    dot.style.left = `${snap(spot.left)}px`
+    dot.style.top = `${snap(spot.top)}px`
+    if (panelOpen) {
+      const shell = placement.getShell?.(field) ?? resolveComposerShell(field)
+      const panelRect = fieldBox(shell) ?? rectOf(shell) ?? fieldBox(field) ?? rectOf(field)
+      if (panelRect) anchorTo(panel, panelRect, 'above', 9)
+    }
   }
 
   // ── the list ──────────────────────────────────────────────────────────────
@@ -767,7 +800,19 @@ export function attachPresence(
   document.addEventListener('keydown', onKeyDown, true)
   document.addEventListener('pointerdown', onDocPointerDown, true)
   document.addEventListener('focusin', onFocusIn, true)
-  const unwatch = watchAnchor(() => rectOf(getInput()), position)
+  const unwatch = watchAnchor(
+    () => {
+      const el = getInput()
+      if (!el) return null
+      const shell = options.placement?.getShell?.(el) ?? resolveComposerShell(el)
+      return fieldBox(shell) ?? rectOf(shell) ?? fieldBox(el) ?? rectOf(el)
+    },
+    position,
+    () => {
+      const el = getInput()
+      return el ? options.placement?.getShell?.(el) ?? resolveComposerShell(el) : null
+    },
+  )
 
   const unsubPrefs = onPrefsChange((p) => {
     prefs = p

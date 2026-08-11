@@ -22,9 +22,30 @@
 // link between the two files; there can't be one, because this string has to be
 // injectable into a page we don't control.
 //
-// Fonts stay the system UI stack on purpose: an overlay on chatgpt.com should
-// sit quietly on that page. Shape, colour, and component language are what make
-// it read as Deja — not a foreign face.
+// Fonts stay the system UI stack on purpose for body UI: an overlay on
+// chatgpt.com should sit quietly on that page. The one exception is the
+// lowercase `deja` wordmark — that always uses bundled Literata (loaded via
+// chrome.runtime.getURL into the closed shadow tree).
+
+/**
+ * Literata @font-face rules for the wordmark, pointed at extension URLs.
+ *
+ * Returns empty when the runtime isn't available (unit tests, orphaned
+ * content scripts) — `.dj-wordmark` still falls back to Georgia.
+ */
+export function brandFontFaces(): string {
+  try {
+    if (typeof chrome === 'undefined' || !chrome.runtime?.id) return ''
+    const semi = chrome.runtime.getURL('fonts/literata-semibold.woff2')
+    const bold = chrome.runtime.getURL('fonts/literata-bold.woff2')
+    return `
+@font-face{font-family:'Literata';font-style:normal;font-display:swap;font-weight:600;src:url('${semi}') format('woff2')}
+@font-face{font-family:'Literata';font-style:normal;font-display:swap;font-weight:700;src:url('${bold}') format('woff2')}
+`
+  } catch {
+    return ''
+  }
+}
 
 /**
  * The palette, as `:host` custom properties, light + dark.
@@ -60,6 +81,7 @@ export const OVERLAY_TOKENS = `
   --dj-radius-row:12px;
   --dj-font:13.5px/1.45 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --dj-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --dj-font-brand:'Literata',Georgia,'Times New Roman',serif;
 }
 @media (prefers-color-scheme: dark){
   :host{
@@ -123,6 +145,10 @@ export const OVERLAY_BASE = `
 .dj-mono{font-family:var(--dj-mono);font-size:.92em}
 .dj-nums{font-variant-numeric:tabular-nums}
 .dj-meta{font-size:11px;color:var(--dj-text-faint);font-variant-numeric:tabular-nums}
+/* Lowercase deja wordmark — Literata only, same as Library / landing. */
+.dj-wordmark{font-family:var(--dj-font-brand);font-weight:600;font-size:15px;
+  letter-spacing:-0.02em;line-height:1.1;color:var(--dj-text)}
+.dj-wordmark .ja{color:var(--dj-accent-text)}
 @keyframes dj-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){
   .dj-card{animation:none}
@@ -165,7 +191,7 @@ export function createOverlayHost(label: string, extraCss: string): OverlayHost 
 
   const shadow = host.attachShadow({ mode: 'closed' })
   const style = document.createElement('style')
-  style.textContent = OVERLAY_TOKENS + OVERLAY_BASE + extraCss
+  style.textContent = brandFontFaces() + OVERLAY_TOKENS + OVERLAY_BASE + extraCss
   shadow.appendChild(style)
 
   const reattach = () => {

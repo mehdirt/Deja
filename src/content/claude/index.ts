@@ -27,12 +27,25 @@ const getInput = (): HTMLElement | null => {
 const { ready: blocklistReady } = startBlocklistSync()
 const { ready: gateReady } = startCaptureGate('claude')
 void Promise.all([blocklistReady, gateReady]).then(() => attachSubmitHook(getInput, 'claude'))
-// The dot and the tooltip share one debounced similarity query: resurface
-// runs it, presence just reads the count off the response.
-// Placement is automatic (it avoids whatever control this site already has
-// in the corner). If it ever looks wrong here, pin it with
-// `{ dotCorner: 'top-right' }` — that's tuned per site, like the selectors.
-const presence = attachPresence(getInput, 'claude')
+// Claude: left of mic/waveform — never the Sonnet model chip.
+const presence = attachPresence(getInput, 'claude', {
+  placement: {
+    mode: 'beside-send',
+    gap: 6,
+    offset: { x: 2 },
+    sendSelectors: [
+      'button[aria-label*="Send" i]',
+      'button[aria-label*="Voice" i]',
+      'button[aria-label*="Dictate" i]',
+      'button[aria-label*="Open voice" i]',
+      'button[aria-label*="Microphone" i]',
+      '[aria-label*="Dictate" i]',
+      '[aria-label*="Voice" i]',
+      '[aria-label*="Open voice" i]',
+      'button[type="submit"]',
+    ],
+  },
+})
 // The picker attaches later (it waits for the blocklist), so the tooltip asks
 // through this holder rather than holding a reference that isn't there yet.
 let picker: PickerHandle | null = null

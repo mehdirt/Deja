@@ -41,21 +41,33 @@ function log(...args: unknown[]) {
   if (DEBUG) console.log('[Deja:picker]', ...args)
 }
 
+const MARK_SVG = `<svg viewBox="0 0 32 32" fill="none" aria-hidden="true" focusable="false">
+<rect width="32" height="32" rx="8" fill="var(--dj-accent)"/>
+<rect x="7" y="7" width="13" height="13" rx="3.5" fill="#fff" opacity=".4"/>
+<rect x="12" y="12" width="13" height="13" rx="3.5" fill="#fff" opacity=".95"/>
+<rect x="15" y="17" width="2.4" height="3.6" rx=".6" fill="var(--dj-accent)"/></svg>`
+
+// Shares the panel's card / row language, but the chrome stays lighter: this is
+// a keyboard gesture mid-typing, not a deliberate "open Deja" moment. Brand
+// mark alone + query title + key chips — no wordmark stack, no foot chrome.
 const PICKER_CSS = `
-.dj-picker{position:fixed;width:360px;max-width:calc(100vw - 16px);
-  display:flex;flex-direction:column;overflow:hidden;padding:0}
+.dj-picker{position:fixed;width:372px;max-width:calc(100vw - 16px);
+  display:flex;flex-direction:column;overflow:hidden;padding:0;border-radius:16px}
 .dj-picker[hidden]{display:none}
-.dj-picker-head{display:flex;align-items:center;gap:9px;padding:11px 12px;
-  border-bottom:1px solid var(--dj-line);
-  background:color-mix(in srgb,var(--dj-bg) 70%,var(--dj-surface))}
+
+.dj-picker-head{display:flex;align-items:center;gap:10px;padding:11px 14px;
+  border-bottom:1px solid var(--dj-line);background:var(--dj-bg)}
+.dj-picker-mark{width:18px;height:18px;border-radius:5px;flex:none;display:block}
+.dj-picker-mark svg{width:18px;height:18px;display:block;border-radius:5px}
 .dj-picker-title{flex:1;min-width:0;font-size:13.5px;font-weight:600;letter-spacing:-0.015em;
-  color:var(--dj-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dj-picker-q{color:var(--dj-accent-text)}
+  color:var(--dj-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25}
+.dj-picker-title .q{color:var(--dj-accent-text)}
 .dj-keys{display:flex;gap:5px;flex:none}
 .dj-keys[hidden]{display:none}
-.dj-key{font-family:var(--dj-mono);font-size:10px;border:1px solid var(--dj-line);
-  border-radius:6px;padding:2px 6px;color:var(--dj-text-faint);background:var(--dj-sunk)}
-.dj-list{max-height:252px;background:var(--dj-bg)}
+.dj-key{font-family:var(--dj-mono);font-size:10px;font-weight:500;border:1px solid var(--dj-line);
+  border-radius:5px;padding:2px 6px;color:var(--dj-text-soft);background:var(--dj-surface)}
+
+.dj-list{max-height:268px;background:var(--dj-bg);padding:10px 10px 8px;gap:8px}
 ` + LIBRARY_ROWS_CSS + BLANKS_CSS
 
 /** Where the `//` token sits in the text before the caret, and what follows it. */
@@ -196,6 +208,10 @@ export function attachPicker(
 
   const head = document.createElement('div')
   head.className = 'dj-picker-head'
+  const markEl = document.createElement('span')
+  markEl.className = 'dj-picker-mark'
+  markEl.innerHTML = MARK_SVG
+  markEl.setAttribute('aria-hidden', 'true')
   const title = document.createElement('span')
   title.className = 'dj-picker-title'
   const keys = document.createElement('span')
@@ -206,7 +222,7 @@ export function attachPicker(
     kbd.textContent = k
     keys.appendChild(kbd)
   }
-  head.append(title, keys)
+  head.append(markEl, title, keys)
 
   const list = document.createElement('ul')
   list.className = 'dj-list'
@@ -239,19 +255,24 @@ export function attachPicker(
   const setTitle = () => {
     title.replaceChildren()
     if (query) {
-      title.appendChild(document.createTextNode('Matching “'))
+      title.append(document.createTextNode('Matching “'))
       const q = document.createElement('span')
-      q.className = 'dj-picker-q'
+      q.className = 'q'
       q.textContent = query
       title.append(q, document.createTextNode('”'))
     } else {
-      title.appendChild(document.createTextNode('Your saved prompts'))
+      title.textContent = 'Your saved prompts'
     }
   }
 
   const renderRows = () => {
     if (!rows.length) {
-      renderNote(list, query ? 'Nothing here matches that yet.' : 'Nothing saved yet — that’s normal.')
+      renderNote(
+        list,
+        query
+          ? 'No matches this time — try a different word?'
+          : 'Nothing saved yet — that’s normal. Ask something on this site and it’ll land here.',
+      )
       return
     }
     list.replaceChildren()

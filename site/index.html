@@ -493,7 +493,9 @@
       }
       .wordmark .ja { color: var(--accent); }
 
-      /* How it works — a quiet memory flow (you ask; Deja remembers) */
+      /* How it works — three quiet beats, then a full-width “reach for it”
+         path. Four equal cards in a 3-col grid left an orphan; the fourth is
+         an alternate gesture, so it gets the whole row. */
       .flow {
         list-style: none; margin: 40px 0 0; padding: 0;
         display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
@@ -524,6 +526,28 @@
         border-color: color-mix(in srgb, var(--accent) 22%, var(--line));
         box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 8%, transparent);
       }
+      /* Step 4 — alternate path: same sequence, whole width, horizontal. */
+      .flow-step.flow-reach {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        align-items: center;
+        gap: 18px 22px;
+        padding: 20px 24px;
+        background:
+          linear-gradient(90deg, color-mix(in srgb, var(--accent-soft) 55%, var(--surface)), var(--surface) 55%);
+        border-color: color-mix(in srgb, var(--accent) 18%, var(--line));
+      }
+      .flow-reach .flow-reach-body {
+        flex: 1; min-width: 0;
+        display: flex; flex-direction: column; gap: 4px;
+      }
+      .flow-reach .flow-who { margin: 0; }
+      .flow-reach h3 { margin: 0; font-size: 17px; }
+      .flow-reach p { margin: 0; max-width: 42rem; }
+      .flow-reach .flow-echo {
+        margin: 0; padding: 0; border: none;
+        flex: none; white-space: nowrap;
+      }
       .flow-mark {
         width: 34px; height: 34px; border-radius: 50%;
         display: inline-flex; align-items: center; justify-content: center;
@@ -531,15 +555,18 @@
         background: var(--sunk); color: var(--ink-soft);
         border: 1px solid var(--line);
         box-shadow: 0 0 0 6px var(--bg);
+        flex: none;
       }
-      .flow-you .flow-mark {
+      .flow-you .flow-mark,
+      .flow-reach .flow-mark {
         background: var(--accent); color: #fff; border-color: transparent;
       }
       .flow-who {
         margin: 0 0 6px; font-size: 12px; font-weight: 600;
         letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint);
       }
-      .flow-you .flow-who { color: var(--accent); }
+      .flow-you .flow-who,
+      .flow-reach .flow-who { color: var(--accent); }
       .flow-step h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.02em; line-height: 1.25; }
       /* Mono is reserved for things that literally are keys or code — here, the
          two slashes someone actually types. */
@@ -553,6 +580,13 @@
         color: var(--ink-faint); font-size: 12.5px;
       }
       .flow-echo svg { flex: none; opacity: 0.7; }
+      .flow-key {
+        display: inline-flex; align-items: center; gap: 2px;
+        font-family: var(--mono); font-size: 0.95em; font-weight: 600;
+        color: var(--accent); letter-spacing: 0.02em; vertical-align: baseline;
+        background: var(--surface); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+        border-radius: 6px; padding: 1px 7px;
+      }
 
       /* Quiet extras — not a second card grid */
       .also {
@@ -937,6 +971,13 @@
       @media (max-width: 720px) {
         .flow { grid-template-columns: 1fr; gap: 14px; }
         .flow::before { display: none; }
+        .flow-step.flow-reach {
+          flex-direction: column; align-items: flex-start;
+          padding: 20px 20px 22px;
+          background:
+            linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 55%, var(--surface)), var(--surface) 72%);
+        }
+        .flow-reach .flow-echo { white-space: normal; }
         .also-grid { grid-template-columns: 1fr; gap: 18px; }
         .also-item { padding: 0; border-left: none; padding-top: 16px; border-top: 1px solid var(--line); }
         .also-item:first-child { padding-top: 0; border-top: none; }
@@ -1055,7 +1096,7 @@
             <span class="eyebrow">How it works</span>
             <h2 id="how-title">Ask once. <span class="wordmark">de<span class="ja">ja</span></span> remembers.</h2>
             <p class="section-lead">
-              Three quiet moments — you only do the first.
+              Three quiet moments — then a shortcut when you want it on purpose.
             </p>
           </div>
 
@@ -1096,12 +1137,15 @@
                 Déjà vu, on purpose
               </div>
             </li>
-            <li class="flow-step">
+            <li class="flow-step flow-reach">
               <span class="flow-mark" aria-hidden="true">4</span>
-              <div>
-                <p class="flow-who">You</p>
-                <h3>Or just reach for it</h3>
-                <p>Type <code>//</code> in the chat box to search everything you&rsquo;ve saved, without leaving the page.</p>
+              <div class="flow-reach-body">
+                <p class="flow-who">Or you</p>
+                <h3>Reach for it anytime</h3>
+                <p>
+                  Type <span class="flow-key">//</span> in the chat box to search everything
+                  you&rsquo;ve saved — without leaving the page.
+                </p>
               </div>
               <div class="flow-echo" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4 10 20"/><path d="M19 4 15 20"/><path d="M4 9h16M3 15h16"/></svg>

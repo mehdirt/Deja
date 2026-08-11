@@ -28,12 +28,19 @@ const getInput = (): HTMLElement | null => {
 const { ready: blocklistReady } = startBlocklistSync()
 const { ready: gateReady } = startCaptureGate('chatgpt')
 void Promise.all([blocklistReady, gateReady]).then(() => attachSubmitHook(getInput, 'chatgpt'))
-// The dot and the tooltip share one debounced similarity query: resurface
-// runs it, presence just reads the count off the response.
-// Placement is automatic (it avoids whatever control this site already has
-// in the corner). If it ever looks wrong here, pin it with
-// `{ dotCorner: 'top-right' }` — that's tuned per site, like the selectors.
-const presence = attachPresence(getInput, 'chatgpt')
+// ChatGPT: single-row bar — sit left of Send / Voice (sibling of ProseMirror).
+const presence = attachPresence(getInput, 'chatgpt', {
+  placement: {
+    mode: 'beside-send',
+    gap: 8,
+    sendSelectors: [
+      'button[data-testid="send-button"]',
+      'button[data-testid="composer-speech-button"]',
+      'button[aria-label*="Send" i]',
+      'button[aria-label*="Voice" i]',
+    ],
+  },
+})
 // The picker attaches later (it waits for the blocklist), so the tooltip asks
 // through this holder rather than holding a reference that isn't there yet.
 let picker: PickerHandle | null = null

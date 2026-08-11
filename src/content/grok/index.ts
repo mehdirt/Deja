@@ -5,6 +5,7 @@ import { attachPresence } from '../shared/presence'
 import { attachPicker, type PickerHandle } from '../shared/picker'
 import { startBlocklistSync } from '../shared/blocklist'
 import { startCaptureGate } from '../shared/captureGate'
+import { resolveComposerShell } from '../shared/anchor'
 
 // Standalone grok.com composer. It has shipped as both a textarea and a
 // contenteditable across redesigns, so we try both with broad fallbacks.
@@ -30,12 +31,25 @@ const getInput = (): HTMLElement | null => {
 const { ready: blocklistReady } = startBlocklistSync()
 const { ready: gateReady } = startCaptureGate('grok')
 void Promise.all([blocklistReady, gateReady]).then(() => attachSubmitHook(getInput, 'grok'))
-// The dot and the tooltip share one debounced similarity query: resurface
-// runs it, presence just reads the count off the response.
-// Placement is automatic (it avoids whatever control this site already has
-// in the corner). If it ever looks wrong here, pin it with
-// `{ dotCorner: 'top-right' }` — that's tuned per site, like the selectors.
-const presence = attachPresence(getInput, 'grok')
+// Grok: tight pill shell (not full-bleed form) — left of Submit/waveform.
+const presence = attachPresence(getInput, 'grok', {
+  placement: {
+    mode: 'beside-send',
+    gap: 8,
+    sendSelectors: [
+      'button[aria-label*="Submit" i]',
+      'button[aria-label*="Send" i]',
+      'button[aria-label*="Voice" i]',
+      'button[type="submit"]',
+    ],
+    // Tight query-bar pill — never the full-bleed wrapping form.
+    getShell: (input) => {
+      const bar = input.closest<HTMLElement>('.query-bar, [class*="query-bar"]')
+      if (bar) return bar
+      return resolveComposerShell(input)
+    },
+  },
+})
 // The picker attaches later (it waits for the blocklist), so the tooltip asks
 // through this holder rather than holding a reference that isn't there yet.
 let picker: PickerHandle | null = null
