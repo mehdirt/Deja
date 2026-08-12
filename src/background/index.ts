@@ -76,9 +76,9 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         // At 'off' nothing is ever skipped. (Legacy rows may still carry
         // `minor` from the old soft-capture era — library can reveal those.)
         // Computed up front — it's pure and doesn't touch the DB, so it can't
-        // widen the transaction below; only its result is used, and only in
-        // the branch where no duplicate was found.
-        const { minor } = classifyPrompt(text, prefs.filterStrength)
+        // widen the transaction below; only its result is used, and only after
+        // the exact-duplicate check below has had its say.
+        const { minor, reason } = classifyPrompt(text, prefs.filterStrength)
 
         // The duplicate/near-duplicate check-then-write sequence below reads
         // the table, decides, then writes — two PROMPT_CAPTURED messages
@@ -99,14 +99,19 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
             return { kind: 'duplicate', id: existing.id } as const
           }
 
-          // A throwaway is skipped here, before the near-duplicate scan. That
-          // scan reads the whole table and trigram-scores it, and glue ("yes",
-          // "ok thanks") is the single most frequent thing a person sends — so
+          // Glue is skipped here, before the near-duplicate scan. That scan
+          // reads the whole table and trigram-scores it, and glue ("yes", "ok
+          // thanks") is the single most frequent thing a person sends — so
           // running it first meant the heaviest work in the capture path fired
-          // on the messages guaranteed not to be stored. The exact-match bump
-          // above still runs first, so re-sending a prompt already in the
-          // library still accrues usage whatever today's filter thinks of it.
-          if (minor) return { kind: 'minor' } as const
+          // on the messages guaranteed not to be stored.
+          //
+          // Only 'trivial' short-circuits, deliberately. A 'short' skip comes
+          // from 'strict' and is a real, if terse, ask — the kind that CAN be a
+          // near-duplicate of something already in the library ("draft the
+          // email" against a stored longer version of it), and re-asking it
+          // should still bump that row's usage. Glue never matches a stored
+          // prompt worth crediting, so it loses nothing by returning early.
+          if (minor && reason === 'trivial') return { kind: 'minor' } as const
 
           // If there's an already-saved prompt on this platform whose body is
           // very similar to what the user just submitted, treat it as the
@@ -126,6 +131,11 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
             await touchUsage(fuzzy.item.id)
             return { kind: 'duplicate', id: fuzzy.item.id } as const
           }
+
+          // The other skip reason ('short', only produced at 'strict'). It got
+          // this far so it could bump a near-duplicate's usage above; it is
+          // still not worth a row of its own.
+          if (minor) return { kind: 'minor' } as const
 
           const id = await savePrompt({
             text,

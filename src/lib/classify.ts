@@ -126,6 +126,7 @@ const TRIVIAL = new Set([
   'huh',
   'really',
   'wait',
+  'wait what',
   'explain',
   'elaborate',
   'expand',
@@ -170,8 +171,10 @@ function normalize(text: string): string {
 const EDGE_DECORATION = /^[\p{P}\p{S}\s]+|[\p{P}\p{S}\s]+$/gu
 
 // Elongation is emphasis, not content: “yesss”, “okkkk”, “thanksss”. Collapse a
-// run of 3+ of the same letter to one so it matches the plain form. English has
-// no word with a real triple letter, so this can't damage a genuine prompt.
+// run of 3+ of the same letter to one so it matches the plain form. This only
+// builds a match key — the stored text is untouched — so the German words that
+// do carry a real triple letter (“Schifffahrt”) lose nothing by it; they simply
+// fail to match an English glue list either way.
 const ELONGATED = /(\p{L})\1{2,}/gu
 
 function bareForm(norm: string): string {
@@ -181,18 +184,25 @@ function bareForm(norm: string): string {
 // Words that carry no request on their own. A message built only from these is
 // glue however it's combined — “ok thanks”, “yes please”, “thank you so much”,
 // “got it, cool” — and a fixed phrase list can never enumerate the combinations.
-// Every entry must be meaningless in isolation; anything that could carry a real
-// ask (write, plan, email, fix) stays out.
+//
+// THE BAR FOR ADDING A WORD HERE. Every entry must be meaningless in isolation
+// AND unable to act as the backbone of a question or a statement. That second
+// half is the one that bites: an earlier version listed the interrogatives
+// (“what”, “how”, “why”) and the copula (“is”, “was”, “be”) because each is
+// throwaway *alone* — and quietly discarded “what is this”, “how do i do this”
+// and “is this good”, which are complete asks built entirely from small words.
+// A bare “what?” is still skipped, because TRIVIAL lists it as an exact phrase;
+// that is the right home for a word that is glue on its own but load-bearing in
+// a sentence. Anything that could carry a real ask (write, plan, email, fix,
+// love) stays out of this set entirely.
 const FILLER = new Set([
   'a',
   'ah',
   'all',
   'alright',
-  'am',
   'amazing',
   'and',
   'awesome',
-  'be',
   'brilliant',
   'but',
   'cheers',
@@ -210,17 +220,14 @@ const FILLER = new Set([
   'hi',
   'hm',
   'hmm',
-  'how',
   'huh',
   'i',
-  'is',
   'it',
   'its',
   "it's",
   'k',
   'kk',
   'lovely',
-  'love',
   'lol',
   'man',
   'me',
@@ -260,11 +267,7 @@ const FILLER = new Set([
   'um',
   'very',
   'wait',
-  'was',
   'well',
-  'what',
-  'why',
-  'works',
   'wow',
   'y',
   'ya',
@@ -280,6 +283,8 @@ const FILLER = new Set([
 // "hehe") — they're generated, not enumerated.
 const LAUGHTER = /^(?:(?:ha|he|hi|ja|ho){2,}|l+o+l+z*|r+o+f+l+|lmf?ao+)$/
 
+// Past a handful of words the odds tip toward a real sentence that happens to
+// use small words, so the all-filler rule stops applying. Glue is short.
 const MAX_FILLER_WORDS = 6
 
 function isFillerWord(word: string): boolean {
@@ -289,7 +294,11 @@ function isFillerWord(word: string): boolean {
 // True when every word is filler. Length-capped: past a handful of words the
 // odds tip toward a real sentence that happens to use small words, and we would
 // rather keep a borderline prompt than drop one.
-function isAllFiller(bare: string): boolean {
+function isAllFiller(bare: string, norm: string): boolean {
+  // A question mark means a question, and a question is an ask. Cheap insurance
+  // against small words recombining into one ("how much?"), checked on `norm`
+  // because bareForm has already stripped the mark off the end by now.
+  if (norm.includes('?')) return false
   const words = bare.match(/[\p{L}\p{N}']+/gu)
   if (!words || words.length === 0 || words.length > MAX_FILLER_WORDS) return false
   return words.every(isFillerWord)
@@ -300,6 +309,14 @@ function isAllFiller(bare: string): boolean {
 function hasNoWords(text: string): boolean {
   return !/[\p{L}\p{N}]/u.test(text)
 }
+
+// The no-words rule is about *reactions*, so it only applies to reaction-sized
+// input. Long symbol-only text is something else — an ASCII diagram, a line of
+// maths, a chess position — and dropping that would be the same "skipped one
+// the user wanted" mistake the philosophy above warns about. Sized for a couple
+// of emoji, including the multi-codepoint kind (a ZWJ family emoji alone is 8
+// UTF-16 units).
+const REACTION_CHARS = 16
 
 // Words that signal a prompt was *composed* rather than fired off: the writer
 // specified a tone, an audience, a format, a length, or a language. These are
@@ -317,7 +334,7 @@ const LANG =
 // named tone is, and it was the most common everyday cue the tone/audience list
 // missed.
 const FORMATS =
-  'table|list|checklist|outline|bullet points?|markdown|json|csv|email|essay|poem|tweet|thread|script|recipe|itinerary|summary|paragraphs?'
+  'table|list|checklist|outline|markdown|json|csv|email|essay|poem|tweet|thread|script|recipe|itinerary|summary|paragraphs?'
 const CRAFT_CUES = new RegExp(
   String.raw`\b(as an?|act as|in the (style|tone|voice) of|formal|informal|casual|polite|friendly|professional|persuasive|concise|detailed|step by step|step-by-step|bullet points?|(in|as|into) (an? )?(${FORMATS})|rewrite|translate|summari[sz]e|explain|eli5|compare|pros and cons|for (a|an|my|our) |to (a|an|my|our) |for (kids|beginners)|so that|without|make sure|(in|to|into) (${LANG}))\b`,
   'i',
@@ -383,12 +400,22 @@ export function classifyPrompt(
   // every message, and there is no message here to save.
   if (!norm) return { minor: true, reason: 'short' }
   if (strength === 'off') return { minor: false, reason: null }
+  // Nothing past SHORT_CHARS can be skipped by any rule below: the longest
+  // TRIVIAL phrase is a dozen characters, the all-filler rule caps at six
+  // words, and the 'strict' gate itself requires `norm.length <= SHORT_CHARS`.
+  // Returning here is therefore behaviour-preserving — and it keeps a long
+  // paste away from bareForm, whose edge-trim is quadratic on one long run of
+  // whitespace or punctuation (a 65k-character run measured at ~2s, enough to
+  // stall the service worker for every tab).
+  if (norm.length > SHORT_CHARS) return { minor: false, reason: null }
   // Strip edge punctuation/emoji and elongation so "yes." / "continue!!" /
   // "okkkk 👍" all match the list.
   const bare = bareForm(norm)
-  if (hasNoWords(bare)) return { minor: true, reason: 'trivial' }
+  if (norm.length <= REACTION_CHARS && hasNoWords(bare)) {
+    return { minor: true, reason: 'trivial' }
+  }
   if (TRIVIAL.has(bare)) return { minor: true, reason: 'trivial' }
-  if (isAllFiller(bare)) return { minor: true, reason: 'trivial' }
+  if (isAllFiller(bare, norm)) return { minor: true, reason: 'trivial' }
   // Default: keep anything that isn't conversational glue.
   if (strength === 'balanced') return { minor: false, reason: null }
   const words = bare ? bare.split(' ').length : 0

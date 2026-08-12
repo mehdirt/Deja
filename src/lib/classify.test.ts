@@ -126,10 +126,71 @@ describe('classifyPrompt', () => {
       'thank you so much',
       'got it, cool',
       'ok cool thanks',
-      'no worries',
       'ah ok',
       'well ok then',
+      'okay sure thanks',
     ]) {
+      expect(classifyPrompt(t, 'balanced').minor, t).toBe(true)
+    }
+  })
+
+  // The all-filler rule's dangerous edge: a complete ask can be built entirely
+  // out of small words, and skipping is permanent. Interrogatives and the copula
+  // are deliberately NOT filler for exactly this reason.
+  it('keeps short questions built only from small words', () => {
+    for (const t of [
+      'what is this',
+      'how do i do this',
+      'what do i do now',
+      'is this good',
+      'how much is this',
+      'why is that',
+      'is it done',
+      'do you love me',
+      'i love you',
+    ]) {
+      expect(classifyPrompt(t, 'balanced').minor, t).toBe(false)
+    }
+  })
+
+  it('still skips those same words when sent bare', () => {
+    for (const t of ['what', 'how', 'why', 'wait', 'wait what']) {
+      expect(classifyPrompt(t, 'balanced').minor, t).toBe(true)
+    }
+  })
+
+  it('stops applying the all-filler rule past the word cap', () => {
+    // 6 all-filler words is still glue; 7 is long enough that we keep it.
+    expect(classifyPrompt('ok cool thanks so very nice', 'balanced').minor).toBe(true)
+    expect(classifyPrompt('ok cool thanks so very nice yes', 'balanced').minor).toBe(false)
+  })
+
+  it('keeps a question even when every word is small', () => {
+    expect(classifyPrompt('how much?', 'balanced').minor).toBe(false)
+    expect(classifyPrompt('is it done?', 'balanced').minor).toBe(false)
+  })
+
+  it('keeps symbol-only text that is too long to be a reaction', () => {
+    // A reaction is dropped; an ASCII diagram or a line of maths is a prompt.
+    expect(classifyPrompt('👍', 'balanced').minor).toBe(true)
+    expect(classifyPrompt('+---+ | | +---+ <-> [ ]', 'balanced').minor).toBe(false)
+  })
+
+  it('never skips anything longer than the short bar', () => {
+    // Also the guard that keeps a long paste away from the edge-trim regex.
+    const long = 'x'.repeat(200)
+    expect(classifyPrompt(long, 'balanced').minor).toBe(false)
+    expect(classifyPrompt(long, 'strict').minor).toBe(false)
+    // An interior run of punctuation is the shape that makes the edge-trim
+    // regex quadratic; the length guard means it never reaches it.
+    const divider = 'a' + '-'.repeat(400) + 'a'
+    const started = Date.now()
+    expect(classifyPrompt(divider, 'balanced').minor).toBe(false)
+    expect(Date.now() - started).toBeLessThan(50)
+  })
+
+  it('treats laughter as glue', () => {
+    for (const t of ['haha', 'hehe', 'lolz', 'rofl', 'lmfao']) {
       expect(classifyPrompt(t, 'balanced').minor, t).toBe(true)
     }
   })
