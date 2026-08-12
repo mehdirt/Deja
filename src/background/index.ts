@@ -99,6 +99,15 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
             return { kind: 'duplicate', id: existing.id } as const
           }
 
+          // A throwaway is skipped here, before the near-duplicate scan. That
+          // scan reads the whole table and trigram-scores it, and glue ("yes",
+          // "ok thanks") is the single most frequent thing a person sends — so
+          // running it first meant the heaviest work in the capture path fired
+          // on the messages guaranteed not to be stored. The exact-match bump
+          // above still runs first, so re-sending a prompt already in the
+          // library still accrues usage whatever today's filter thinks of it.
+          if (minor) return { kind: 'minor' } as const
+
           // If there's an already-saved prompt on this platform whose body is
           // very similar to what the user just submitted, treat it as the
           // same prompt and bump its usage instead of creating a near-duplicate row.
@@ -117,8 +126,6 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
             await touchUsage(fuzzy.item.id)
             return { kind: 'duplicate', id: fuzzy.item.id } as const
           }
-
-          if (minor) return { kind: 'minor' } as const
 
           const id = await savePrompt({
             text,

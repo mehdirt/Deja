@@ -9,9 +9,13 @@
 //     everything. (Legacy soft-captured rows may still exist with `minor: true`;
 //     the library can reveal those under "filtered".)
 //   - The bar is deliberately CONSERVATIVE. At the default ('balanced') we skip
-//     only exact conversational glue ("yes", "continue", …). The short/substance
+//     only conversational glue ("yes", "ok thanks", "👍"). The short/substance
 //     gate is reserved for 'strict'. We'd rather keep a borderline prompt than
 //     skip one the user wanted.
+//   - Glue is recognised two ways, because one is not enough. A phrase list
+//     (TRIVIAL) catches fixed sayings with content words in them ("makes sense",
+//     "try again"); an all-filler rule catches the open-ended combinations a
+//     list can never hold ("ok thanks", "yes please", "thank you so much").
 //   - "Hard to remember & reusable" is the real target, but reusability is not
 //     detectable locally without a model (v1 ships zero LLM calls). So we proxy
 //     it with what we CAN measure: triviality, length, and structural substance.
@@ -23,9 +27,16 @@
 
 import type { FilterStrength } from './types'
 
-// Short / substance gate — used only at 'strict'. 'balanced' skips exact throwaways
-// (and empty text) and keeps everything else, so the default matches what Settings
-// promises: skip “yes” / “continue”, not “ideas for date night”.
+// Short / substance gate — used only at 'strict'. 'balanced' skips throwaways
+// (glue, decoration-only, empty text) and keeps everything else, so the default
+// matches what Settings promises: skip “yes” / “continue”, not “ideas for date
+// night”.
+//
+// Both bars must be cleared to be skipped: a prompt is only "short" if it is
+// under SHORT_CHARS *and* under RICH_WORDS. The word bar is the narrower of the
+// two — clearing it inside 60 characters means many small words ("can you tell
+// me how to word this politely for work"), which reads as composed even though
+// it is brief, so it is kept.
 const SHORT_CHARS = 60
 const RICH_WORDS = 10
 
@@ -56,6 +67,13 @@ const TRIVIAL = new Set([
   "that's fine",
   'thats fine',
   'all good',
+  'no worries',
+  'no problem',
+  'np',
+  'my bad',
+  'never mind',
+  'nevermind',
+  'forget it',
   'done',
   'finished',
   // Thanks / praise
@@ -138,8 +156,149 @@ const TRIVIAL = new Set([
   'testing',
 ])
 
+// Fold the characters a phone or macOS autocorrect substitutes silently, so the
+// list above (written with straight quotes) still matches what people actually
+// type. Without this, “that’s fine” — the form every Apple keyboard produces —
+// misses the entry sitting right there in TRIVIAL.
 function normalize(text: string): string {
-  return text.replace(/\s+/g, ' ').trim().toLowerCase()
+  return text.replace(/[‘’ʼ]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim().toLowerCase()
+}
+
+// Punctuation, symbols and emoji at either end. Stripped only for the throwaway
+// check — the stored text keeps every character. Covers “…yes!!”, “ok 👍”,
+// “«continue»”, none of which the old trailing-`[.!?…]` strip caught.
+const EDGE_DECORATION = /^[\p{P}\p{S}\s]+|[\p{P}\p{S}\s]+$/gu
+
+// Elongation is emphasis, not content: “yesss”, “okkkk”, “thanksss”. Collapse a
+// run of 3+ of the same letter to one so it matches the plain form. English has
+// no word with a real triple letter, so this can't damage a genuine prompt.
+const ELONGATED = /(\p{L})\1{2,}/gu
+
+function bareForm(norm: string): string {
+  return norm.replace(EDGE_DECORATION, '').replace(ELONGATED, '$1')
+}
+
+// Words that carry no request on their own. A message built only from these is
+// glue however it's combined — “ok thanks”, “yes please”, “thank you so much”,
+// “got it, cool” — and a fixed phrase list can never enumerate the combinations.
+// Every entry must be meaningless in isolation; anything that could carry a real
+// ask (write, plan, email, fix) stays out.
+const FILLER = new Set([
+  'a',
+  'ah',
+  'all',
+  'alright',
+  'am',
+  'amazing',
+  'and',
+  'awesome',
+  'be',
+  'brilliant',
+  'but',
+  'cheers',
+  'cool',
+  'do',
+  'done',
+  'eh',
+  'fine',
+  'for',
+  'good',
+  'got',
+  'great',
+  'hello',
+  'hey',
+  'hi',
+  'hm',
+  'hmm',
+  'how',
+  'huh',
+  'i',
+  'is',
+  'it',
+  'its',
+  "it's",
+  'k',
+  'kk',
+  'lovely',
+  'love',
+  'lol',
+  'man',
+  'me',
+  'much',
+  'my',
+  'n',
+  'nah',
+  'nice',
+  'no',
+  'nope',
+  'now',
+  'oh',
+  'ok',
+  'okay',
+  'perfect',
+  'please',
+  'pls',
+  'plz',
+  'really',
+  'right',
+  'sense',
+  'so',
+  'sorry',
+  'sounds',
+  'sure',
+  'thank',
+  'thanks',
+  'that',
+  "that's",
+  'thats',
+  'the',
+  'then',
+  'this',
+  'thx',
+  'ty',
+  'uh',
+  'um',
+  'very',
+  'wait',
+  'was',
+  'well',
+  'what',
+  'why',
+  'works',
+  'wow',
+  'y',
+  'ya',
+  'yay',
+  'yeah',
+  'yep',
+  'yes',
+  'you',
+  'yup',
+])
+
+// Laughter and stretched agreement don't fit in a word list ("hahaha", "loool",
+// "hehe") — they're generated, not enumerated.
+const LAUGHTER = /^(?:(?:ha|he|hi|ja|ho){2,}|l+o+l+z*|r+o+f+l+|lmf?ao+)$/
+
+const MAX_FILLER_WORDS = 6
+
+function isFillerWord(word: string): boolean {
+  return FILLER.has(word) || LAUGHTER.test(word)
+}
+
+// True when every word is filler. Length-capped: past a handful of words the
+// odds tip toward a real sentence that happens to use small words, and we would
+// rather keep a borderline prompt than drop one.
+function isAllFiller(bare: string): boolean {
+  const words = bare.match(/[\p{L}\p{N}']+/gu)
+  if (!words || words.length === 0 || words.length > MAX_FILLER_WORDS) return false
+  return words.every(isFillerWord)
+}
+
+/** True when nothing is left after punctuation, symbols and emoji — “👍”, “???”,
+ *  “🙏🏽🙏🏽”. There is no prompt here to remember. */
+function hasNoWords(text: string): boolean {
+  return !/[\p{L}\p{N}]/u.test(text)
 }
 
 // Words that signal a prompt was *composed* rather than fired off: the writer
@@ -153,8 +312,14 @@ function normalize(text: string): string {
 // alone would rescue half the short noise on the internet.
 const LANG =
   'english|spanish|french|german|italian|portuguese|arabic|persian|farsi|chinese|japanese|korean|hindi|russian|turkish|dutch'
+// Output shapes people ask for by name. "put it in a table", "as a checklist",
+// "in markdown" — a named format is a specification, the same kind of signal a
+// named tone is, and it was the most common everyday cue the tone/audience list
+// missed.
+const FORMATS =
+  'table|list|checklist|outline|bullet points?|markdown|json|csv|email|essay|poem|tweet|thread|script|recipe|itinerary|summary|paragraphs?'
 const CRAFT_CUES = new RegExp(
-  String.raw`\b(as an?|act as|in the (style|tone|voice) of|formal|informal|casual|polite|friendly|professional|persuasive|concise|detailed|step by step|step-by-step|bullet points?|as a table|as (an? )?outline|rewrite|translate|summari[sz]e|explain|eli5|compare|pros and cons|for (a|an|my|our) |to (a|an|my|our) |for (kids|beginners)|so that|without|make sure|(in|to|into) (${LANG}))\b`,
+  String.raw`\b(as an?|act as|in the (style|tone|voice) of|formal|informal|casual|polite|friendly|professional|persuasive|concise|detailed|step by step|step-by-step|bullet points?|(in|as|into) (an? )?(${FORMATS})|rewrite|translate|summari[sz]e|explain|eli5|compare|pros and cons|for (a|an|my|our) |to (a|an|my|our) |for (kids|beginners)|so that|without|make sure|(in|to|into) (${LANG}))\b`,
   'i',
 )
 
@@ -213,13 +378,18 @@ export function classifyPrompt(
   text: string,
   strength: FilterStrength = 'balanced',
 ): Classification {
-  if (strength === 'off') return { minor: false, reason: null }
   const norm = normalize(text)
+  // Empty is skipped at EVERY strength, 'off' included: "save everything" means
+  // every message, and there is no message here to save.
   if (!norm) return { minor: true, reason: 'short' }
-  // Strip trailing punctuation so "yes." / "continue!" still match the list.
-  const bare = norm.replace(/[.!?…]+$/, '').trim()
+  if (strength === 'off') return { minor: false, reason: null }
+  // Strip edge punctuation/emoji and elongation so "yes." / "continue!!" /
+  // "okkkk 👍" all match the list.
+  const bare = bareForm(norm)
+  if (hasNoWords(bare)) return { minor: true, reason: 'trivial' }
   if (TRIVIAL.has(bare)) return { minor: true, reason: 'trivial' }
-  // Default: keep anything that isn't exact conversational glue.
+  if (isAllFiller(bare)) return { minor: true, reason: 'trivial' }
+  // Default: keep anything that isn't conversational glue.
   if (strength === 'balanced') return { minor: false, reason: null }
   const words = bare ? bare.split(' ').length : 0
   if (norm.length <= SHORT_CHARS && words < RICH_WORDS && !hasSubstance(text)) {

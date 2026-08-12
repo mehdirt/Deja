@@ -2,6 +2,23 @@
 
 Append-only log of decisions and context from nontrivial work sessions. Read before starting nontrivial work; append an entry after.
 
+## 2026-08-12
+
+**Selective-capture strengths reviewed (`classify.ts`).** Levels themselves kept — `off` / `balanced` / `strict` is the right shape, and the "skip storing, don't hide" rule stays. Four real gaps in how `balanced` recognised glue, all fixed in the classifier (pure, unit-tested, no signature change):
+
+- Glue was matched only as *exact phrases*, so the list could never cover combinations. Added an **all-filler rule**: a message whose every word is contentless ("ok thanks", "yes please", "thank you so much", "got it, cool") is glue no matter the arrangement. Capped at 6 words so a real sentence built from small words is still kept. `FILLER` deliberately excludes anything that could carry an ask (write/plan/email/fix).
+- **Smart quotes** missed. Every Apple keyboard produces "that’s fine"; `TRIVIAL` holds the straight-quote form. `normalize` now folds `’ ‘ ʼ “ ”`.
+- **Emoji / punctuation-only** messages ("👍", "???") were saved as prompts. Now trivial (at `balanced`+; `off` still keeps them — "no exceptions" means what it says).
+- **Decoration and elongation** defeated the match: only trailing `[.!?…]` was stripped, so "ok 👍", "thanks!! 🙏", "yesss", "okkkk" all got stored. Strip punctuation/symbols/emoji at *both* edges and collapse 3+ repeated letters (no English word has a real triple).
+
+`off` now also skips **empty** text at every strength — there is no message to save, and it was the one input where "save everything" produced a blank row.
+
+`strict` unchanged in shape; `hasSubstance` gained **named output formats** ("in a table", "as a checklist", "in markdown", "as an outline") as a craft cue — the most common everyday cue the tone/audience list was missing. The `SHORT_CHARS` && `RICH_WORDS` conjunction is intentional and now documented rather than changed.
+
+**Capture hot path reordered** (`background/index.ts`): the `minor` skip moved *above* the near-duplicate scan. That scan does `listPrompts()` + trigram-score the whole library, and glue is the highest-frequency message there is — so the heaviest work in the path was firing on exactly the messages guaranteed not to be stored. Exact-match usage bump still runs first, so re-sending a stored prompt still accrues usage regardless of today's filter.
+
+Not done, flagged for a product call: a filtered capture is silent past the one-time toast and unrecoverable. `Classification.reason` already says *why*; the toast could offer "keep it anyway". That's a feature, not a tuning fix.
+
 ## 2026-08-11
 
 **NER PII postponed — removed from tree.** Opt-in “Also hide names & street addresses” (Transformers.js / offscreen / onnx / HF host perms) stripped. Structured regex PII + vault stay. Legacy `[person_N]` / `[place_N]` / `[city_N]` still fill-in via template labels; prefs force those kinds off. Revisit later as a separate opt-in download.

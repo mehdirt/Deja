@@ -102,8 +102,74 @@ describe('classifyPrompt', () => {
 
   it("strength 'off' keeps everything, even bare glue", () => {
     expect(classifyPrompt('yes', 'off').minor).toBe(false)
-    expect(classifyPrompt('', 'off').minor).toBe(false)
+    expect(classifyPrompt('ok thanks', 'off').minor).toBe(false)
+    expect(classifyPrompt('👍', 'off').minor).toBe(false)
     expect(classifyPrompt('make it blue', 'off').minor).toBe(false)
+  })
+
+  it('skips empty text at every strength, including off', () => {
+    for (const s of ['off', 'balanced', 'strict'] as const) {
+      expect(classifyPrompt('', s).minor, s).toBe(true)
+      expect(classifyPrompt('  \n ', s).minor, s).toBe(true)
+    }
+  })
+
+  it('matches trivial phrases typed with a smart apostrophe', () => {
+    expect(classifyPrompt('that’s fine').minor).toBe(true)
+    expect(classifyPrompt('that’s fine').reason).toBe('trivial')
+  })
+
+  it('skips glue combinations no phrase list could enumerate', () => {
+    for (const t of [
+      'ok thanks',
+      'yes please',
+      'thank you so much',
+      'got it, cool',
+      'ok cool thanks',
+      'no worries',
+      'ah ok',
+      'well ok then',
+    ]) {
+      expect(classifyPrompt(t, 'balanced').minor, t).toBe(true)
+    }
+  })
+
+  it('skips messages made only of emoji or punctuation', () => {
+    for (const t of ['👍', '🙏🏽', '???', '...', '!!!', '👍👍']) {
+      const c = classifyPrompt(t, 'balanced')
+      expect(c.minor, t).toBe(true)
+      expect(c.reason, t).toBe('trivial')
+    }
+  })
+
+  it('skips glue dressed up with emoji or stretched letters', () => {
+    for (const t of ['ok 👍', 'thanks!! 🙏', 'yesss', 'okkkk', 'hahaha', 'loool', 'perfect 🎉']) {
+      expect(classifyPrompt(t, 'balanced').minor, t).toBe(true)
+    }
+  })
+
+  it('does not mistake a real short ask for filler', () => {
+    for (const t of [
+      'make it blue',
+      'ideas for date night',
+      'what rhymes with orange',
+      'is it going to rain',
+      'why do cats purr',
+      'love poem for my wife',
+    ]) {
+      expect(classifyPrompt(t, 'balanced').minor, t).toBe(false)
+    }
+  })
+
+  it('rescues a short prompt that names an output format (strict)', () => {
+    for (const t of [
+      'put it in a table',
+      'as a checklist',
+      'reply in markdown',
+      'in bullet points',
+    ]) {
+      expect(classifyPrompt(t, 'strict').minor, t).toBe(false)
+    }
   })
 
   it("strength 'strict' hides medium prompts that 'balanced' keeps", () => {

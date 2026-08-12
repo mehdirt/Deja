@@ -92,7 +92,7 @@ const STRENGTHS: Array<{ key: FilterStrength; label: string; hint: string }> = [
   {
     key: 'balanced',
     label: 'Skip the throwaways',
-    hint: 'Skip one-word replies like “yes” or “continue”. Recommended for most people.',
+    hint: 'Skip quick replies like “yes”, “ok thanks” or “continue”. Recommended for most people.',
   },
   {
     key: 'strict',
