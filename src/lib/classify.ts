@@ -25,7 +25,7 @@
 //   - Local, pure, zero-dependency, unit-testable. The constants are PROVISIONAL
 //     and centralized here so tuning is a one-line change once we have real data.
 
-import type { FilterStrength } from './types'
+import type { FilterReason, FilterStrength } from './types'
 
 // Short / substance gate — used only at 'strict'. 'balanced' skips throwaways
 // (glue, decoration-only, empty text) and keeps everything else, so the default
@@ -384,7 +384,7 @@ export interface Classification {
   minor: boolean
   // Why it was skipped — useful for tuning/telemetry-free debugging and for a
   // future "skipped because…" hint. null when the prompt should be stored.
-  reason: 'trivial' | 'short' | null
+  reason: FilterReason | null
 }
 
 /** Classify a prompt for selective capture at the given strength. Pure; safe to

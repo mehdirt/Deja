@@ -28,6 +28,15 @@ Not done, flagged for a product call: a filtered capture is silent past the one-
 
 Declined, with reason: the maintainability reviewer wanted 47 `TRIVIAL` entries deleted as redundant with `FILLER`. Correct that they overlap, but `TRIVIAL` is the explicit, cheap, greppable safety net, and this very review shrank `FILLER` for safety — making behaviour depend entirely on `FILLER` staying broad is the wrong direction. Kept the duplication deliberately.
 
+**A skip is no longer a dead end.** The review's standing open question — a filtered capture is permanent, unrecoverable, and silent past the one-time toast — is now closed, and it's the last structural weakness the three levels had. `CaptureResponse` carries `reason` out to the page, and the two skips get deliberately different treatment:
+
+- `short` (only `strict` produces it) is a judgment call about a real if terse ask, so it's offered back: *"Skipped a short one — want to keep it?"* with a **Keep it** button that hand-saves through the existing `SAVE_MANUAL` path. That path already bypasses the classifier by design — the person disagreed with it — and still redacts in the worker, so overruling a skip never smuggles in personal details.
+- `trivial` glue stays quiet with the one-time explanation. Being asked whether to keep "yes" on every message would be worse than the skip.
+
+`showActionToast` gained a `confirmLabel` (defaults unchanged) because "Okay, undone" is exactly backwards for an offer the user *takes up*. Copy went through the DESIGN.md voice table: an earlier draft ("it looked brief") grades the user's prompt, which that file forbids. `strict`'s Settings hint now says the skip is recoverable, which is what makes the aggressive setting safe to choose.
+
+New `src/content/shared/skipToast.test.ts` pins which skip offers and which stays quiet; both directions are mutation-tested (forcing the offer off fails one test, forcing it always-on fails two). The toast renders into a closed shadow root, so these assert the wiring — which toast, and what its button does — rather than the DOM.
+
 Also from the review: `strict`'s Settings hint no longer promises "detailed questions" (format cues rescue bare fragments like `as a checklist`), the redundant `bullet points?` inside `FORMATS` is gone, and the `ELONGATED` comment no longer claims something false about non-English words.
 
 ## 2026-08-11

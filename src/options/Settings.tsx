@@ -97,7 +97,7 @@ const STRENGTHS: Array<{ key: FilterStrength; label: string; hint: string }> = [
   {
     key: 'strict',
     label: 'Only the good stuff',
-    hint: 'Save only longer or clearly specific requests — quick ones are gently skipped.',
+    hint: 'Save only longer or clearly specific requests. If Deja skips one you wanted, you can keep it right from the chat box.',
   },
 ]
 

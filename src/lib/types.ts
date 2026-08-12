@@ -38,6 +38,12 @@ export const PII_NER_KINDS: PiiKind[] = ['person', 'place', 'city']
 // depending on the storage layer.
 export type FilterStrength = 'off' | 'balanced' | 'strict'
 
+// Which rule decided a prompt wasn't worth storing. 'trivial' is conversational
+// glue; 'short' is the brief-and-unstructured gate, which only 'strict' applies.
+// Lives here for the same reason as FilterStrength — the classifier is pure, and
+// the capture response carries this value out to the page.
+export type FilterReason = 'trivial' | 'short'
+
 export interface Prompt {
   id?: number
   text: string
@@ -169,12 +175,20 @@ export type RuntimeMessage =
 // `notice` is true only the first time that happens, so the content script can
 // show a one-time explanation instead of silently skipping (informed, not silent).
 // `id` is omitted when filtered — nothing was written.
+//
+// `reason` says WHICH rule skipped it, and the two want different treatment in
+// the page. 'trivial' is conversational glue ("yes", "ok thanks") — frequent,
+// and obviously right, so offering it back would be noise. 'short' comes only
+// from the 'strict' strength: a real if terse ask, judged not worth keeping,
+// which is exactly the call a person may want to overrule. See `filterStrength`
+// in prefs.ts and `classifyPrompt` in classify.ts.
 export type CaptureResponse =
   | {
       ok: true
       id?: number
       filtered: boolean
       notice: boolean
+      reason?: FilterReason
       redacted: number
       duplicate?: boolean
       /** How many least-used prompts were soft-deleted to stay under libraryCap. */

@@ -4,7 +4,7 @@ import { isBlocked } from '@/lib/blocklist'
 import { isCapturableField, withinComposer, looksLikeAuthPath, safeCaptureUrl } from '@/lib/sensitive'
 import { getBlocklist } from './blocklist'
 import { shouldCapture } from './captureGate'
-import { showSavedToast, showInfoToast } from './toast'
+import { showSavedToast, showInfoToast, showActionToast } from './toast'
 import { readText, editableFromEvent } from './editable'
 
 // Quiet by default — the host page's console must stay clean, and capture
@@ -13,6 +13,26 @@ const DEBUG = false
 
 function log(...args: unknown[]) {
   if (DEBUG) console.log('[Deja]', ...args)
+}
+
+/**
+ * Overrule a skip: store a prompt the filter passed on.
+ *
+ * Reuses SAVE_MANUAL, the same message the in-page hand-save sends, which
+ * bypasses the classifier by design — the whole point is that the person
+ * disagreed with it. Redaction still happens in the worker, so keeping a prompt
+ * by hand never keeps personal details the settings say to hide.
+ *
+ * Fire-and-forget, like every other content→background call here: it must never
+ * throw into the host page, and the toast has already told the user it's kept.
+ */
+function keepAnyway(text: string, platform: Platform, url: string): void {
+  if (!chrome.runtime?.id) return
+  try {
+    chrome.runtime.sendMessage({ type: 'SAVE_MANUAL', text, platform, url }).catch(() => {})
+  } catch {
+    /* orphaned context — ignore */
+  }
 }
 
 export function sendCapture(text: string, platform: Platform): void {
@@ -60,13 +80,27 @@ export function sendCapture(text: string, platform: Platform): void {
         void writeHealth(platform, true)
         // Already in the library — no toast, no undo (nothing new was written).
         if (resp.duplicate) return
-        // Selective capture: throwaway was not stored. No "saved" toast; the
-        // first time, a one-time explanation so the skip is never silent.
+        // Selective capture: throwaway was not stored. No "saved" toast.
+        //
+        // A skip is permanent — nothing was written, and there is no row to go
+        // back for later — so the strength that makes a *judgment call* offers
+        // the call back. 'short' only comes from 'strict', where the prompt was
+        // a real if terse ask; one button hand-saves it. 'trivial' is glue, and
+        // being asked whether to keep "yes" every time would be its own kind of
+        // rude, so that one keeps the quiet one-time explanation.
         if (resp.filtered) {
-          if (resp.notice)
+          if (resp.reason === 'short') {
+            showActionToast(
+              'Skipped a short one — want to keep it?',
+              'Keep it',
+              () => keepAnyway(trimmed, platform, msg.payload.url),
+              'Kept it ✓',
+            )
+          } else if (resp.notice) {
             showInfoToast(
               'Skipped a short one — you can change that anytime in Deja’s settings',
             )
+          }
           return
         }
         const savedId = resp.id

@@ -168,10 +168,15 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
             notice = true
             await writePrefs({ minorNoticeSeen: true })
           }
+          // `reason` travels out so the page can tell glue apart from a real
+          // ask that 'strict' judged too brief — only the latter is worth
+          // offering back. Non-null here by construction: `minor` is only true
+          // when the classifier set one.
           sendResponse({
             ok: true,
             filtered: true,
             notice,
+            reason: reason ?? undefined,
             redacted: redactedTotal,
           })
           return

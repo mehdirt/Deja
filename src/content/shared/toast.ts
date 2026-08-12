@@ -94,7 +94,17 @@ export function showSavedToast(
 // A toast for an action the user just took in-page (turning saving off here,
 // pausing). Same chip, but the message is the whole message — no "Saved for
 // you ✓" prefix, because these aren't saves.
-export function showActionToast(message: string, undoLabel: string, onUndo: () => void): void {
+//
+// `confirmLabel` is what the chip says after the button is pressed. It defaults
+// to undoing something the user did, but the same shape also carries an offer
+// the user takes up (keeping a prompt Deja skipped), where "Okay, undone" would
+// be exactly backwards.
+export function showActionToast(
+  message: string,
+  undoLabel: string,
+  onUndo: () => void,
+  confirmLabel = 'Okay, undone',
+): void {
   const wrap = ensureWrap()
   wrap.replaceChildren()
 
@@ -115,7 +125,7 @@ export function showActionToast(message: string, undoLabel: string, onUndo: () =
   undo.textContent = undoLabel
   undo.addEventListener('click', () => {
     onUndo()
-    msg.textContent = 'Okay, undone'
+    msg.textContent = confirmLabel
     undo.remove()
     window.clearTimeout(hideTimer)
     hideTimer = window.setTimeout(dismiss, 1200)
