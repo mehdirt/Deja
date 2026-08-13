@@ -217,27 +217,11 @@ Deja runs entirely on the client across **four execution contexts**, all TypeScr
 - **Background service worker** — `src/background/index.ts`. The only writer to IndexedDB from outside the UI. Handles `PROMPT_CAPTURED` (redact PII → classify → store), `SIMILAR_QUERY` (score the pool → re-rank → top matches), `LIBRARY_SEARCH` (the in-page panel and picker, which can't read IndexedDB themselves), `SAVE_MANUAL`, `PROMPT_USED` / `SUGGESTION_DISMISSED`, `OPEN_LIBRARY`, and `UNDO_CAPTURE`, and paints the pause badge. `pool.ts` caches the prompt list in worker scope so a keystroke doesn't cost a full table read. MV3 workers are short‑lived, so it keeps no state in module scope that matters across wakes — everything persists through Dexie / `chrome.storage`.
 - **Popup** — `src/popup/`. Search + recent prompts + pause control.
 - **Options / Library** — `src/options/`. The full library, settings, and privacy page.
+- **Shared core** — `src/lib/`: pure, unit‑tested modules for the DB, search, similarity scoring, the capture classifier, PII redaction, ranking, and preferences.
 
-**Shared core** lives in `src/lib/` (pure, unit‑tested):
+Path alias `@/` → `src/` (kept in sync in `tsconfig.json` and `vite.config.ts`). Selectors are deliberately confined to `src/content/<platform>/index.ts` so a DOM change is a one‑file fix.
 
-| Module | Responsibility |
-| --- | --- |
-| `db.ts` | Dexie schema (single `prompts` table) + all CRUD; soft‑delete, import/export |
-| `types.ts` | `Prompt`, `Platform`, runtime message shapes, `PLATFORM_LABEL` / `PLATFORM_COLOR`, `FilterStrength` |
-| `search.ts` | MiniSearch fuzzy index, rebuilt in‑memory |
-| `similarity.ts` | IDF‑weighted trigram similarity + length‑aware threshold (resurface) |
-| `classify.ts` | Selective‑capture classifier (minor vs keep, by strength) |
-| `pii.ts` | Local PII detection + redaction (regex + Luhn) applied before storage |
-| `ranking.ts` | "Most useful" score (usage × recency) |
-| `sensitive.ts` | Capture‑eligibility: refuse credential / OTP / payment / non‑composer fields; URL minimization |
-| `blocklist.ts` | User blocklist (domains + regex) storage + matching |
-| `health.ts` | Per‑platform capture‑health storage |
-| `prefs.ts` | Preferences: resurface click, filter strength, pause, per‑site, incognito, PII redaction |
-| `markdown.ts` · `format.ts` | Markdown export · text/time formatting |
-
-Path alias `@/` → `src/` (kept in sync in `tsconfig.json` and `vite.config.ts`).
-
-> Selectors are deliberately confined to `src/content/<platform>/index.ts` so a DOM change is a one‑file fix. See [CLAUDE.md](CLAUDE.md) for the full contributor map and [DESIGN.md](DESIGN.md) for the visual system.
+> [CLAUDE.md](CLAUDE.md) has the full module‑by‑module map and the rules that aren't obvious from the code. [DESIGN.md](DESIGN.md) has the visual system.
 
 ---
 
@@ -317,26 +301,7 @@ Deja ships in usable phases (see [ROADMAP.md](ROADMAP.md)). The big upgrades on 
 
 ## Deploying & launching
 
-Deja is local‑first, so there's **nothing server‑side to deploy** — "launching" means two independent things: publishing the extension, and (optionally) hosting the landing page.
-
-### 1. Publish the extension (Chrome Web Store)
-1. **Bump the version** in `package.json` (it's injected into the manifest at build).
-2. **Build:** `npm run build`.
-3. **Zip the build output** — the *contents* of `dist/`, not the folder:
-   ```bash
-   cd dist && zip -r ../deja-<version>.zip . && cd ..
-   ```
-4. **Create a developer account** at the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole) (one‑time US$5 fee).
-5. **Create the listing** and upload the zip. Fill in the description, **permission justifications**, **single‑purpose** statement, and **data‑safety** answers — all drafted in [`store/listing.md`](store/listing.md). Add the `1280×800` screenshots already in [`store/`](store/) (shot list + remaining promo/video notes in [`store/assets.md`](store/assets.md)), and link a hosted **privacy‑policy URL** (`site/privacy.html` via Netlify Drop — see the GTM plan).
-6. **Submit for review** as **Unlisted** first. Expect a review wait; ship updates by repeating steps 1–3 and uploading a new zip. The repo is open source (MIT); leave the listing Unlisted until the Week 2 go/no-go.
-
-### 2. Host the landing page (optional)
-`site/index.html` (+ `site/privacy.html`) is self‑contained with no build step and no third‑party requests. Host on any static host — **Netlify Drop** is the GTM plan default (drag the `site/` folder); GitHub Pages / Vercel / Cloudflare Pages also work. Before going live, replace `REPLACE_EXTENSION_ID` (store URL). Source links already point at the public GitHub repo.
-
-### 3. Soft launch
-Per the roadmap: invite ~50 users from communities you're already in, watch how the resurface moment lands, and tune the thresholds before any broad launch. No analytics by design — listen, don't measure.
-
-> Firefox/Edge are not targeted yet (this is an MV3 Chrome build); both are plausible later with minor manifest work.
+Local‑first means nothing server‑side to deploy — "launching" is just publishing the extension zip and, optionally, hosting the static landing page. Full steps (Web Store listing, privacy‑policy hosting, soft‑launch plan) live in [`docs/ops/release-runbook.md`](docs/ops/release-runbook.md).
 
 ---
 
