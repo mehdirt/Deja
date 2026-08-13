@@ -1,0 +1,73 @@
+name: Deja stopped saving on a site
+description: Prompts on one particular site aren't being saved any more.
+title: 'Not saving on: '
+labels: ['needs triage', 'capture-health']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most common thing that goes wrong, and it's usually not your
+        fault: these sites change the design of their message box regularly, and
+        when they do, Deja loses track of where to look. It's normally a quick
+        fix once we know which site.
+
+        **Please don't paste your actual prompt text** — this page is public, and
+        we don't need it to fix this.
+
+  - type: dropdown
+    id: site
+    attributes:
+      label: Which site?
+      options:
+        - ChatGPT
+        - Claude
+        - Gemini
+        - DeepSeek
+        - Grok
+    validations:
+      required: true
+
+  - type: dropdown
+    id: health
+    attributes:
+      label: What does Deja's settings page say about that site?
+      description: >-
+        Open Deja's settings and look under "Where Deja works" — each site has a
+        coloured dot and a short status next to it.
+      options:
+        - 'Needs attention (red dot)'
+        - 'Saving (green dot) — but nothing is actually being saved'
+        - 'Not yet (grey dot)'
+        - 'Turned off'
+        - "I couldn't find it"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: still-broken
+    attributes:
+      label: Does it still happen after reloading the page?
+      options:
+        - 'Yes, still broken after a reload'
+        - 'No, reloading fixed it'
+        - "Haven't tried"
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Which version of Deja?
+      placeholder: v0.5.0
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else worth knowing?
+      description: >-
+        Optional. For example: it worked yesterday, or it only happens in a new
+        chat, or the site recently changed how it looks.
+    validations:
+      required: false

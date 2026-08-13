@@ -24,6 +24,7 @@ The prompts you write are work. Most of them vanish into a scrolled‑away chat 
 - [Roadmap & future landscape](#roadmap--future-landscape)
 - [Deploying & launching](#deploying--launching)
 - [Tech stack](#tech-stack)
+- [Feedback & contributing](#feedback--contributing)
 - [Project documents](#project-documents)
 - [License](#license)
 
@@ -300,6 +301,28 @@ Vite · React 18 · TypeScript · Tailwind CSS · Dexie (IndexedDB) · MiniSearc
 
 ---
 
+## Feedback & contributing
+
+**Something's wrong, or you have an idea?** Use the buttons inside Deja
+(**settings → tell me what you think**), or
+[open a report](https://github.com/mehdirt/Deja/issues/new/choose). The forms are
+in plain language and ask only what's needed — no technical detail required.
+Nothing is ever sent automatically; you review and submit it yourself.
+
+**Deja captured something it shouldn't have?** That's a security bug and it goes
+[here, privately](https://github.com/mehdirt/Deja/security/advisories/new) —
+never a public issue. See [SECURITY.md](SECURITY.md) §7.
+
+**Want to contribute code?** [CONTRIBUTING.md](CONTRIBUTING.md) has the setup,
+the review expectations, and the constraints that are non‑negotiable. The
+easiest useful contribution is a selector fix when a site changes its layout —
+it's the most common real failure and it unblocks actual people.
+
+Whatever you file: **no real prompt text, no personal information.** Issues are
+public, and keeping prompts on your machine is the whole promise.
+
+---
+
 ## Project documents
 
 | Doc | What's in it |
@@ -309,6 +332,8 @@ Vite · React 18 · TypeScript · Tailwind CSS · Dexie (IndexedDB) · MiniSearc
 | [DESIGN.md](DESIGN.md) | Visual identity — tokens, type, components, voice |
 | [SECURITY.md](SECURITY.md) | Security & privacy posture and threat model |
 | [CLAUDE.md](CLAUDE.md) | Contributor guidance and the full module map |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to set up, what gets merged, and the five rules that override everything |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Be decent; most people filing issues here aren't developers |
 | [store/](store/) | Web Store listing copy + asset/launch plan |
 
 ---

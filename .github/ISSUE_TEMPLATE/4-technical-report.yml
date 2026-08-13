@@ -1,0 +1,106 @@
+name: Technical report (for developers)
+description: >-
+  A bug with a reproduction, a selector fix, a build or CI problem. If you're
+  using Deja rather than working on it, one of the forms above will be quicker.
+title: '[dev] '
+labels: ['needs triage', 'dev']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form assumes you can build the extension and read a stack trace. If
+        that isn't you, please use **Something's broken** instead — you'll get
+        the same attention with fewer questions.
+
+        Two things before you file:
+
+        - **A capture leak is not this form.** If Deja stored something it
+          shouldn't have (a password, a field outside the composer), report it
+          through [private advisories](https://github.com/mehdirt/Deja/security/advisories/new)
+          instead. `SECURITY.md` §3 is the rule set it violated.
+        - **No prompt text, no real PII in the report.** Redacted or synthetic
+          samples only — the same rule the product follows.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Capture (content scripts, selectors, submit hooks)
+        - Background worker / storage (Dexie, messages)
+        - Selective capture / classifier
+        - Search, resurface, or ranking
+        - In-page surfaces (dot, panel, picker, toast)
+        - Options / popup UI
+        - Build, CI, or tooling
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What's wrong
+      description: One or two sentences. Lead with the observable behaviour.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: >-
+        Numbered steps against a build from `main`, or a failing test. If you
+        can express it as a test case in `src/lib/*.test.ts`, that is the single
+        most useful thing you can attach.
+      placeholder: |
+        1. npm run build, load dist/ unpacked
+        2. Open chatgpt.com, type "…", press Enter
+        3. Open the library — the prompt is missing
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+    validations:
+      required: true
+
+  - type: input
+    id: commit
+    attributes:
+      label: Version or commit
+      placeholder: v0.5.0, or 3325c61
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: Browser and OS
+      placeholder: Chrome 141, macOS 15.5
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console output or stack trace
+      description: >-
+        From the service worker console (chrome://extensions → Deja → service
+        worker) or the page console. Note that content scripts ship with
+        `DEBUG = false` on purpose, so the page console is quiet by design.
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I've confirmed this on a build from `main`, not only a released version.
+          required: false
+        - label: There's no real prompt text or personal information in this report.
+          required: true

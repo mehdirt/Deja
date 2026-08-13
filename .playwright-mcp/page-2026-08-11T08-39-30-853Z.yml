@@ -1,0 +1,33 @@
+- generic [ref=e1]:
+  - main [ref=e7]:
+    - generic [ref=e8]:
+      - link "Home page" [ref=e12] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e16]:
+        - link "Imagine" [ref=e18] [cursor=pointer]:
+          - /url: /imagine
+        - generic [ref=e36]:
+          - button "Settings" [ref=e37] [cursor=pointer]
+          - button "Sign in" [ref=e40] [cursor=pointer]
+          - button "Sign up" [ref=e41] [cursor=pointer]
+    - generic [ref=e59]:
+      - textbox "Ask Grok anything" [active] [ref=e62]:
+        - /placeholder: What do you want to know? (AI Agent)
+      - generic [ref=e64]:
+        - button "Attach" [ref=e66] [cursor=pointer]
+        - generic [ref=e70]:
+          - button "Model select" [ref=e73] [cursor=pointer]:
+            - generic [ref=e74]: Fast
+          - button "Submit" [disabled] [ref=e80]
+    - generic [ref=e84]:
+      - generic [ref=e85]:
+        - text: By messaging Grok, you agree to our
+        - link "Terms" [ref=e86] [cursor=pointer]:
+          - /url: https://x.ai/legal/terms-of-service
+        - text: and
+        - link "Privacy Policy" [ref=e87] [cursor=pointer]:
+          - /url: https://x.ai/legal/privacy-policy
+        - text: .
+      - button "Your privacy choices" [ref=e88] [cursor=pointer]
+  - region "Notifications alt+T"
+  - alert [ref=e89]

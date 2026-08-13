@@ -1,0 +1,124 @@
+- generic [ref=f5e1]:
+  - main [ref=f5e4]:
+    - button [ref=f5e7] [cursor=pointer]:
+      - generic [ref=f5e8]: side_nav_expand
+    - generic [ref=f5e16]:
+      - text: play_arrow
+      - link [ref=f5e17] [cursor=pointer]:
+        - /url: https://gemini.google/about/?utm_source=gemini&utm_medium=web&utm_campaign=gemini_zero_state_link_to_marketing_microsite
+        - text: About Gemini
+        - generic [ref=f5e18]: Opens in a new window
+      - link [ref=f5e19] [cursor=pointer]:
+        - /url: https://gemini.google.com/app/download
+        - text: Get Gemini App
+        - generic [ref=f5e20]: Opens in a new window
+      - link [ref=f5e21] [cursor=pointer]:
+        - /url: https://one.google.com/ai
+        - text: Subscriptions
+        - generic [ref=f5e22]: Opens in a new window
+      - link [ref=f5e23] [cursor=pointer]:
+        - /url: https://business.gemini.google/?utm_source=cloud_sfdc&utm_medium=et&utm_campaign=FY26-Q2-global-gemini-app&utm_content=-&utm_term=-
+        - text: For Business
+        - generic [ref=f5e24]: Opens in a new window
+      - button [ref=f5e27]:
+        - generic [ref=f5e28]: Sign in
+    - generic [ref=f5e34]:
+      - navigation [ref=f5e35]:
+        - generic [ref=f5e38]:
+          - navigation [ref=f5e40]:
+            - generic [ref=f5e43]:
+              - link [disabled]:
+                - /url: /app
+                - generic:
+                  - img: gemini_chat
+          - group [ref=f5e44]:
+            - generic [ref=f5e46]:
+              - button [ref=f5e48] [cursor=pointer]:
+                - img [ref=f5e50]: account_circle
+              - button [ref=f5e55] [cursor=pointer]:
+                - img [ref=f5e57]: settings
+      - generic [ref=f5e65]:
+        - generic [ref=f5e66]:
+          - heading [level=1] [ref=f5e67]: Conversation with Gemini
+          - heading [level=1] [ref=f5e81]:
+            - generic [ref=f5e82]: Meet Gemini, your personal AI assistant
+        - generic [ref=f5e84]:
+          - group [ref=f5e85]:
+            - generic [ref=f5e88]:
+              - textbox [ref=f5e94]:
+                - text: Ask Gemini
+                - paragraph [ref=f5e95]
+              - button [ref=f5e101] [cursor=pointer]:
+                - img [ref=f5e103]: plus
+              - generic [ref=f5e105]:
+                - group [ref=f5e108]:
+                  - button [ref=f5e109]:
+                    - generic [ref=f5e111]:
+                      - generic [ref=f5e112]: Flash-Lite
+                      - img [ref=f5e114]: keyboard_arrow_down
+                - button [ref=f5e122] [cursor=pointer]:
+                  - img [ref=f5e124]: mic
+          - paragraph [ref=f5e128]:
+            - link [ref=f5e129] [cursor=pointer]:
+              - /url: https://policies.google.com/terms
+              - text: Google Terms
+              - generic [ref=f5e130]: Opens in a new window
+            - text: and the
+            - link [ref=f5e131] [cursor=pointer]:
+              - /url: https://policies.google.com/privacy
+              - text: Privacy Policy
+              - generic [ref=f5e132]: Opens in a new window
+            - text: apply. Gemini is AI and can make mistakes, including about people.
+            - link [ref=f5e133] [cursor=pointer]:
+              - /url: https://support.google.com/gemini/answer/13594961#signed_out&zippy=%2Chow-does-google-handle-my-data-when-i-use-gemini-apps-while-signed-out
+              - text: Your privacy & Gemini
+              - generic [ref=f5e134]: Opens in a new window
+  - dialog [active] [ref=f5e139]:
+    - generic "Before you continue to Google" [ref=f5e143]:
+      - generic [ref=f5e146]:
+        - button "Change language" [ref=f5e147] [cursor=pointer]:
+          - generic [ref=f5e152]: en-US
+        - button "Sign in" [ref=f5e153]
+      - generic [ref=f5e157]:
+        - generic [ref=f5e158]: Before you continue to Google
+        - generic [ref=f5e159]:
+          - text: We use
+          - link "cookies" [ref=f5e160] [cursor=pointer]:
+            - /url: https://policies.google.com/technologies/cookies?hl=en-US&utm_source=ucbs
+          - text: and data, including IP addresses, to
+        - list [ref=f5e161]:
+          - listitem [ref=f5e162]:
+            - generic [ref=f5e167]: Deliver and maintain Google services
+          - listitem [ref=f5e168]:
+            - img [ref=f5e170]: warning
+            - generic [ref=f5e171]: Track outages and protect against spam, fraud, and abuse
+          - listitem [ref=f5e172]:
+            - img [ref=f5e174]: bar_chart
+            - generic [ref=f5e175]: Measure audience engagement and site statistics to understand how our services are used and enhance the quality of those services
+        - generic [ref=f5e176]: If you choose to “Accept all,” we will also use cookies and data, including IP addresses, to
+        - list [ref=f5e177]:
+          - listitem [ref=f5e178]:
+            - generic [ref=f5e183]: Develop and improve new services
+          - listitem [ref=f5e184]:
+            - img [ref=f5e186]: bar_chart
+            - generic [ref=f5e187]: Deliver and measure the effectiveness of ads
+          - listitem [ref=f5e188]:
+            - generic [ref=f5e193]: Show personalized content, depending on your settings
+          - listitem [ref=f5e194]:
+            - generic [ref=f5e199]: Show personalized ads, depending on your settings
+        - generic [ref=f5e200]: If you choose to “Reject all,” we will not use cookies or IP addresses for these additional purposes.
+        - generic [ref=f5e201]: Non-personalized content is influenced by things like the content you’re currently viewing, activity in your active Search session, and your location. Non-personalized ads are influenced by the content you’re currently viewing and your general location. Personalized content and ads can also include more relevant results, recommendations, and tailored ads based on past activity from this browser, like previous Google searches. We also use cookies and data to tailor the experience to be age-appropriate, if relevant.
+        - generic [ref=f5e202]: Select “More options” to see additional information, including details about managing your privacy settings. You can also visit g.co/privacytools at any time.
+        - generic [ref=f5e203]:
+          - generic [ref=f5e204]:
+            - button "Accept all" [ref=f5e205]
+            - button "Reject all" [ref=f5e209]
+          - button "More options" [ref=f5e213] [cursor=pointer]
+        - generic [ref=f5e214]:
+          - link "Privacy" [ref=f5e215] [cursor=pointer]:
+            - /url: https://policies.google.com/privacy?hl=en-US&utm_source=ucbs
+          - generic [ref=f5e216]: •
+          - link "Terms" [ref=f5e217] [cursor=pointer]:
+            - /url: https://policies.google.com/terms?hl=en-US&utm_source=ucbs
+      - button "Read more" [ref=f5e218] [cursor=pointer]:
+        - img [ref=f5e221]: keyboard_arrow_down

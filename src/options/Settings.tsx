@@ -30,7 +30,7 @@ import { PII_LABEL } from '@/lib/pii'
 import { clearPiiVault, mergePiiVault, readPiiVault } from '@/lib/piiVault'
 import { buildMarkdown } from '@/lib/markdown'
 import { restoreBackupFromText } from '@/lib/restoreBackup'
-import { feedbackHref } from '@/lib/feedback'
+import { feedbackHref, REPO_URL } from '@/lib/feedback'
 import { BugIcon, ChevronIcon, IdeaIcon, CheckCircleIcon } from '@/ui/ActionIcons'
 import {
   PLATFORM_LABEL,
@@ -520,9 +520,15 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
   const hasRules = bl.domains.length > 0 || bl.patterns.length > 0
   const version = extVersion()
   const brokenSites = PLATFORMS.filter((p) => health[p]?.ok === false).map((p) => PLATFORM_LABEL[p])
-  const captureContext = brokenSites.length
-    ? `capture broken on ${brokenSites.join(', ')}`
-    : 'capture not working'
+  // One broken site is passed as the bare label so the report form can
+  // preselect it; anything else is a sentence for the free-text field. See
+  // feedbackHref — a dropdown only prefills on an exact option match.
+  const captureContext =
+    brokenSites.length === 1
+      ? brokenSites[0]
+      : brokenSites.length
+        ? `capture broken on ${brokenSites.join(', ')}`
+        : 'capture not working'
 
   return (
     <div className="dj-stagger-auto flex flex-col gap-5">
@@ -1088,7 +1094,22 @@ export function Settings({ onShowWelcome }: { onShowWelcome: () => void }) {
             I have an idea
           </a>
         </div>
-        {version && <p className="dj-meta">Deja v{version}</p>}
+        {/* Not a "contribute" call — this audience isn't developers. It's the
+            one claim a privacy tool can't make with words alone: you don't have
+            to take our word for what Deja does with your prompts. */}
+        <p className="dj-meta">
+          {version && <>Deja v{version} · </>}
+          Deja is open source —{' '}
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-ink"
+          >
+            anyone can check exactly what it does
+          </a>
+          .
+        </p>
       </Section>
     </div>
   )

@@ -169,7 +169,37 @@ Run before every build that ships:
 
 ## 7. Reporting
 
-Found a way Deja captures or leaks something it shouldn't? That's a
-security bug, not a feature request — treat it as the highest priority. Until a
-formal channel exists, file it as a private issue with reproduction steps and the
-site/field involved.
+Found a way Deja captures or leaks something it shouldn't? That's a security
+bug, not a feature request — treat it as the highest priority.
+
+**Report it privately, through
+[GitHub's private advisories](https://github.com/mehdirt/Deja/security/advisories/new).**
+Not a public issue: everyone running Deja has a local library of their own
+writing, and a public report tells the world how to reach it before there's a
+fix. (Public issue forms deliberately route here for anything capture-related —
+see `.github/ISSUE_TEMPLATE/config.yml`.)
+
+**In scope** — anything that breaks a §1 promise: capture outside the composer,
+a credential or payment field being stored, PII surviving redaction in a shape
+§3.7 claims to cover, prompt text reaching the network, a blocklisted domain
+still being captured, or a way for a host page to read the library out of an
+overlay.
+
+**Out of scope** — the documented non-goals in §2 (a malicious host site feeding
+us a secret through the composer itself; names and free-form addresses, pending
+on-device NER), and anything requiring physical access to an unlocked machine.
+
+**What to include:** the site and field involved, reproduction steps, the
+version, and what got stored. **Never include the real captured secret** — say
+"a password was stored in plaintext", not the password. If you accidentally
+captured your own credential while testing, rotate it.
+
+**What to expect:** an acknowledgement as promptly as a small project can
+manage, a fix prioritised above all other work, and credit in the advisory and
+the incident log in §5 unless you'd rather stay anonymous. Please give a fix a
+reasonable window before disclosing publicly.
+
+**If you're a user who thinks this happened to you:** open the library, delete
+the captured item, then Settings → *purge deleted prompts* to erase it from
+disk, and rotate the credential as a precaution. Then report it — the
+remediation steps in §5 are the template.

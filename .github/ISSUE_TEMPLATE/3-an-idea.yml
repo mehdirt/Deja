@@ -1,0 +1,52 @@
+name: I have an idea
+description: Something Deja could do, or do better.
+title: 'Idea: '
+labels: ['idea']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are welcome, including half-formed ones. The most useful thing you
+        can tell us isn't the feature — it's the moment that made you want it.
+
+        Worth knowing before you write: Deja deliberately does **not** call any
+        AI model, send anything off your machine, or keep accounts. Ideas that
+        need those aren't off-limits to discuss, but they're a different product
+        rather than a version of this one. `ROADMAP.md` has the full list of what
+        was deferred and why.
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like Deja to do?
+      validations:
+        required: true
+
+  - type: textarea
+    id: moment
+    attributes:
+      label: What were you doing when you wished for it?
+      description: >-
+        The situation matters more than the solution — it often points at a
+        simpler fix than the one either of us would have guessed.
+      placeholder: >-
+        I was trying to find a prompt I wrote weeks ago and could only remember
+        roughly what it said.
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else worth knowing?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Before you send
+      options:
+        - label: >-
+            I've checked there's no personal information in what I wrote above.
+          required: true

@@ -1,0 +1,18 @@
+# Force every report through a form. The forms exist to ask the two or three
+# things that actually make a report actionable — a blank box gets us "it
+# doesn't work" and a week of round-trips.
+blank_issues_enabled: false
+
+contact_links:
+  - name: Deja captured or leaked something it shouldn't
+    url: https://github.com/mehdirt/Deja/security/advisories/new
+    about: >-
+      Report this privately, not as a public issue. A capture leak is the most
+      serious bug Deja can have, and a public issue tells everyone how to
+      reproduce it before there's a fix.
+
+  - name: A question, or just want to talk about it
+    url: https://github.com/mehdirt/Deja/discussions
+    about: >-
+      Not sure whether something is a bug? Wondering if Deja can do a thing?
+      Ask here — no form to fill in.
