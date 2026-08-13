@@ -2,7 +2,12 @@
   <img src="src/assets/icon-128.png" alt="Deja" width="72">
 </p>
 
-<h1 align="center">deja</h1>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="site/logos/wordmark-dark.svg">
+    <img src="site/logos/wordmark-light.svg" alt="deja" height="52">
+  </picture>
+</p>
 
 <p align="center">
   <strong>Every prompt you write is work. Deja makes sure none of it goes missing.</strong>
@@ -29,7 +34,7 @@ Deja is a small Chrome extension for anyone who talks to ChatGPT, Claude, Gemini
 
 If you've ever written the perfect prompt, gotten a great answer, and then lost it forever in a scrolled‑away chat — that's the exact problem this solves.
 
-> **Status: v0.5.0.** Saving you can trust, the resurface moment, and a full set of in‑page tools: a quiet button in the chat box, `//` to search without leaving the page, per‑site controls, on‑device PII redaction, and a hand‑save for when a site's layout changes. Full phased plan in [ROADMAP.md](ROADMAP.md).
+> **Status: v0.6.0.** Saving you can trust, the resurface moment, and a full set of in‑page tools: a quiet button in the chat box, `//` to search without leaving the page, per‑site controls, on‑device PII redaction, and a hand‑save for when a site's layout changes. Selective‑capture skips now offer themselves back instead of vanishing, and reporting a problem or an idea goes through plain‑language forms built for it. Full phased plan in [ROADMAP.md](ROADMAP.md).
 
 ---
 
