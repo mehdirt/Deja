@@ -86,14 +86,17 @@ Shared core lives under `src/lib/`:
 - `health.ts` — per-platform capture-health storage/signals (the content-side probe lives in `src/content/shared/health.ts`).
 - `sensitive.ts` — capture-eligibility: rejects password/OTP/credential and non-composer fields, and minimizes captured URLs.
 - `blocklist.ts` — user blocklist (domains + regex) storage/matching (the content-side sync cache lives in `src/content/shared/blocklist.ts`).
-- `markdown.ts` — Markdown export. `import.ts` — JSON import. `format.ts` — text/relative-time helpers, plus `conversationUrl()`, which returns a link back to the original chat only when the captured URL actually points at a conversation (a prompt sent as the first message of a new chat is captured before the site assigns one, so the path is bare and the link would just reload the homepage).
+- `markdown.ts` — Markdown export. `restoreBackup.ts` — JSON import/restore. `format.ts` — text/relative-time helpers, plus `conversationUrl()`, which returns a link back to the original chat only when the captured URL actually points at a conversation (a prompt sent as the first message of a new chat is captured before the site assigns one, so the path is bare and the link would just reload the homepage).
 - `types.ts` — `Prompt`, `Platform`, the runtime message/response shapes, and `PLATFORM_LABEL` / `PLATFORM_COLOR`.
+- `libraryCap.ts` — enforces the library size cap, trimming oldest rows past the limit. `promptFormat.ts` — detects markdown-ish prompt bodies so the library can render them accordingly.
 
-The in-page surfaces (everything Deja renders inside a chat site) share three modules under `src/content/shared/`:
+The in-page surfaces (everything Deja renders inside a chat site) share modules under `src/content/shared/`:
 
 - `overlayTheme.ts` — the palette and primitives for every overlay, plus `createOverlayHost()`. Shadow roots are **closed** (an open root is readable by any script on the host page, and these surfaces render library rows). Tokens are declared on `:host`, mirroring `globals.css` — change both in the same commit. See the *In-page surfaces* section of `DESIGN.md`.
 - `anchor.ts` — positioning and viewport clamping, shared by the tooltip, dot, panel, and picker.
 - `presence.ts` / `picker.ts` / `blanks.ts` — the ambient dot and its panel, the `//` picker, and the shared fill-in step.
+- `toast.ts` — the one-time skip-explanation and "Keep it" action toast shown after a capture is filtered.
+- `libraryRows.ts` — renders library-row markup shared by the dot's panel and the `//` picker. `editable.ts` — reads/writes text in a site's composer element across contentEditable and `<textarea>` shapes. `message.ts` — typed wrapper over `chrome.runtime.sendMessage` for the content-script side.
 
 Two rules those surfaces follow that aren't obvious from the code:
 
