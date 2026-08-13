@@ -1,18 +1,42 @@
-# Deja
+<p align="center">
+  <img src="src/assets/icon-128.png" alt="Deja" width="72">
+</p>
 
-**Your personal prompt library — organized automatically, always within reach.**
+<h1 align="center">deja</h1>
 
-Deja is a Manifest V3 Chrome extension that **quietly saves** every prompt you send to ChatGPT, Claude, Gemini, DeepSeek, and Grok and stores it in a local, searchable library. No copy‑paste, no accounts, no cloud — everything lives in IndexedDB on your machine.
+<p align="center">
+  <strong>Every prompt you write is work. Deja makes sure none of it goes missing.</strong>
+</p>
 
-The prompts you write are work. Most of them vanish into a scrolled‑away chat the moment you hit Enter. Deja keeps them, makes them findable, and quietly **resurfaces the right one while you're typing the next**.
+<p align="center">
+  <a href="https://github.com/mehdirt/Deja/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/mehdirt/Deja/ci.yml?branch=main&label=CI" alt="CI status"></a>
+  <a href="https://github.com/mehdirt/Deja/blob/main/LICENSE"><img src="https://img.shields.io/github/license/mehdirt/Deja?color=blue" alt="License"></a>
+  <a href="https://github.com/mehdirt/Deja/commits/main"><img src="https://img.shields.io/github/last-commit/mehdirt/Deja" alt="Last commit"></a>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/contributions-welcome-brightgreen" alt="Contributions welcome"></a>
+</p>
 
-> **Status: v0.5.0** — trustworthy saving plus the resurface moment, and now a set of in‑page surfaces: a quiet Deja button in the chat box, `//` to search everything you've saved without leaving the page, per‑site controls where the annoyance happens, suggestion ordering that follows what you actually reuse, and a hand‑save for when a site changes its layout. Also: selective saving (short throwaways are skipped but recoverable), one‑click pause, on‑device PII redaction, duplicate collapsing, and a built‑in feedback path. See [ROADMAP.md](ROADMAP.md) for the phased plan.
+<p align="center">
+  <a href="#why-deja">Why</a> ·
+  <a href="#a-quick-tour">Tour</a> ·
+  <a href="#install-load-unpacked">Install</a> ·
+  <a href="#contributing">Contributing</a> ·
+  <a href="#say-hello">Contact</a>
+</p>
+
+---
+
+Deja is a small Chrome extension for anyone who talks to ChatGPT, Claude, Gemini, DeepSeek, or Grok. It **quietly saves every prompt you send**, keeps it searchable, and taps you on the shoulder with your own earlier version right as you start typing it again. No copy‑paste, no account to make, no cloud — everything stays on your machine, in your browser's own local storage.
+
+If you've ever written the perfect prompt, gotten a great answer, and then lost it forever in a scrolled‑away chat — that's the exact problem this solves.
+
+> **Status: v0.5.0.** Saving you can trust, the resurface moment, and a full set of in‑page tools: a quiet button in the chat box, `//` to search without leaving the page, per‑site controls, on‑device PII redaction, and a hand‑save for when a site's layout changes. Full phased plan in [ROADMAP.md](ROADMAP.md).
 
 ---
 
 ## Contents
 
 - [Why Deja](#why-deja)
+- [A quick tour](#a-quick-tour)
 - [Supported sites](#supported-sites)
 - [Features](#features)
 - [Install (load unpacked)](#install-load-unpacked)
@@ -24,7 +48,8 @@ The prompts you write are work. Most of them vanish into a scrolled‑away chat 
 - [Roadmap & future landscape](#roadmap--future-landscape)
 - [Deploying & launching](#deploying--launching)
 - [Tech stack](#tech-stack)
-- [Feedback & contributing](#feedback--contributing)
+- [Contributing](#contributing)
+- [Say hello](#say-hello)
 - [Project documents](#project-documents)
 - [License](#license)
 
@@ -38,6 +63,21 @@ Every frequent AI user hits the **prompt graveyard**: you craft a perfect prompt
 2. **The resurface moment is the product.** The instant you start re‑asking something, your older, better version floats up in‑context — like a password manager appearing at the login box, not a notebook you have to remember to open.
 
 **Why it's defensible:** any single lab could ship a "save prompt" button tomorrow — but none will let your prompt history follow you *out* of its walled garden into a competitor's. Deja is the prompt layer that rides *above* whichever model wins: your accumulated craft, portable, private, and yours. The one‑liner: **your prompts, every AI, one library.**
+
+---
+
+## A quick tour
+
+Here's what actually happens, in order, the first time you use it.
+
+1. **You install it, and forget it's there.** No sign‑up, no setup wizard. Load the extension and go back to whatever you were doing on ChatGPT or Claude.
+2. **You send a prompt, as normal.** A small "Saved for you ✔" toast appears for a second, then gets out of the way. That's the whole interaction — Deja never asks you to click "save."
+3. **A week later, you start typing something similar.** Before you finish the sentence, a quiet tooltip floats above the box: *you've asked something like this before.* Click it, and your older, better‑worded version drops in — like a password manager recognizing a login page, not a notebook you had to remember to open.
+4. **You want something specific, right now.** Type `//` in any chat box. Your whole library opens right there, searchable, without a tab switch. Arrow keys to browse, Enter to use one.
+5. **Something felt off — maybe a site redesigned its layout.** The little Deja dot in the corner of the box turns amber and offers to save that one prompt by hand, so nothing falls through the cracks silently.
+6. **Eventually, you want to look around properly.** Click the toolbar icon → **library** for the full page: search, tags, favorites, sort by what you actually reuse, export, or clean house.
+
+That's the whole tour. Everything past this point is detail on how each step works and how to build on it.
 
 ---
 
@@ -301,25 +341,48 @@ Vite · React 18 · TypeScript · Tailwind CSS · Dexie (IndexedDB) · MiniSearc
 
 ---
 
-## Feedback & contributing
+## Contributing
 
-**Something's wrong, or you have an idea?** Use the buttons inside Deja
-(**settings → tell me what you think**), or
-[open a report](https://github.com/mehdirt/Deja/issues/new/choose). The forms are
-in plain language and ask only what's needed — no technical detail required.
-Nothing is ever sent automatically; you review and submit it yourself.
+Deja has two front doors, because a non‑technical user reporting a broken site
+and a developer fixing that same site need opposite things from the process.
 
-**Deja captured something it shouldn't have?** That's a security bug and it goes
-[here, privately](https://github.com/mehdirt/Deja/security/advisories/new) —
-never a public issue. See [SECURITY.md](SECURITY.md) §7.
+**Using Deja and something's off, or you have an idea?**
+No account, no code, no jargon required.
+- Open **settings → tell me what you think** inside the extension, or
+  [pick a report type here](https://github.com/mehdirt/Deja/issues/new/choose) —
+  a broken site, something not saving, or just an idea.
+- The forms are short, plain‑language, and ask only what makes the report
+  actionable. Nothing is ever sent automatically; you review and submit it
+  yourself.
+- Deja captured something it shouldn't have? That's a security bug — file it
+  [privately here](https://github.com/mehdirt/Deja/security/advisories/new),
+  never as a public issue. See [SECURITY.md](SECURITY.md) §7.
 
-**Want to contribute code?** [CONTRIBUTING.md](CONTRIBUTING.md) has the setup,
-the review expectations, and the constraints that are non‑negotiable. The
-easiest useful contribution is a selector fix when a site changes its layout —
-it's the most common real failure and it unblocks actual people.
+**Want to send a pull request?**
+1. Read [CONTRIBUTING.md](CONTRIBUTING.md) first — five rules that override
+   everything else (nothing leaves the machine, composer‑only capture, never
+   break the host page, plain language, pure/testable code), then setup and
+   review expectations.
+2. Fork, branch, and run `npm install && npm run test && npm run typecheck`
+   before you open the PR — CI runs the same checks.
+3. Keep the change scoped. A selector fix when a site changes its layout is
+   the single most common real failure and the easiest way to unblock actual
+   people — start there if you're not sure where to start.
+4. Open the PR against `main`; the template walks you through what to include.
 
-Whatever you file: **no real prompt text, no personal information.** Issues are
-public, and keeping prompts on your machine is the whole promise.
+Whatever you file, either door: **no real prompt text, no personal
+information.** Issues are public, and keeping prompts on your machine is the
+whole promise Deja makes.
+
+---
+
+## Say hello
+
+Questions, feedback, or just want to talk about the project — email
+**[mehdirt25@gmail.com](mailto:mehdirt25@gmail.com)**. For anything that
+belongs in the public record (bugs, ideas, contributions), the
+[issue forms](https://github.com/mehdirt/Deja/issues/new/choose) above are
+still the faster path; email is for everything else.
 
 ---
 
