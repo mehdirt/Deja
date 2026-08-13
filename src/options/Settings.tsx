@@ -87,7 +87,7 @@ const STRENGTHS: Array<{ key: FilterStrength; label: string; hint: string }> = [
   {
     key: 'off',
     label: 'Save everything',
-    hint: 'Keeps every message you send, no exceptions.',
+    hint: 'Keeps every message you send, even the quick ones.',
   },
   {
     key: 'balanced',

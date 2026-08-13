@@ -153,6 +153,33 @@ describe('classifyPrompt', () => {
     }
   })
 
+  // Regression guard for the rule FILLER documents: a word belongs there only
+  // if it is meaningless alone AND can't be the backbone of a clause. Each
+  // phrase below is ONE backbone word surrounded by filler, so if any of them
+  // is ever added to the set, that phrase becomes all-filler and this fails.
+  // Built this way on purpose — a phrase with a real content word in it would
+  // still pass and prove nothing.
+  it('keeps a clause whose only non-filler word is its backbone', () => {
+    for (const t of [
+      'is it good', // is
+      'are you sure', // are
+      'was it good', // was
+      'am i right', // am
+      'can you do it', // can
+      'will you please', // will
+      'should i do it', // should
+      'would you please', // would
+      'does it work', // does — 'work' is not filler, 'works' is
+      'what is this', // what
+      'how much', // how
+      'why me', // why
+      'who are you', // who
+      'love it now', // love
+    ]) {
+      expect(classifyPrompt(t, 'balanced').minor, t).toBe(false)
+    }
+  })
+
   it('still skips those same words when sent bare', () => {
     for (const t of ['what', 'how', 'why', 'wait', 'wait what']) {
       expect(classifyPrompt(t, 'balanced').minor, t).toBe(true)

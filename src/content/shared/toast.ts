@@ -99,11 +99,18 @@ export function showSavedToast(
 // to undoing something the user did, but the same shape also carries an offer
 // the user takes up (keeping a prompt Deja skipped), where "Okay, undone" would
 // be exactly backwards.
+//
+// When `onAction` returns a promise, the chip waits for it before claiming
+// anything. That matters for the one caller whose action is a *write*: telling
+// someone their prompt was kept when the write failed loses it for good, and a
+// skipped prompt has no row to go back for. Synchronous actions (local UI
+// toggles) confirm immediately, exactly as before.
 export function showActionToast(
   message: string,
   undoLabel: string,
-  onUndo: () => void,
+  onUndo: () => void | Promise<boolean>,
   confirmLabel = 'Okay, undone',
+  failLabel = 'Didn’t work — nothing changed',
 ): void {
   const wrap = ensureWrap()
   wrap.replaceChildren()
@@ -124,10 +131,27 @@ export function showActionToast(
   undo.className = 'dj-undo'
   undo.textContent = undoLabel
   undo.addEventListener('click', () => {
-    onUndo()
-    msg.textContent = confirmLabel
+    const pending = onUndo()
     undo.remove()
     window.clearTimeout(hideTimer)
+    if (pending && typeof pending.then === 'function') {
+      // Hold the chip open while the write lands. Local IndexedDB, so this is
+      // milliseconds — but it's the difference between a promise and a claim.
+      hideTimer = window.setTimeout(dismiss, 5000)
+      void pending
+        .then((ok) => {
+          msg.textContent = ok ? confirmLabel : failLabel
+        })
+        .catch(() => {
+          msg.textContent = failLabel
+        })
+        .finally(() => {
+          window.clearTimeout(hideTimer)
+          hideTimer = window.setTimeout(dismiss, 1800)
+        })
+      return
+    }
+    msg.textContent = confirmLabel
     hideTimer = window.setTimeout(dismiss, 1200)
   })
 

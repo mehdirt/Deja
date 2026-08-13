@@ -47,7 +47,8 @@ shipped feature set; reviewers compare the listing against behavior.
 > Fuzzy search, tags, pins, and a favorites view. Sort by newest, most useful,
 > most-used, or longest-unseen. Bulk-select and clean up in seconds. Short
 > throwaway prompts ("yes", "continue") can be skipped at capture — tunable in
-> settings (off / balanced / strict) so they never clutter your library.
+> settings (off / balanced / strict) so they never clutter your library. If it
+> skips one you wanted, a Keep it button hands it straight back.
 >
 > ▸ YOURS TO CONTROL
 > Pause saving with one click — from the popup, or straight from the button in

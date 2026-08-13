@@ -100,6 +100,46 @@ describe('overruling a skip', () => {
     })
   })
 
+  // Keeping a skipped prompt is the recovery path: a skip leaves no row to go
+  // back for, so claiming success on a write that failed loses the prompt for
+  // good AND tells the person it's safe. The toast renders into a closed shadow
+  // root (overlayTheme.ts) so there is no chip to assert against — what's
+  // observable, and what carries the correctness, is what the action reports.
+  it('reports honestly when the keep succeeds or fails', async () => {
+    for (const [label, saveResponse, expected] of [
+      ['stored', { ok: true, id: 9, filtered: false, notice: false, redacted: 0 }, true],
+      ['worker error', { ok: false, error: 'nope' }, false],
+      ['no response', undefined, false],
+    ] as const) {
+      showActionToast.mockReset()
+      const sendMessage = vi.fn().mockImplementation((m: { type: string }) =>
+        m.type === 'SAVE_MANUAL'
+          ? Promise.resolve(saveResponse)
+          : Promise.resolve({ ok: true, filtered: true, notice: false, reason: 'short' }),
+      )
+      globalThis.chrome = {
+        runtime: { id: 'test-extension-id', sendMessage },
+      } as unknown as typeof chrome
+
+      textarea.value = `draft the ${label} email`
+      pressEnter(textarea)
+      await vi.waitFor(() => expect(showActionToast).toHaveBeenCalled())
+      const onKeep = showActionToast.mock.calls[0][2] as () => Promise<boolean>
+      await expect(onKeep()).resolves.toBe(expected)
+    }
+  })
+
+  it('reports a failure rather than throwing when the worker is gone', async () => {
+    installChrome({ ok: true, filtered: true, notice: false, reason: 'short' })
+    textarea.value = 'draft the email'
+    pressEnter(textarea)
+    await vi.waitFor(() => expect(showActionToast).toHaveBeenCalled())
+    const onKeep = showActionToast.mock.calls[0][2] as () => Promise<boolean>
+    // Orphaned content script: chrome.runtime.id is gone after a reload.
+    globalThis.chrome = { runtime: {} } as unknown as typeof chrome
+    await expect(onKeep()).resolves.toBe(false)
+  })
+
   it('stays quiet for glue, offering nothing back', async () => {
     const sendMessage = installChrome({
       ok: true,

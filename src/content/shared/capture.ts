@@ -23,15 +23,23 @@ function log(...args: unknown[]) {
  * disagreed with it. Redaction still happens in the worker, so keeping a prompt
  * by hand never keeps personal details the settings say to hide.
  *
- * Fire-and-forget, like every other content→background call here: it must never
- * throw into the host page, and the toast has already told the user it's kept.
+ * Resolves with whether the prompt actually landed. This one is deliberately
+ * NOT fire-and-forget like the undo beside it: undo failing leaves an extra row
+ * (harmless), but *this* failing loses a prompt the person just asked to rescue,
+ * and a skip leaves no row to go back for. The dot's hand-save already waits on
+ * its response for the same reason — see presence.ts. Never throws into the host
+ * page; a dead worker resolves false rather than rejecting.
  */
-function keepAnyway(text: string, platform: Platform, url: string): void {
-  if (!chrome.runtime?.id) return
+function keepAnyway(text: string, platform: Platform, url: string): Promise<boolean> {
+  if (!chrome.runtime?.id) return Promise.resolve(false)
   try {
-    chrome.runtime.sendMessage({ type: 'SAVE_MANUAL', text, platform, url }).catch(() => {})
+    return chrome.runtime
+      .sendMessage({ type: 'SAVE_MANUAL', text, platform, url })
+      .then((resp: CaptureResponse | undefined) => resp?.ok === true)
+      .catch(() => false)
   } catch {
-    /* orphaned context — ignore */
+    /* orphaned context */
+    return Promise.resolve(false)
   }
 }
 
@@ -101,6 +109,7 @@ export function sendCapture(text: string, platform: Platform): void {
               'Keep it',
               () => keepAnyway(trimmed, platform, msg.payload.url),
               'Kept it ✓',
+              'Couldn’t keep it — try again from the Deja dot',
             )
           } else if (resp.notice) {
             showInfoToast(

@@ -77,9 +77,10 @@ Site DOMs change often, so each platform uses an **ordered list of selector fall
 - Click to **copy** by default — or opt into **insert‑at‑cursor** in settings. It never silently auto‑fills, and never overwrites what you've typed. Dismissible per query (× / Esc suppresses that prompt only); it never nags.
 
 ### What gets saved — keep the keepers
-- A local, zero‑LLM classifier flags **"minor"** prompts (bare follow‑ups like "yes" / "continue", tiny fragments with no code, URL, structure, or length).
-- **Soft capture, never a silent drop:** minor prompts are still stored, just hidden from the library and resurface by default — surfaced under **`filtered (N)`** with a one‑click **keep** to promote any back.
-- **Filter strength** is a setting: `off` (keep everything) · `balanced` (default — only obvious throwaways) · `strict` (only longer / structured prompts).
+- A local, zero‑LLM classifier spots **throwaway** prompts two ways: a list of fixed sayings ("makes sense", "try again") and a rule that catches the combinations no list can hold — a message whose every word is filler ("ok thanks", "thank you so much"), plus reactions like "👍". At `strict` it also skips prompts that are brief and unstructured.
+- **Skipped, not hidden:** a minor prompt is never written to disk. The strength you choose is a gate on what enters the library, not a flag on rows that still take up space. (Prompts saved by older versions, which *did* hide instead of skip, are still there under **`filtered (N)`** with a one‑click **keep**.)
+- **Never a silent drop:** the first skip of each kind explains itself, and because a skip leaves no row to go back for, the strength that makes a judgment call offers it back — a `strict` skip comes with a **Keep it** button right in the chat box.
+- **What Deja saves** is a setting: `off` (keep everything) · `balanced` (default — only obvious glue like "yes" or "ok thanks") · `strict` (only longer / clearly specific requests).
 
 ### What gets recorded is yours
 - **Pause saving** from the popup or the in‑page Deja button: for **1 hour** or **until you resume**, with a live countdown and a toolbar badge. It resumes on its own.
