@@ -55,6 +55,31 @@ describe('overruling a skip', () => {
     delete globalThis.chrome
   })
 
+  it('names the setting on the first strict skip, and still offers to keep it', async () => {
+    installChrome({ ok: true, filtered: true, notice: true, reason: 'short' })
+    textarea.value = 'draft the email'
+    pressEnter(textarea)
+    await vi.waitFor(() => expect(showActionToast).toHaveBeenCalled())
+
+    const [message, buttonLabel] = showActionToast.mock.calls[0]
+    // People forget they chose 'strict'; the first skip is where they find out.
+    expect(message).toMatch(/settings/i)
+    expect(message).toMatch(/longer/i)
+    // The offer is not sacrificed to make room for the explanation.
+    expect(buttonLabel).toBe('Keep it')
+  })
+
+  it('drops the explanation on later skips but keeps offering', async () => {
+    installChrome({ ok: true, filtered: true, notice: false, reason: 'short' })
+    textarea.value = 'draft the email'
+    pressEnter(textarea)
+    await vi.waitFor(() => expect(showActionToast).toHaveBeenCalled())
+
+    const [message, buttonLabel] = showActionToast.mock.calls[0]
+    expect(message).not.toMatch(/settings/i)
+    expect(buttonLabel).toBe('Keep it')
+  })
+
   it("offers a 'short' skip back, and keeping it hand-saves the prompt", async () => {
     const sendMessage = installChrome({ ok: true, filtered: true, notice: false, reason: 'short' })
     textarea.value = 'draft the email'

@@ -163,10 +163,16 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         }
 
         if (outcome.kind === 'minor') {
+          // One-time courtesy, tracked per reason. The first 'short' skip is
+          // the moment a person on 'strict' finds out the strength they picked
+          // (often a while ago, and forgotten since) is what's dropping their
+          // brief prompts — so it has to fire even if a glue skip already used
+          // up the other notice.
+          const seenKey = reason === 'short' ? 'shortNoticeSeen' : 'minorNoticeSeen'
           let notice = false
-          if (!prefs.minorNoticeSeen) {
+          if (!prefs[seenKey]) {
             notice = true
-            await writePrefs({ minorNoticeSeen: true })
+            await writePrefs({ [seenKey]: true })
           }
           // `reason` travels out so the page can tell glue apart from a real
           // ask that 'strict' judged too brief — only the latter is worth

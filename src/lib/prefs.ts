@@ -39,6 +39,12 @@ export interface Prefs {
   // explanation. Set the first time a minor prompt is skipped so we inform
   // once and then stay quiet (never nag).
   minorNoticeSeen: boolean
+  // The same one-time courtesy for the *other* skip reason. Tracked separately
+  // on purpose: the two say different things, and a person on 'strict' whose
+  // first skip happened to be glue would otherwise never be told that the
+  // strength they chose is what's dropping their short prompts — the thing
+  // people most often forget they turned on. See classify.ts's FilterReason.
+  shortNoticeSeen: boolean
   // Pause capture. 0 = capturing; otherwise an epoch-ms instant capture is
   // paused until (PAUSE_FOREVER = until manually resumed). The capture/resurface
   // hot paths check this live, so capture resumes on its own when the time
@@ -102,6 +108,7 @@ export const DEFAULT_PREFS: Prefs = {
   resurfaceClick: 'insert',
   filterStrength: 'balanced',
   minorNoticeSeen: false,
+  shortNoticeSeen: false,
   pauseUntil: 0,
   autoPauseIncognito: true,
   sites: allSitesEnabled(),
@@ -172,6 +179,7 @@ function coerce(raw: unknown): Prefs {
     resurfaceClick: obj.resurfaceClick === 'copy' ? 'copy' : 'insert',
     filterStrength: coerceStrength(obj),
     minorNoticeSeen: obj.minorNoticeSeen === true,
+    shortNoticeSeen: obj.shortNoticeSeen === true,
     pauseUntil:
       typeof obj.pauseUntil === 'number' && Number.isFinite(obj.pauseUntil) && obj.pauseUntil > 0
         ? obj.pauseUntil

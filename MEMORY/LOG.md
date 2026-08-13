@@ -33,6 +33,12 @@ Declined, with reason: the maintainability reviewer wanted 47 `TRIVIAL` entries 
 - `short` (only `strict` produces it) is a judgment call about a real if terse ask, so it's offered back: *"Skipped a short one — want to keep it?"* with a **Keep it** button that hand-saves through the existing `SAVE_MANUAL` path. That path already bypasses the classifier by design — the person disagreed with it — and still redacts in the worker, so overruling a skip never smuggles in personal details.
 - `trivial` glue stays quiet with the one-time explanation. Being asked whether to keep "yes" on every message would be worse than the skip.
 
+**The first `strict` skip names the setting.** Owner's point, and it's the right one: people set `strict` once and forget, so a run of silent skips reads as Deja not working rather than as the strength doing its job. The first `short` skip now says *"Skipped — you're set to save only longer ones. Change that anytime in Deja's settings"*; later ones drop back to the short offer. The **Keep it** button is on both — the explanation does not cost the offer.
+
+Considered and rejected: showing the offer *only* on the first skip. It would reintroduce exactly the dead end this feature closed, for skip #47 that the person actually wanted. The noise argument that motivates once-only doesn't hold here either — a toast already fires on every successful save, so the per-skip offer replaces that toast rather than adding to it.
+
+`shortNoticeSeen` is tracked separately from `minorNoticeSeen` rather than reusing it: a person on `strict` whose first skip happened to be glue would otherwise burn the single notice on the wrong message and never learn what the strength is doing. Both directions mutation-tested.
+
 `showActionToast` gained a `confirmLabel` (defaults unchanged) because "Okay, undone" is exactly backwards for an offer the user *takes up*. Copy went through the DESIGN.md voice table: an earlier draft ("it looked brief") grades the user's prompt, which that file forbids. `strict`'s Settings hint now says the skip is recoverable, which is what makes the aggressive setting safe to choose.
 
 New `src/content/shared/skipToast.test.ts` pins which skip offers and which stays quiet; both directions are mutation-tested (forcing the offer off fails one test, forcing it always-on fails two). The toast renders into a closed shadow root, so these assert the wiring — which toast, and what its button does — rather than the DOM.

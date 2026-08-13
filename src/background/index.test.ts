@@ -40,12 +40,20 @@ vi.mock('@/background/pool', () => ({
   getPool: vi.fn(async () => []),
   invalidatePool: vi.fn(),
 }))
+const writePrefs = vi.fn()
+let storedPrefs: Record<string, unknown> = {}
+
 vi.mock('@/lib/prefs', () => ({
   PAUSE_FOREVER: 0,
   isPaused: () => false,
   onPrefsChange: () => () => {},
-  readPrefs: async () => ({ redactPii: false, filterStrength: 'balanced', libraryCap: 0 }),
-  writePrefs: vi.fn(),
+  readPrefs: async () => ({
+    redactPii: false,
+    filterStrength: 'balanced',
+    libraryCap: 0,
+    ...storedPrefs,
+  }),
+  writePrefs: (...a: unknown[]) => writePrefs(...a),
 }))
 
 type Listener = (
@@ -91,6 +99,8 @@ describe('PROMPT_CAPTURED handler', () => {
     for (const m of [findExistingPrompt, listPrompts, touchUsage, savePrompt, findSimilar])
       m.mockReset()
     classifyPrompt.mockReset()
+    writePrefs.mockReset()
+    storedPrefs = { minorNoticeSeen: true, shortNoticeSeen: true }
     findExistingPrompt.mockResolvedValue(undefined)
     listPrompts.mockResolvedValue([])
     findSimilar.mockReturnValue([])
@@ -130,6 +140,27 @@ describe('PROMPT_CAPTURED handler', () => {
     const resp = await capture('make it blue')
     expect(savePrompt).not.toHaveBeenCalled()
     expect(resp).toMatchObject({ ok: true, filtered: true })
+  })
+
+  // The two skips explain themselves once each, and the counters are separate.
+  // Sharing one would mean a person on 'strict' whose first skip happened to be
+  // glue never learns that the strength they picked is dropping their short
+  // prompts — the setting people most often forget they turned on.
+  it('explains a strict skip even after glue has already used its notice', async () => {
+    storedPrefs = { minorNoticeSeen: true, shortNoticeSeen: false }
+    classifyPrompt.mockReturnValue({ minor: true, reason: 'short' })
+    const resp = await capture('make it blue')
+    expect(resp).toMatchObject({ filtered: true, notice: true, reason: 'short' })
+    expect(writePrefs).toHaveBeenCalledWith({ shortNoticeSeen: true })
+  })
+
+  it('stays quiet once each skip has explained itself', async () => {
+    storedPrefs = { minorNoticeSeen: true, shortNoticeSeen: true }
+    classifyPrompt.mockReturnValue({ minor: true, reason: 'short' })
+    expect(await capture('make it blue')).toMatchObject({ notice: false })
+    classifyPrompt.mockReturnValue({ minor: true, reason: 'trivial' })
+    expect(await capture('ok thanks')).toMatchObject({ notice: false })
+    expect(writePrefs).not.toHaveBeenCalled()
   })
 
   it('bumps usage on an exact re-send even when the filter would skip it now', async () => {

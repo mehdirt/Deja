@@ -90,8 +90,14 @@ export function sendCapture(text: string, platform: Platform): void {
         // rude, so that one keeps the quiet one-time explanation.
         if (resp.filtered) {
           if (resp.reason === 'short') {
+            // The first one doubles as the reminder of *why* this is happening.
+            // People set 'strict' once and forget; without this the skips read
+            // as Deja quietly not working. After that the offer speaks for
+            // itself, so the message gets out of the way.
             showActionToast(
-              'Skipped a short one — want to keep it?',
+              resp.notice
+                ? 'Skipped — you’re set to save only longer ones. Change that anytime in Deja’s settings'
+                : 'Skipped a short one — want to keep it?',
               'Keep it',
               () => keepAnyway(trimmed, platform, msg.payload.url),
               'Kept it ✓',
