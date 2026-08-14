@@ -12,19 +12,21 @@ issue forms (for everyone). This file is the maintainer side.
 ## 1. One-time GitHub setup
 
 The files in the repo only work if these are switched on. Nothing here is
-automatic — do them in the repo's **Settings** tab.
+automatic — do them in the repo's **Settings** tab. Status below checked
+directly against the live repo on 2026-08-14, not assumed from the docs.
 
-| Setting | Where | Why it matters |
-| --- | --- | --- |
-| **Private vulnerability reporting** | Settings → Code security | `SECURITY.md`, the issue chooser, and `CODE_OF_CONDUCT.md` all link to `/security/advisories/new`. Without it those links 404 — and a capture leak has nowhere private to go, so it lands in a public issue instead. **Do this one first.** |
-| **Discussions** | Settings → General → Features | The issue chooser offers Discussions for questions. Same problem if it's off: a dead link on the page people see first. |
-| **Labels** | Issues → Labels | The forms apply `needs triage`, `capture-health`, `idea`, and `dev` on submission. A label that doesn't exist is silently dropped. Create them before announcing anywhere. |
-| **Require CI to pass before merge** | Settings → Branches → `main` | CI already runs typecheck, lint, test, and build on every PR; the branch rule is what makes it binding. |
+| Setting | Where | Status | Why it matters |
+| --- | --- | --- | --- |
+| **Branch protection on `main`** | Settings → Branches | ✅ **Done** (2026-08-14) | PR + 1 approval + passing `check` (CI) required to merge; no force-push, no deletion, linear history. Admins exempt so the owner's direct-commit workflow still works. |
+| **Private vulnerability reporting** | Settings → Code security | ❌ **Not enabled** | `SECURITY.md`, the issue chooser, and `CODE_OF_CONDUCT.md` all link to `/security/advisories/new`. Without it those links 404 — and a capture leak has nowhere private to go, so it lands in a public issue instead. **Do this one first**, before announcing the repo anywhere. |
+| **Discussions** | Settings → General → Features | ❌ **Not enabled** | The issue chooser offers Discussions for questions. Same problem if it's off: a dead link on the page people see first. |
+| **Labels** | Issues → Labels | ❌ **Not created** | Only GitHub's stock defaults exist (`bug`, `documentation`, `duplicate`, `enhancement`, `good first issue`, `help wanted`, `invalid`, `question`, `wontfix`). The forms apply `needs triage`, `capture-health`, `idea`, and `dev` on submission — none of those four exist yet, so every form submission is silently missing its label. Create them before announcing anywhere. |
 
 Suggested labels beyond the four the forms need:
 
-`good first issue` · `help wanted` · `selector-drift` · `privacy` · `voice`
-(copy/wording) · `wontfix — out of scope` · `needs repro` · `blocked`
+`selector-drift` · `privacy` · `voice` (copy/wording) · `needs repro` ·
+`blocked` — `good first issue`, `help wanted`, and `wontfix` already exist as
+GitHub defaults.
 
 ---
 

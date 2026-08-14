@@ -107,6 +107,10 @@ These get reviewed fastest, because they're unblocking real people.
 **Branch from `main`.** One logical change per branch and per commit — a
 selector fix and a copy tweak are two pull requests, not one.
 
+**`main` is protected.** Merging needs a passing CI run and one approving
+review — direct pushes aren't accepted from anyone but the repo owner. This is
+enforced by GitHub, not just written down here.
+
 **Commit messages** follow Conventional Commits, since the release notes are
 derived from them:
 
