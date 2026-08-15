@@ -276,6 +276,73 @@ describe('classifyPrompt', () => {
     expect(classifyPrompt('fix `const x = 1`', 'strict').minor).toBe(false)
   })
 
+  // The topicless rule — the one that makes 'balanced' generalize past its word
+  // lists. Each phrase below is a real clause that TRIVIAL and the all-filler
+  // rule both let through, because neither can enumerate greetings and
+  // placeholder nouns recombining.
+  it('skips messages with no subject in them at balanced', () => {
+    for (const t of [
+      'hi there',
+      'hey there',
+      'hello there!',
+      'good morning',
+      'you there',
+      'hi again',
+      'hey guys',
+      'anyone there',
+      'quick question',
+      'a quick question',
+      'test message',
+      'i need help',
+      'help me',
+      'another one please',
+    ]) {
+      const c = classifyPrompt(t, 'balanced')
+      expect(c.minor, t).toBe(true)
+      expect(c.reason, t).toBe('vague')
+    }
+  })
+
+  // Unlike the all-filler rule, a question mark does NOT rescue a topicless
+  // message: "u there?" is a question about nothing.
+  it('skips a topicless message even when it is phrased as a question', () => {
+    expect(classifyPrompt('hi there?', 'balanced').minor).toBe(true)
+    expect(classifyPrompt('u there?', 'balanced').minor).toBe(true)
+  })
+
+  it('skips single-token keyboard mashing', () => {
+    for (const t of ['asdfasdf', 'sdfsdf', 'blahblah']) {
+      expect(classifyPrompt(t, 'balanced').minor, t).toBe(true)
+    }
+  })
+
+  // The topicless rule's dangerous edge, and the reason SOCIAL and GENERIC are
+  // separate sets rather than more entries in FILLER: every word below is
+  // contentless in the phrase above it, and load-bearing here.
+  it('keeps a subject-bearing prompt built from the same words', () => {
+    for (const t of [
+      'put it there', // there
+      'a quick question about taxes', // quick, question
+      'i need a recipe for lasagna', // need
+      'help me write my cv', // help
+      'another idea for the party', // another
+      'what is this thing', // thing
+    ]) {
+      expect(classifyPrompt(t, 'balanced').minor, t).toBe(false)
+    }
+  })
+
+  // SOCIAL / GENERIC / FILLER are English, so a non-English message has no
+  // recognisable filler and always reads as subject-bearing. That is the
+  // correct failure direction — keep it — but it is a real limitation, not an
+  // accident, and this pins it so a future "optimisation" can't quietly invert
+  // it. (The vowel-based mashing heuristic that would have broken this is why
+  // REPEATED_UNIT exists instead.)
+  it('fails open on non-English text rather than skipping it', () => {
+    expect(classifyPrompt('سلام چطوری', 'balanced').minor).toBe(false)
+    expect(classifyPrompt('こんにちは', 'balanced').minor).toBe(false)
+  })
+
   it('matches Settings golden examples for each strength', () => {
     // balanced — skip glue, keep short real asks
     expect(classifyPrompt('yes', 'balanced').minor).toBe(true)

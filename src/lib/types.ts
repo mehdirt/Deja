@@ -39,10 +39,15 @@ export const PII_NER_KINDS: PiiKind[] = ['person', 'place', 'city']
 export type FilterStrength = 'off' | 'balanced' | 'strict'
 
 // Which rule decided a prompt wasn't worth storing. 'trivial' is conversational
-// glue; 'short' is the brief-and-unstructured gate, which only 'strict' applies.
-// Lives here for the same reason as FilterStrength — the classifier is pure, and
-// the capture response carries this value out to the page.
-export type FilterReason = 'trivial' | 'short'
+// glue; 'vague' is a message with no subject in it ("hi there", "quick
+// question"); 'short' is the brief-and-unstructured gate, which only 'strict'
+// applies. Lives here for the same reason as FilterStrength — the classifier is
+// pure, and the capture response carries this value out to the page.
+//
+// The three are distinguished because the page treats them differently: glue is
+// skipped quietly, while 'vague' and 'short' are judgment calls and get offered
+// back with a *Keep it* button. See `src/content/shared/capture.ts`.
+export type FilterReason = 'trivial' | 'vague' | 'short'
 
 export interface Prompt {
   id?: number

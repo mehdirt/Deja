@@ -91,21 +91,31 @@ export function sendCapture(text: string, platform: Platform): void {
         // Selective capture: throwaway was not stored. No "saved" toast.
         //
         // A skip is permanent — nothing was written, and there is no row to go
-        // back for later — so the strength that makes a *judgment call* offers
-        // the call back. 'short' only comes from 'strict', where the prompt was
-        // a real if terse ask; one button hand-saves it. 'trivial' is glue, and
-        // being asked whether to keep "yes" every time would be its own kind of
-        // rude, so that one keeps the quiet one-time explanation.
+        // back for later — so the rule that makes a *judgment call* offers the
+        // call back. 'short' comes from 'strict', where the prompt was a real if
+        // terse ask; 'vague' is a message with no subject in it ("quick
+        // question"), which is a judgment and, unlike 'short', is made at the
+        // DEFAULT strength — so it needs the button more, not less. 'trivial' is
+        // glue, and being asked whether to keep "yes" every time would be its
+        // own kind of rude, so that one keeps the quiet one-time explanation.
         if (resp.filtered) {
-          if (resp.reason === 'short') {
+          if (resp.reason === 'short' || resp.reason === 'vague') {
             // The first one doubles as the reminder of *why* this is happening.
-            // People set 'strict' once and forget; without this the skips read
+            // People set a strength once and forget; without this the skips read
             // as Deja quietly not working. After that the offer speaks for
             // itself, so the message gets out of the way.
+            //
+            // The two reasons need different first-time copy. A 'short' skip is
+            // the consequence of a setting the person chose, so it points at
+            // that setting; a 'vague' skip happens on the default, where "you're
+            // set to save only longer ones" would be a lie about a choice they
+            // never made — it has to explain the message instead.
+            const firstTime =
+              resp.reason === 'vague'
+                ? 'Skipped — there wasn’t much to remember in that one. You can change what gets saved in Deja’s settings'
+                : 'Skipped — you’re set to save only longer ones. Change that anytime in Deja’s settings'
             showActionToast(
-              resp.notice
-                ? 'Skipped — you’re set to save only longer ones. Change that anytime in Deja’s settings'
-                : 'Skipped a short one — want to keep it?',
+              resp.notice ? firstTime : 'Skipped a short one — want to keep it?',
               'Keep it',
               () => keepAnyway(trimmed, platform, msg.payload.url),
               'Kept it ✓',

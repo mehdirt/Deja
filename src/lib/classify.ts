@@ -12,10 +12,16 @@
 //     only conversational glue ("yes", "ok thanks", "👍"). The short/substance
 //     gate is reserved for 'strict'. We'd rather keep a borderline prompt than
 //     skip one the user wanted.
-//   - Glue is recognised two ways, because one is not enough. A phrase list
-//     (TRIVIAL) catches fixed sayings with content words in them ("makes sense",
-//     "try again"); an all-filler rule catches the open-ended combinations a
-//     list can never hold ("ok thanks", "yes please", "thank you so much").
+//   - Throwaways are recognised three ways, because a list is never enough. A
+//     phrase list (TRIVIAL) catches fixed sayings with content words in them
+//     ("makes sense", "try again"); an all-filler rule catches the open-ended
+//     combinations a list can never hold ("ok thanks", "thank you so much");
+//     and a topicless rule catches the messages that parse as real clauses but
+//     name nothing ("hi there", "quick question", "i need help"). The first two
+//     ask "is this message on my list?" and so only ever skip what someone
+//     thought to write down. The third asks "is there a subject in here?",
+//     which is a property of the message, and is what lets 'balanced' handle
+//     phrasings nobody enumerated.
 //   - "Hard to remember & reusable" is the real target, but reusability is not
 //     detectable locally without a model (v1 ships zero LLM calls). So we proxy
 //     it with what we CAN measure: triviality, length, and structural substance.
@@ -279,6 +285,79 @@ const FILLER = new Set([
   'yup',
 ])
 
+// Words that address a person rather than say anything: the greeting half of
+// "hi there", "good morning", "you there", "hey guys". Separate from FILLER
+// because they are not glue *inside* a sentence — "there" is a real word in
+// "put it there" — they only empty a message out when nothing else is present.
+// Used exclusively by the topicless rule below, which requires the WHOLE
+// message to be built from these plus filler.
+const SOCIAL = new Set([
+  'again',
+  'anybody',
+  'anyone',
+  'back',
+  'bro',
+  'buddy',
+  'dude',
+  'everybody',
+  'everyone',
+  'folks',
+  'guys',
+  'mate',
+  'morning',
+  'somebody',
+  'someone',
+  'there',
+  'u',
+  'ur',
+])
+
+// Content words that name nothing. "quick question", "test message", "i need
+// help", "another one" all parse as real clauses and survive every rule above,
+// yet none of them records a single fact you would ever search for.
+//
+// THE BAR FOR ADDING A WORD HERE is narrower than FILLER's: the word must be a
+// noun, adjective or verb that is *contentless in every context* — placeholder
+// vocabulary. Interrogatives ("what", "how"), the copula ("is", "was") and
+// modals ("can", "will", "should") must NEVER appear here even though they look
+// contentless alone: they are the backbone of the small-word questions that
+// FILLER's own comment warns about, and `classify.test.ts` guards them. A word
+// that is glue only when sent bare belongs in TRIVIAL instead.
+const GENERIC = new Set([
+  'another',
+  'anything',
+  'everything',
+  'help',
+  'message',
+  'msg',
+  'need',
+  'one',
+  'ones',
+  'question',
+  'questions',
+  'quick',
+  'random',
+  'something',
+  'stuff',
+  'test',
+  'testing',
+  'thing',
+  'things',
+])
+
+// A single token that is just its own first few characters repeated — "asdfasdf",
+// "sdfsdf", "blahblah". Keyboard mashing and stalling noise, which no word list
+// can enumerate.
+//
+// Scoped to ASCII letters on purpose. The obvious heuristic — "a word with no
+// vowel is mashing" — is wrong twice: `asdf` contains one, and every word in a
+// script without written vowels (Persian, Arabic, both of which this extension
+// supports) would match. A repeated unit is script-safe and needs no vowel
+// notion at all. Applied only to one-word messages, so the English word that
+// genuinely repeats its own prefix ("couscous") is never at risk inside a
+// sentence.
+const REPEATED_UNIT = /^([a-z]{2,4})\1+$/
+
 // Laughter and stretched agreement don't fit in a word list ("hahaha", "loool",
 // "hehe") — they're generated, not enumerated.
 const LAUGHTER = /^(?:(?:ha|he|hi|ja|ho){2,}|l+o+l+z*|r+o+f+l+|lmf?ao+)$/
@@ -302,6 +381,36 @@ function isAllFiller(bare: string, norm: string): boolean {
   const words = bare.match(/[\p{L}\p{N}']+/gu)
   if (!words || words.length === 0 || words.length > MAX_FILLER_WORDS) return false
   return words.every(isFillerWord)
+}
+
+// Past this the odds tip toward a real sentence, the same reasoning as
+// MAX_FILLER_WORDS. A message with nothing in it is short by nature — "hi
+// there", "quick question", "i need help" — so the cap can be tight.
+const MAX_VAGUE_WORDS = 5
+
+/**
+ * True when the message names nothing: every word is filler, a greeting, or
+ * placeholder vocabulary. This is the rule that makes 'balanced' generalize.
+ *
+ * WHY THIS EXISTS. TRIVIAL and isAllFiller are both closed sets, so the only
+ * messages they skip are the ones somebody thought to list. "hi there" survived
+ * both — `there` isn't glue — and so did every unlisted variant of it ("hey
+ * guys", "you there", "quick question"). Adding each string fixes one string.
+ * Asking instead "is there a subject here?" is a rule about the message rather
+ * than a list of messages, and it is the same question a person would ask.
+ *
+ * Deliberately NOT rescued by a question mark, unlike isAllFiller: "u there?"
+ * is a question with nothing in it. The backbone words that make small-word
+ * questions real ("what is this", "how much?") are protected by being absent
+ * from all three sets, so they count as subjects and this rule never sees them.
+ */
+function isTopicless(bare: string): boolean {
+  const words = bare.match(/[\p{L}\p{N}']+/gu)
+  if (!words || words.length === 0 || words.length > MAX_VAGUE_WORDS) return false
+  if (words.length === 1 && REPEATED_UNIT.test(words[0])) return true
+  return words.every(
+    (w) => isFillerWord(w) || SOCIAL.has(w) || GENERIC.has(w),
+  )
 }
 
 /** True when nothing is left after punctuation, symbols and emoji — “👍”, “???”,
@@ -416,7 +525,11 @@ export function classifyPrompt(
   }
   if (TRIVIAL.has(bare)) return { minor: true, reason: 'trivial' }
   if (isAllFiller(bare, norm)) return { minor: true, reason: 'trivial' }
-  // Default: keep anything that isn't conversational glue.
+  // A message with no subject in it. Reported as 'vague' rather than 'trivial'
+  // because it is a judgment call at the DEFAULT strength, and the page offers
+  // a judgment call back with a button; glue it just explains once.
+  if (isTopicless(bare)) return { minor: true, reason: 'vague' }
+  // Default: keep anything that is neither glue nor empty of subject.
   if (strength === 'balanced') return { minor: false, reason: null }
   const words = bare ? bare.split(' ').length : 0
   if (norm.length <= SHORT_CHARS && words < RICH_WORDS && !hasSubstance(text)) {
