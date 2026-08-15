@@ -22,7 +22,7 @@ import { PLATFORM_LABEL } from './types'
 export const REPO_URL = 'https://github.com/mehdirt/Deja'
 
 /** Optional hosted-form override. When set, used instead of GitHub Issues. */
-export const FEEDBACK_URL = ''
+export const FEEDBACK_URL = 'https://tally.so/r/zxB52R'
 
 export type FeedbackKind = 'problem' | 'idea' | 'capture'
 
