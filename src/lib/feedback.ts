@@ -34,16 +34,17 @@ const TEMPLATE: Record<FeedbackKind, string> = {
 }
 
 /**
- * The href for a feedback action. Prefers a hosted form if configured, else the
- * matching prefilled GitHub issue form.
- *
- * `context` is what Deja already knows about the situation (e.g. the platform a
- * capture-health warning is about) and `version` the running build — both are
- * non-personal, and the user still sees and edits everything before submitting.
- * Deliberately never includes prompt text.
+ * The prefilled GitHub issue URL for a feedback action. Exported separately
+ * from `feedbackHref` so the prefill contract stays testable even while a
+ * hosted form is configured — the param names here have to match field ids in
+ * `.github/ISSUE_TEMPLATE/`, GitHub drops mismatches silently, and that is
+ * exactly the kind of breakage a test has to catch rather than a person.
  */
-export function feedbackHref(kind: FeedbackKind, context?: string, version?: string): string {
-  if (FEEDBACK_URL) return FEEDBACK_URL
+export function githubIssueHref(
+  kind: FeedbackKind,
+  context?: string,
+  version?: string,
+): string {
   const params = new URLSearchParams({ template: TEMPLATE[kind] })
   // Which build you were running matters for a fault and not at all for a
   // wish, so the idea form doesn't ask and this doesn't send it.
@@ -61,4 +62,22 @@ export function feedbackHref(kind: FeedbackKind, context?: string, version?: str
     params.set(isPlatformLabel && kind === 'capture' ? 'site' : 'notes', context)
   }
   return `${REPO_URL}/issues/new?${params.toString()}`
+}
+
+/**
+ * The href for a feedback action. Prefers the hosted form when one is
+ * configured, else the matching prefilled GitHub issue form.
+ *
+ * `context` is what Deja already knows about the situation (e.g. the platform a
+ * capture-health warning is about) and `version` the running build — both are
+ * non-personal, and the user still sees and edits everything before submitting.
+ * Deliberately never includes prompt text.
+ *
+ * NOTE: the hosted form takes no prefill, so `context` and `version` are
+ * dropped when FEEDBACK_URL is set — the form asks for the version itself. That
+ * is the accepted cost of not requiring a GitHub account to report anything.
+ */
+export function feedbackHref(kind: FeedbackKind, context?: string, version?: string): string {
+  if (FEEDBACK_URL) return FEEDBACK_URL
+  return githubIssueHref(kind, context, version)
 }

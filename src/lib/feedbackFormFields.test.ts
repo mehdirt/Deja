@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { feedbackHref } from './feedback'
+import { githubIssueHref } from './feedback'
 
 // The in-app feedback buttons prefill GitHub issue forms by query param, and
 // GitHub matches those params against the `id:` of each field. A mismatch is
@@ -33,7 +33,7 @@ describe('feedback links match the issue forms', () => {
   it('every form the code links to exists on disk', () => {
     const present = readdirSync(TEMPLATE_DIR)
     for (const kind of KINDS) {
-      const template = new URL(feedbackHref(kind)).searchParams.get('template')
+      const template = new URL(githubIssueHref(kind)).searchParams.get('template')
       expect(template, kind).toBeTruthy()
       expect(present, `${kind} → ${template}`).toContain(template)
     }
@@ -51,7 +51,7 @@ describe('feedback links match the issue forms', () => {
     // dropdown) and a sentence (aimed at free text).
     for (const context of ['ChatGPT', 'capture broken on ChatGPT, Claude']) {
       for (const kind of KINDS) {
-        const params = new URL(feedbackHref(kind, context, '0.5.0')).searchParams
+        const params = new URL(githubIssueHref(kind, context, '0.5.0')).searchParams
         const template = params.get('template')!
         const ids = fieldIds(templateSource(template))
         for (const [key] of params) {
