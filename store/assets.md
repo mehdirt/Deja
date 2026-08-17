@@ -1,8 +1,16 @@
 # Store & launch assets — production guide
 
-These need a real browser running the built extension, so they can't be
-generated from the repo. This is the shot list, specs, and scripts to produce
-them quickly and consistently.
+These need a real browser running the built extension. Recapture:
+
+```bash
+npm run build
+node scripts/capture-store-screenshots.mjs
+```
+
+That loads `dist/` in Playwright's Chrome for Testing, seeds a public-safe
+library, and writes the PNGs below. In-page shots use a ChatGPT-like fixture
+(`scripts/fixtures/chatgpt-mock.html`) so the real overlays attach without a
+logged-in chat account.
 
 ## Setup for clean captures
 
@@ -18,39 +26,25 @@ them quickly and consistently.
 
 ## Screenshots (Chrome Web Store)
 
-Required: at least one at **1280×800** (preferred) or 640×400. Provide 4–5.
+Required: at least one at **1280×800** (preferred) or 640×400. The store listing
+takes **five**; Product Hunt can take the sixth. Upload order: picker first.
 
-**Status (Jul 2026):** five store-ready PNGs are in this folder —
-`screenshot-{1..5}-1280x800.png`. Re-capture only if the UI drifts.
+**Status (Aug 2026):** six store-ready PNGs in this folder, recaptured against
+bundled Figtree/Literata and the in-page surfaces. Shot 7 (dot panel) is skipped
+— `PRESENCE_ENABLED` is currently `false` in `src/content/shared/presence.ts`.
 
-**All five need retaking.** The current files are dated 2026-07-10, before the
-fonts were bundled and before the plain-language pass, so they show Deja in an
-OS fallback face — the exact bug Phase 6 was about, frozen in the shop window.
-Shots 6 and 7 are new.
+Store captions (one short line each):
 
-1. **The resurface moment** ⚠️ retake `screenshot-1-resurface-1280x800.png` — on a real
-   chat site, mid-prompt, with the "You've been here before →" tooltip. Hero shot.
-2. **Search + sort** ✅ `screenshot-2-search-sort-1280x800.png` — query in the
-   search box with the sort dropdown open (newest / most useful / most used /
-   longest unseen).
-3. **The library** ✅ `screenshot-3-library-1280x800.png` — healthy list, platform
-   filter row, tags visible.
-4. **The popup** ✅ `screenshot-4-popup-1280x800.png` — toolbar popup with
-   capturing/pause and recent prompts.
-5. **Capture controls (settings)** ✅ `screenshot-5-settings-1280x800.png` —
-   per-site switches + health dots, filter strength, PII redaction.
+1. **The picker** — `screenshot-6-picker-1280x800.png` — *Your own words, back in two keystrokes.*
+2. **The resurface moment** — `screenshot-1-resurface-1280x800.png` — *It finds you, too.*
+3. **The library** — `screenshot-3-library-1280x800.png` — *Every prompt you sent, still yours.*
+4. **The popup** — `screenshot-4-popup-1280x800.png` — *Pause, search, or jump to the full library.*
+5. **Capture controls (settings)** — `screenshot-5-settings-1280x800.png` — *Per-site saving, throwaways, personal info — all on this computer.*
 
-Optional 6th (if you want to show it): **selective capture** — the library with
-the `filtered (n)` view revealing a "minor" prompt and its `keep` action.
+Extra (PH / listing overflow):
 
-Caption each with one short line (the store overlays them).
-
-6. **The picker** — `//` typed in a real chat box with the list open and a row
-   highlighted, blanks visible in one of them. This is the single clearest image
-   of what Deja now is; consider making it the first screenshot.
-7. **The dot and its panel** — the panel open above a chat box, showing search
-   results and the "not here" footer. Shoot it on a light host page so the warm
-   card reads against it.
+- **Search + sort** — `screenshot-2-search-sort-1280x800.png` — *Find it the way you remember it.*
+- **The dot and its panel** — not captured. Flip `PRESENCE_ENABLED` and re-run the script.
 
 ## Promo tiles (optional but recommended)
 

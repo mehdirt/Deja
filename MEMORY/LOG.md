@@ -2,6 +2,10 @@
 
 Append-only log of decisions and context from nontrivial work sessions. Read before starting nontrivial work; append an entry after.
 
+## 2026-08-17
+
+**Store screenshots recaptured (1280×800).** Six PNGs in `store/`, from a real loaded `dist/` in Playwright's Chrome for Testing — bundled Figtree/Literata, seeded everyday library, no personal text. In-page shots (`//` picker, resurface tooltip) use `scripts/fixtures/chatgpt-mock.html` so the actual content scripts attach without a logged-in chat account. Recapture: `node scripts/capture-store-screenshots.mjs`. Shot 7 (dot + panel) skipped: `PRESENCE_ENABLED` is `false` in `presence.ts` (placement still unfinished on Claude/Gemini/Grok). CWS takes five — upload picker first.
+
 ## 2026-08-12
 
 **Selective-capture strengths reviewed (`classify.ts`).** Levels themselves kept — `off` / `balanced` / `strict` is the right shape, and the "skip storing, don't hide" rule stays. Four real gaps in how `balanced` recognised glue, all fixed in the classifier (pure, unit-tested, no signature change):
