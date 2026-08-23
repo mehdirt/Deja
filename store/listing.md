@@ -131,7 +131,7 @@ at `site/privacy.html` via Netlify Drop and paste the URL here).
 ## Assets needed (see ./assets.md)
 
 - Store icon 128×128 (have it: `src/assets/icon-128.png`)
-- Screenshots ✅ — five `1280×800` PNGs in this folder (`screenshot-*-1280x800.png`)
+- Screenshots ✅ — six `1280×800` PNGs in this folder (`screenshot-*-1280x800.png`). Upload the picker first. The store takes five; search+sort is the spare. The dot-panel shot is skipped while `PRESENCE_ENABLED` is off.
 - Small promo tile 440×280 (optional but recommended)
 - Marquee 1400×560 (optional)
 - Demo video (script in `assets.md` — still to record)

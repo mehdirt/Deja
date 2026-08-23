@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChatGPT</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #fff;
+        --sidebar: #f9f9f9;
+        --line: #ececec;
+        --ink: #0d0d0d;
+        --muted: #8f8f8f;
+        --bubble: #f4f4f4;
+        --composer: #fff;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+      }
+      .app {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        height: 100%;
+      }
+      aside {
+        background: var(--sidebar);
+        border-right: 1px solid var(--line);
+        padding: 12px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: -0.02em;
+      }
+      .mark {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background: #10a37f;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .new {
+        border: 1px solid #e5e5e5;
+        background: #fff;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font: inherit;
+        font-size: 13px;
+        text-align: left;
+        color: var(--ink);
+      }
+      .chats { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+      .chats p {
+        margin: 0 10px 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .chats a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 8px;
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 13.5px;
+        line-height: 1.35;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chats a.on { background: #ececec; }
+      main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        height: 100%;
+      }
+      .thread {
+        flex: 1;
+        overflow: auto;
+        padding: 28px 24px 8px;
+      }
+      .col {
+        max-width: 720px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+      .msg { display: flex; gap: 14px; align-items: flex-start; }
+      .msg.user { justify-content: flex-end; }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #10a37f;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        display: grid;
+        place-items: center;
+        flex: none;
+        margin-top: 2px;
+      }
+      .bubble {
+        max-width: 78%;
+        background: var(--bubble);
+        border-radius: 22px;
+        padding: 10px 16px;
+        font-size: 15.5px;
+        line-height: 1.55;
+      }
+      .assistant .body {
+        font-size: 15.5px;
+        line-height: 1.65;
+        padding-top: 4px;
+      }
+      .dock {
+        padding: 8px 24px 22px;
+      }
+      form.composer {
+        max-width: 720px;
+        margin: 0 auto;
+        border: 1px solid #e5e5e5;
+        background: var(--composer);
+        border-radius: 28px;
+        box-shadow: 0 0 0 1px rgba(0,0,0,.02), 0 8px 24px rgba(0,0,0,.04);
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        padding: 8px 8px 8px 18px;
+      }
+      #prompt-textarea {
+        flex: 1;
+        border: 0;
+        resize: none;
+        outline: none;
+        font: inherit;
+        font-size: 16px;
+        line-height: 1.5;
+        min-height: 44px;
+        max-height: 160px;
+        padding: 10px 0;
+        background: transparent;
+        color: var(--ink);
+      }
+      #prompt-textarea::placeholder { color: #8f8f8f; }
+      button[data-testid="send-button"] {
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 50%;
+        background: #0d0d0d;
+        color: #fff;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        flex: none;
+        margin-bottom: 4px;
+      }
+      button[data-testid="send-button"] svg { display: block; }
+      .hint {
+        text-align: center;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside>
+        <div class="brand"><span class="mark">G</span> ChatGPT</div>
+        <button class="new" type="button">＋ New chat</button>
+        <nav class="chats">
+          <p>Today</p>
+          <a class="on" href="#">Quiet weekend in Lisbon</a>
+          <a href="#">Email to the landlord</a>
+          <a href="#">Dinner ideas for four</a>
+          <p>Yesterday</p>
+          <a href="#">Explain this like I’m new</a>
+          <a href="#">Rewrite this kindly</a>
+        </nav>
+      </aside>
+      <main>
+        <div class="thread">
+          <div class="col">
+            <div class="msg user">
+              <div class="bubble">I want a quiet few days away — somewhere I can walk, eat well, and not fight crowds.</div>
+            </div>
+            <div class="msg assistant">
+              <div class="avatar">G</div>
+              <div class="body">
+                Lisbon’s older neighborhoods stay calm if you skip the main squares. Alfama in the morning, a long lunch in Estrela, and a rainy-day plan at a small museum — that’s the shape of a good, unhurried trip.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dock">
+          <form class="composer" action="javascript:void(0)">
+            <textarea
+              id="prompt-textarea"
+              rows="1"
+              placeholder="Ask anything"
+              autocomplete="off"
+            ></textarea>
+            <button type="button" data-testid="send-button" aria-label="Send prompt">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </form>
+          <p class="hint">ChatGPT can make mistakes. Check important info.</p>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

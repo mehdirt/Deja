@@ -2,6 +2,10 @@
 
 Append-only log of decisions and context from nontrivial work sessions. Read before starting nontrivial work; append an entry after.
 
+## 2026-08-17
+
+**Store screenshots recaptured (1280×800).** Six PNGs in `store/`, from a real loaded `dist/` in Playwright's Chrome for Testing — bundled Figtree/Literata, seeded everyday library, no personal text. In-page shots (`//` picker, resurface tooltip) use `scripts/fixtures/chatgpt-mock.html` so the actual content scripts attach without a logged-in chat account. Recapture: `node scripts/capture-store-screenshots.mjs`. Shot 7 (dot + panel) skipped: `PRESENCE_ENABLED` is `false` in `presence.ts` (placement still unfinished on Claude/Gemini/Grok). CWS takes five — upload picker first.
+
 ## 2026-08-12
 
 **Selective-capture strengths reviewed (`classify.ts`).** Levels themselves kept — `off` / `balanced` / `strict` is the right shape, and the "skip storing, don't hide" rule stays. Four real gaps in how `balanced` recognised glue, all fixed in the classifier (pure, unit-tested, no signature change):
@@ -241,3 +245,13 @@ Added a third rule, `isTopicless()` — *does this message name a subject at all
 3. My keyboard-mashing heuristic ("a word with no vowel") is wrong twice: `asdf` contains one, and Persian/Arabic — which this extension supports — write none. Replaced with `REPEATED_UNIT`, which needs no vowel notion. Pinned non-English fail-open behaviour with a test so a future tidy-up can't invert it.
 
 Verified 36/36 on a hand-built save/skip probe, 315/315 suite green, typecheck + lint + build clean. Existing backbone-word guards (`what is this`, `how much?`, `can you do it`) all still pass untouched — `SOCIAL`/`GENERIC` are held to a stricter admission bar than `FILLER` precisely because of them.
+
+## 2026-08-16
+
+**GTM plan rewritten for v2** (`docs/plans/2026-08-16-deja-gtm-launch-plan.md`, supersedes 07-03). Owner is about to publish: Chrome Web Store, screenshots, a YouTube video, then posts on LinkedIn, X, Show HN, Medium, Telegram, plus Product Hunt and Reddit kept from the July plan. Checked live state before writing, not just docs:
+
+- CWS: **nothing done** — no dev account, no listing. `site/` has never been deployed either, despite `dejaprompts.netlify.app` already hardcoded into its meta tags (`og:url`, canonical, JSON-LD) — deploying is a drag-and-drop away, not a rewrite.
+- `gh label list` confirms `community-runbook.md`'s 08-14 finding still holds: the 4 custom labels the issue forms apply (`needs triage`, `capture-health`, `idea`, `dev`) don't exist, and neither do private vulnerability reporting nor Discussions. Made this a **hard blocker** in the new plan (§1.5) ahead of any HN/PH push — "open source, come contribute" into a repo whose own issue forms silently mislabel every submission undercuts the ask being made.
+- `store/assets.md`'s screenshot status was self-contradictory (marks 4 of 5 shots ✅ then says "all five need retaking" two lines later) — both are shot 2026-07-10, before fonts were bundled and before the in-page surfaces (`//` picker, dot panel) existed at all. Plan calls for a full recapture, not a touch-up, plus 2 new shots for the surfaces that didn't exist in July.
+- Video scope grew on purpose: July's script was a silent 30s captioned demo; a real YouTube upload needs to earn a click on its own, so v2 scripts a 60–120s narrated walkthrough (hook → save → `//` → resurface → privacy → CTA) as the master asset, cut down for LinkedIn/X/PH.
+- Added a metric with no July equivalent: **PRs from someone who isn't mehdirt** — the actual test of whether "contribute" was more than a badge, distinct from install/retention numbers.

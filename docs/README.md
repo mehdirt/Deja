@@ -3,7 +3,8 @@
 Entry point for project docs beyond the root-level README.md, DESIGN.md, ROADMAP.md, and CONCEPT.md.
 
 - `plans/` — dated implementation plans (e.g. GTM launch, feature rollouts).
-  - `2026-07-03-deja-gtm-launch-plan.md` — go-to-market / launch sequencing.
+  - `2026-08-16-deja-gtm-launch-plan.md` — current go-to-market / launch plan (video, screenshots, CWS + LinkedIn/X/HN/Medium/Telegram/PH/Reddit push, contribution readiness). Supersedes the 07-03 plan below.
+  - `2026-07-03-deja-gtm-launch-plan.md` — original go-to-market plan, kept for history and channel-mechanics notes.
   - `2026-08-10-in-context-mechanisms.md` — M1–M7, the in-page surfaces (dot, `//` picker, per-site off, learned ordering, hand-save, welcome intent chips, welcome demo).
 - `ops/` — operational runbooks (release process, incident handling, store submission).
   - `community-runbook.md` — issue triage, PR review, and the one-time GitHub setup the contribution flow needs.

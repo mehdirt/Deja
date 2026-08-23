@@ -111,7 +111,7 @@ Prepared in-repo (the parts that can be authored from code):
 - Chrome Web Store listing **copy** ✅ — `store/listing.md` (summary, description, permission justifications, single-purpose + data-safety answers, pre-submission checklist).
 - Landing page ✅ — `site/index.html` (one self-contained file, no signup, no third-party requests; install CTA + load-from-source). Has `REPLACE_*` placeholders for the store URL; GitHub source links are live (MIT-licensed public repo).
 - Asset & launch plan ✅ — `store/assets.md` (screenshot shot list, promo-tile specs, demo-video script).
-- Store screenshots ✅ — five `1280×800` PNGs in `store/screenshot-*-1280x800.png` (resurface, search+sort, library, popup, settings).
+- Store screenshots ✅ — six `1280×800` PNGs in `store/screenshot-*-1280x800.png` (picker, resurface, library, popup, settings, search+sort). Dot-panel shot waiting on `PRESENCE_ENABLED`.
 - Ship-readiness fix ✅ — dropped the unused `activeTab` permission; the extension requests `storage`, `alarms` (pause-badge expiry), and the five content-script hosts.
 - Open source ✅ — `LICENSE` (MIT); feedback goes to GitHub Issues (no personal email in tree).
 
