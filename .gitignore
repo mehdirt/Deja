@@ -10,3 +10,9 @@ deja-*.zip
 .tmp/
 screenshots/
 public/fonts/
+
+# Video / marketing & publishing artifacts
+site/youtube-intro-thumbnail.*
+scripts/render-youtube-thumbnail.mjs
+scripts/fixtures/demo-library.json
+docs/ops/youtube-intro-video-scenario.md
