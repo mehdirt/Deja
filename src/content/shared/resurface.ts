@@ -543,6 +543,9 @@ export function attachResurface(
   }
 
   const onInput = (e: Event) => {
+    // Ignore input events coming from Deja overlay inputs (search, picker, blanks)
+    if ((e.composedPath?.() ?? []).some((n) => (n as HTMLElement)?.classList?.contains('dj-host'))) return
+
     // Resolve the editable from the event first (robust to composers that
     // differ from the page selector or have drifted), falling back to the
     // platform selector. This is the same resolution capture uses, so resurface

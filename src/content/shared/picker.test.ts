@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { findTrigger } from './picker'
+import { renderBlanks } from './blanks'
 
 // The trigger rules are the whole reason `//` is safe to use on someone else's
 // page: it must open when a person reaches for it and stay shut every other
@@ -45,3 +46,59 @@ describe('findTrigger', () => {
     expect(findTrigger('just typing normally')).toBeNull()
   })
 })
+
+describe('renderBlanks interaction & isolation', () => {
+  it('renders input fields for each placeholder and isolates input events', () => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+
+    const onDone = vi.fn()
+    const onCancel = vi.fn()
+    const text = 'Write an email to my landlord about {issue} in {apartment}.'
+
+    const handle = renderBlanks(container, { text, onDone, onCancel })
+    const inputs = container.querySelectorAll<HTMLInputElement>('.dj-input')
+    expect(inputs.length).toBe(2)
+
+    // Focuses the first field
+    handle.focus()
+    expect(document.activeElement).toBe(inputs[0])
+
+    // Types into fields
+    inputs[0].value = 'a leaking pipe'
+    inputs[1].value = 'unit 4B'
+
+    // Keydown Enter commits the filled template
+    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+    const stopPropagationSpy = vi.spyOn(enterEvent, 'stopPropagation')
+    inputs[0].dispatchEvent(enterEvent)
+
+    expect(stopPropagationSpy).toHaveBeenCalled()
+    expect(onDone).toHaveBeenCalledWith(
+      'Write an email to my landlord about a leaking pipe in unit 4B.',
+    )
+
+    container.remove()
+  })
+
+  it('stops input event propagation to prevent triggering outer composer searches', () => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+
+    renderBlanks(container, {
+      text: 'Test {topic}',
+      onDone: vi.fn(),
+      onCancel: vi.fn(),
+    })
+
+    const input = container.querySelector<HTMLInputElement>('.dj-input')!
+    const inputEvent = new Event('input', { bubbles: true })
+    const stopSpy = vi.spyOn(inputEvent, 'stopPropagation')
+
+    input.dispatchEvent(inputEvent)
+    expect(stopSpy).toHaveBeenCalled()
+
+    container.remove()
+  })
+})
+

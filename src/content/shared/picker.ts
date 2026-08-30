@@ -52,6 +52,7 @@ const MARK_SVG = `<svg viewBox="0 0 32 32" fill="none" aria-hidden="true" focusa
 // mark alone + query title + key chips — no wordmark stack, no foot chrome.
 const PICKER_CSS = `
 .dj-picker{position:fixed;width:372px;max-width:calc(100vw - 16px);
+  max-height:calc(100vh - 24px);
   display:flex;flex-direction:column;overflow:hidden;padding:0;border-radius:16px}
 .dj-picker[hidden]{display:none}
 
@@ -442,6 +443,10 @@ export function attachPicker(
       close()
       return
     }
+    // Typing inside our own overlay (e.g. fill-in blank inputs) must never
+    // be processed as a trigger search in the host composer.
+    if ((e.composedPath?.() ?? []).includes(layer.host)) return
+
     // Only a real person may open a surface that reads the library. Site
     // frameworks do emit synthetic input events, which is exactly why capture
     // isn't gated this way — but here, failing closed just means the picker
@@ -487,6 +492,9 @@ export function attachPicker(
     // script could drive the selection and read what we type back.
     if (!isRealUserEvent(e)) return
     if (!fillView.hidden) {
+      // Keystrokes inside our own shadow DOM (e.g. blanks inputs) belong to the fill view.
+      if ((e.composedPath?.() ?? []).includes(layer.host)) return
+
       // Same as the Back button: leave the blanks step, keep the list open.
       // A second Escape (now on the list) closes the picker.
       if (e.key === 'Escape') {

@@ -13,11 +13,12 @@ import { blankLabel, fillTemplate, findPlaceholders } from '@/lib/template'
 // with btn radius, primary + ghost actions.
 
 export const BLANKS_CSS = `
-.dj-fill{padding:14px;display:flex;flex-direction:column;gap:11px;background:var(--dj-bg)}
+.dj-fill{padding:14px;display:flex;flex-direction:column;gap:11px;background:var(--dj-bg);
+  max-height:calc(100vh - 80px);overflow-y:auto;overscroll-behavior:contain}
 .dj-fill-lead{margin:0;font-size:12.5px;line-height:1.45;color:var(--dj-text-soft)}
 .dj-fill-preview{font-size:13.5px;line-height:1.55;background:var(--dj-surface);
   border:1px solid var(--dj-line);border-radius:var(--dj-radius-row);padding:10px 12px;
-  color:var(--dj-text-soft);max-height:84px;overflow:hidden;box-shadow:var(--dj-shadow-sm)}
+  color:var(--dj-text-soft);max-height:84px;overflow-y:auto;box-shadow:var(--dj-shadow-sm)}
 .dj-fill-preview b{font-family:var(--dj-mono);font-weight:500;font-size:.92em;color:var(--dj-accent-text);
   background:var(--dj-accent-soft);border-radius:4px;padding:0 3px}
 .dj-fill-field{display:flex;flex-direction:column;gap:4px}
@@ -96,6 +97,8 @@ export function renderBlanks(container: HTMLElement, opts: BlanksOptions): Blank
     input.id = id
     input.className = 'dj-input'
     input.placeholder = 'Type what goes here'
+    input.autocomplete = 'off'
+    input.spellcheck = false
     field.append(label, input)
     wrap.appendChild(field)
     inputs.push({ name: b.name, input })
@@ -110,13 +113,23 @@ export function renderBlanks(container: HTMLElement, opts: BlanksOptions): Blank
     opts.onDone(fillTemplate(opts.text, values))
   }
 
-  // Enter anywhere in the form commits — the form is short and every field is
-  // optional, so there's nothing to validate first.
+  // Isolate events inside the form so host page shortcuts and listeners
+  // (e.g. ChatGPT / Claude global shortcuts) don't steal keys or actions.
   wrap.addEventListener('keydown', (e) => {
+    e.stopPropagation()
     if (e.key === 'Enter') {
       e.preventDefault()
       commit()
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      opts.onCancel()
     }
+  })
+  wrap.addEventListener('keyup', (e) => {
+    e.stopPropagation()
+  })
+  wrap.addEventListener('input', (e) => {
+    e.stopPropagation()
   })
 
   const actions = document.createElement('div')
@@ -141,7 +154,15 @@ export function renderBlanks(container: HTMLElement, opts: BlanksOptions): Blank
   container.appendChild(wrap)
 
   return {
-    focus: () => inputs[0]?.input.focus(),
+    focus: () => {
+      const first = inputs[0]?.input
+      if (!first) return
+      first.focus()
+      first.select()
+      requestAnimationFrame(() => {
+        first.focus()
+      })
+    },
   }
 }
 

@@ -255,3 +255,15 @@ Verified 36/36 on a hand-built save/skip probe, 315/315 suite green, typecheck +
 - `store/assets.md`'s screenshot status was self-contradictory (marks 4 of 5 shots ✅ then says "all five need retaking" two lines later) — both are shot 2026-07-10, before fonts were bundled and before the in-page surfaces (`//` picker, dot panel) existed at all. Plan calls for a full recapture, not a touch-up, plus 2 new shots for the surfaces that didn't exist in July.
 - Video scope grew on purpose: July's script was a silent 30s captioned demo; a real YouTube upload needs to earn a click on its own, so v2 scripts a 60–120s narrated walkthrough (hook → save → `//` → resurface → privacy → CTA) as the master asset, cut down for LinkedIn/X/PH.
 - Added a metric with no July equivalent: **PRs from someone who isn't mehdirt** — the actual test of whether "contribute" was more than a badge, distinct from install/retention numbers.
+
+## 2026-08-29
+
+**Fixed `//` picker blanks positioning & focus hijacking bugs.**
+1. **Viewport overflow**: In `anchorTo`, positioning `above` blindly flipped `below` when `top < MARGIN` without checking if there was room below. When the composer was near the viewport bottom, transitioning to the taller fill-in-the-blank form placed the popup completely off-screen below the viewport. Fixed by making flip checks room-aware, clamping `top` to `[MARGIN, maxTop]`, and adding `max-height` with `overflow-y: auto` in CSS for `.dj-picker` and `.dj-fill`.
+2. **Focus / typing swallowed by host composer**: Typing into `.dj-input` blank fields dispatched `input` events that bubbled through the shadow root to the document-level `onInput` listener in `picker.ts`. Because `editableFromEvent` returned null for the closed shadow host, it fell back to the host composer, saw no trigger, and dismissed the picker immediately. Fixed by:
+   - Ignoring events inside `layer.host` in `onInput` and `onKeyDown`.
+   - Adding `e.stopPropagation()` in `blanks.ts` on `input`, `keydown`, and `keyup`.
+   - Ensuring `focus()` properly focuses and selects the first blank field on mount via `requestAnimationFrame`.
+   - Ignoring shadow host events in `resurface.ts` `onInput`.
+   - Added vitest unit tests in `anchor.test.ts` and `picker.test.ts`.
+

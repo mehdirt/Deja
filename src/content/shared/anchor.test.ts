@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  anchorTo,
   FIELD_INSET,
   fieldBox,
   findSendControl,
@@ -270,3 +271,58 @@ describe('resolveComposerShell', () => {
     expect(resolveComposerShell(field)).toBe(pill)
   })
 })
+
+describe('anchorTo', () => {
+  it('places card above composer when room is available', () => {
+    Object.defineProperty(window, 'innerWidth', { value: 1200, configurable: true })
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+
+    const card = document.createElement('div')
+    Object.defineProperty(card, 'offsetHeight', { value: 200, configurable: true })
+    Object.defineProperty(card, 'offsetWidth', { value: 360, configurable: true })
+
+    const composer = fakeRect(300, 600, 500, 60)
+    anchorTo(card, composer, 'above', 9)
+
+    expect(card.style.position).toBe('fixed')
+    expect(card.style.left).toBe('300px')
+    expect(card.style.top).toBe(`${600 - 200 - 9}px`) // 391px
+  })
+
+  it('stays above and clamps to margin instead of overflowing below when composer is near bottom', () => {
+    Object.defineProperty(window, 'innerWidth', { value: 1200, configurable: true })
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+
+    const card = document.createElement('div')
+    // Tall card (e.g. fill-in-the-blank view)
+    Object.defineProperty(card, 'offsetHeight', { value: 400, configurable: true })
+    Object.defineProperty(card, 'offsetWidth', { value: 360, configurable: true })
+
+    const composer = fakeRect(300, 720, 500, 60)
+    anchorTo(card, composer, 'above', 9)
+
+    // Above room: 720 - 9 - 8 = 703 > 400
+    // top = 720 - 400 - 9 = 311px
+    expect(card.style.top).toBe('311px')
+    expect(parseInt(card.style.top, 10) + 400).toBeLessThanOrEqual(800)
+  })
+
+  it('does not flip below if there is no room below', () => {
+    Object.defineProperty(window, 'innerWidth', { value: 1200, configurable: true })
+    Object.defineProperty(window, 'innerHeight', { value: 500, configurable: true })
+
+    const card = document.createElement('div')
+    Object.defineProperty(card, 'offsetHeight', { value: 350, configurable: true })
+    Object.defineProperty(card, 'offsetWidth', { value: 360, configurable: true })
+
+    // Composer at top=300, bottom=360 on 500px window
+    // roomAbove = 300 - 9 - 8 = 283
+    // roomBelow = 500 - 8 - (360 + 9) = 123
+    // Even though 350 > 283, roomAbove (283) > roomBelow (123), so it must stay above and clamp to margin
+    const composer = fakeRect(300, 300, 500, 60)
+    anchorTo(card, composer, 'above', 9)
+
+    expect(card.style.top).toBe('8px') // clamped to MARGIN
+  })
+})
+

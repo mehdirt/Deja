@@ -55,23 +55,38 @@ export function anchorTo(
       left = rect.right - w - gap
       break
 
-    case 'below':
-      top = rect.bottom + gap
+    case 'below': {
+      const roomBelow = window.innerHeight - MARGIN - (rect.bottom + gap)
+      const roomAbove = rect.top - gap - MARGIN
+      if (h > roomBelow && roomAbove > roomBelow) {
+        top = rect.top - h - gap
+      } else {
+        top = rect.bottom + gap
+      }
       left = rect.left
-      if (top + h > window.innerHeight - MARGIN) top = rect.top - h - gap
       break
+    }
 
     case 'above':
-    default:
-      top = rect.top - h - gap
+    default: {
+      const roomAbove = rect.top - gap - MARGIN
+      const roomBelow = window.innerHeight - MARGIN - (rect.bottom + gap)
+      if (h > roomAbove && roomBelow > roomAbove) {
+        top = rect.bottom + gap
+      } else {
+        top = rect.top - h - gap
+      }
       left = rect.left
-      if (top < MARGIN) top = rect.bottom + gap // flip below
       break
+    }
   }
 
   const maxLeft = window.innerWidth - w - MARGIN
   if (left > maxLeft) left = Math.max(MARGIN, maxLeft)
   if (left < MARGIN) left = MARGIN
+
+  const maxTop = window.innerHeight - h - MARGIN
+  if (top > maxTop) top = Math.max(MARGIN, maxTop)
   if (top < MARGIN) top = MARGIN
 
   card.style.position = 'fixed'
