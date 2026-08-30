@@ -13,6 +13,8 @@ public/fonts/
 
 # Video / marketing & publishing artifacts
 site/youtube-intro-thumbnail.*
+site/promo-*
 scripts/render-youtube-thumbnail.mjs
+scripts/render-promo-tiles.mjs
 scripts/fixtures/demo-library.json
 docs/ops/youtube-intro-video-scenario.md
