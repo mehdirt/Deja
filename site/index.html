@@ -302,6 +302,117 @@
          its OWN line under the button — inline-flex let it ride up beside the
          button when there was room. */
       .cta-sub { font-size: 13px; color: var(--ink-faint); margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+      .cta-sub a { color: var(--accent); font-weight: 500; text-decoration: none; }
+      .cta-sub a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+      /* Demo video — matches browser mock + section rhythm */
+      #demo-video {
+        padding: 48px 0 58px;
+        background:
+          linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 42%, transparent) 0%, transparent 72%),
+          var(--bg);
+        border-top: 1px solid var(--line);
+      }
+      #demo-video .section-head { margin-bottom: 28px; }
+      #demo-video .section-lead { max-width: 36rem; margin-left: auto; margin-right: auto; }
+      .video-stage { max-width: 920px; margin: 0 auto; }
+      .video-browser {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+        overflow: hidden;
+        box-shadow:
+          0 1px 2px rgba(28, 27, 25, 0.04),
+          0 22px 48px rgba(28, 27, 25, 0.08);
+      }
+      @media (prefers-color-scheme: dark) {
+        .video-browser {
+          box-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.2),
+            0 22px 48px rgba(0, 0, 0, 0.32);
+        }
+      }
+      .video-browser-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        background: var(--sunk);
+        border-bottom: 1px solid var(--line);
+      }
+      .video-browser-bar .browser-dots {
+        display: flex;
+        gap: 6px;
+        flex: none;
+        padding-left: 2px;
+      }
+      .video-browser-bar .browser-dots span {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--ink-faint) 42%, transparent);
+      }
+      .video-browser-title {
+        flex: 1;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ink-faint);
+        letter-spacing: 0.01em;
+      }
+      .video-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #0d0d12;
+      }
+      .video-frame[data-loading="true"] {
+        background:
+          linear-gradient(110deg, color-mix(in srgb, var(--ink-faint) 12%, transparent) 8%, transparent 18%, color-mix(in srgb, var(--ink-faint) 10%, transparent) 33%, transparent 44%),
+          #12111a;
+        background-size: 200% 100%;
+        animation: video-shimmer 1.4s ease-in-out infinite;
+      }
+      @keyframes video-shimmer {
+        0% { background-position: 100% 0; }
+        100% { background-position: -100% 0; }
+      }
+      .video-frame iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .video-poster {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #12111a center / cover no-repeat;
+      }
+      .video-poster .play {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.96);
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+        opacity: 0.9;
+      }
+      .video-poster .play svg { margin-left: 4px; }
+      .video-caption {
+        margin: 14px 0 0;
+        padding: 0 8px;
+        font-size: 13px;
+        color: var(--ink-faint);
+        text-align: center;
+        line-height: 1.5;
+      }
+      .video-caption a { color: var(--accent); font-weight: 500; text-decoration: none; }
+      .video-caption a:hover { text-decoration: underline; }
 
       /* The moment, illustrated — animated. On wide screens this sits inside a
          quiet browser chrome so the resurface moment reads as “on the site.” */
@@ -383,6 +494,7 @@
         .hero p.lead { margin: 0; max-width: 28rem; font-size: 18px; }
         .cta-row { justify-content: flex-start; }
         .hero-actions .cta-sub { justify-content: flex-start; margin-top: 16px; }
+        .hero-actions .cta-sub a { margin-right: 2px; }
         .mock { margin: 0; max-width: none; }
         .browser {
           border-radius: 14px;
@@ -1017,6 +1129,7 @@
           <span class="word">de<span class="ja">ja</span></span>
         </a>
         <nav aria-label="Primary">
+          <a href="#demo-video">Demo</a>
           <a href="#how">How it works</a>
           <a href="#privacy">Privacy</a>
           <a class="nav-source" href="https://github.com/mehdirt/Deja">
@@ -1084,8 +1197,40 @@
               >
             </div>
             <p class="cta-sub">
+              <a href="#demo-video">Watch the demo</a>
+              <span>·</span>
               <span>Free</span><span>·</span><span>stays on your computer</span><span>·</span><span>no sign-up</span>
             </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="demo-video" aria-labelledby="demo-video-title">
+        <div class="wrap">
+          <div class="section-head center">
+            <span class="eyebrow">See it in action</span>
+            <h2 id="demo-video-title">A minute with <span class="wordmark">de<span class="ja">ja</span></span></h2>
+            <p class="section-lead">
+              Saving, resurface, <span class="flow-key">//</span> search, and the toolbar popup — the quiet moments that matter.
+            </p>
+          </div>
+          <div class="video-stage">
+            <div class="video-browser">
+              <div class="video-browser-bar" aria-hidden="true">
+                <div class="browser-dots"><span></span><span></span><span></span></div>
+                <span class="video-browser-title">Demo walkthrough</span>
+                <span class="browser-dots" style="visibility: hidden"><span></span><span></span><span></span></span>
+              </div>
+              <div class="video-frame" id="demo-video-frame" data-loading="true">
+                <noscript>
+                  <p style="padding: 2rem; text-align: center; color: var(--ink-soft)">
+                    Enable JavaScript to play the demo, or visit
+                    <a href="https://github.com/mehdirt/Deja#watch-it-in-action">the README</a>.
+                  </p>
+                </noscript>
+              </div>
+            </div>
+            <p class="video-caption" id="demo-video-caption" hidden></p>
           </div>
         </div>
       </section>
@@ -1389,6 +1534,60 @@
         </div>
       </div>
     </footer>
+
+    <script>
+      // YouTube demo embed — set youtubeVideoId in site/video.config.json after upload.
+      (function () {
+        var frame = document.getElementById('demo-video-frame');
+        var caption = document.getElementById('demo-video-caption');
+        if (!frame) return;
+
+        function mount(id, title) {
+          frame.removeAttribute('data-loading');
+          frame.innerHTML =
+            '<iframe src="https://www.youtube-nocookie.com/embed/' +
+            id +
+            '?rel=0&modestbranding=1" title="' +
+            (title || 'Deja demo video') +
+            '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>';
+          if (caption) {
+            caption.hidden = false;
+            caption.innerHTML =
+              'Prefer YouTube? <a href="https://www.youtube.com/watch?v=' +
+              id +
+              '" rel="noopener noreferrer">Open this walkthrough on YouTube</a>.';
+          }
+        }
+
+        function poster(title) {
+          frame.removeAttribute('data-loading');
+          frame.innerHTML =
+            '<div class="video-poster" style="background-image:url(\'og-image.jpg\');cursor:default">' +
+            '<span class="play" aria-hidden="true" style="opacity:.85"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div>';
+          if (caption) {
+            caption.hidden = false;
+            caption.textContent = 'Walkthrough video coming soon — the player will appear here after upload.';
+          }
+        }
+
+        fetch('video.config.json')
+          .then(function (r) {
+            return r.json();
+          })
+          .then(function (cfg) {
+            var id = (cfg && cfg.youtubeVideoId ? String(cfg.youtubeVideoId) : '').trim();
+            var title = (cfg && cfg.title) || 'Deja — your prompts, every AI, one library';
+            if (id) {
+              mount(id, title);
+            } else {
+              poster(title);
+            }
+          })
+          .catch(function () {
+            poster('Deja demo');
+          });
+      })();
+    </script>
 
     <script>
       // Animated hero demo: cycle through a few composers, typing then deleting,
