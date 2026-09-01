@@ -43,7 +43,7 @@ If you've ever written the perfect prompt, gotten a great answer, and then lost 
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=XynnstJbDvA">
-    <img src="https://img.youtube.com/vi/XynnstJbDvA/hqdefault.jpg" alt="Watch the Deja intro on YouTube" width="720">
+    <img src="store/youtube-intro-thumbnail.png" alt="Watch the Deja intro on YouTube — your prompts worth keeping" width="720">
   </a>
 </p>
 
