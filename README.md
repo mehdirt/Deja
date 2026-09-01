@@ -42,20 +42,18 @@ If you've ever written the perfect prompt, gotten a great answer, and then lost 
 ## Watch it in action
 
 <p align="center">
-  <a href="https://dejaprompts.netlify.app/#demo-video">
-    <img src="site/og-image.jpg" alt="Watch the Deja intro — save, resurface, and // search" width="720">
+  <a href="https://www.youtube.com/watch?v=XynnstJbDvA">
+    <img src="https://img.youtube.com/vi/XynnstJbDvA/hqdefault.jpg" alt="Watch the Deja intro on YouTube" width="720">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://dejaprompts.netlify.app/#demo-video"><strong>Watch the demo →</strong></a>
+  <a href="https://www.youtube.com/watch?v=XynnstJbDvA"><strong>Watch on YouTube →</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://dejaprompts.netlify.app/#demo-video"><strong>Landing page</strong></a>
   &nbsp;·&nbsp;
   <a href="https://chromewebstore.google.com/detail/deja/kighkbbfofcpkgjkpjmggmlhhhabobdp"><strong>Add to Chrome</strong></a>
 </p>
-
-> **YouTube:** after upload, set `youtubeVideoId` in [`site/video.config.json`](site/video.config.json) (landing page embeds it automatically). Optional README thumbnail:
->
-> `[![Watch on YouTube](https://img.youtube.com/vi/YOUR_ID/hqdefault.jpg)](https://www.youtube.com/watch?v=YOUR_ID)`
 
 ---
 

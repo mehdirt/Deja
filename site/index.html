@@ -305,16 +305,11 @@
       .cta-sub a { color: var(--accent); font-weight: 500; text-decoration: none; }
       .cta-sub a:hover { color: var(--accent-hover); text-decoration: underline; }
 
-      /* Demo video — matches browser mock + section rhythm */
+      /* Demo video — breathing room below hero, no hard break */
       #demo-video {
-        padding: 48px 0 58px;
-        background:
-          linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 42%, transparent) 0%, transparent 72%),
-          var(--bg);
-        border-top: 1px solid var(--line);
+        padding: 40px 0 58px;
       }
-      #demo-video .section-head { margin-bottom: 28px; }
-      #demo-video .section-lead { max-width: 36rem; margin-left: auto; margin-right: auto; }
+      #demo-video .section-head { margin-bottom: 22px; }
       .video-stage { max-width: 920px; margin: 0 auto; }
       .video-browser {
         border: 1px solid var(--line);
@@ -478,7 +473,7 @@
 
       /* Wide: copy + CTA left, mock right — demo stays in first viewport */
       @media (min-width: 900px) {
-        .hero { padding: 48px 0 56px; }
+        .hero { padding: 48px 0 40px; }
         .hero-grid {
           grid-template-columns: minmax(0, 1fr) minmax(320px, 1.05fr);
           grid-template-areas:
@@ -1210,9 +1205,6 @@
           <div class="section-head center">
             <span class="eyebrow">See it in action</span>
             <h2 id="demo-video-title">A minute with <span class="wordmark">de<span class="ja">ja</span></span></h2>
-            <p class="section-lead">
-              Saving, resurface, <span class="flow-key">//</span> search, and the toolbar popup — the quiet moments that matter.
-            </p>
           </div>
           <div class="video-stage">
             <div class="video-browser">
